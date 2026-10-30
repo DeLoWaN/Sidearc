@@ -65,6 +65,8 @@ The search filters the Favorites, the Pinned Tabs and the Unpinned Tabs. It does
 - A click on an Unpinned Tab of another window moves the tab into the current window (Tab Handoff).
 - A move in the panel also moves the tab in the Chrome tab strip.
 - Collapsing a Tab group in the panel collapses it in the Chrome tab strip, and the reverse.
+- A tab that the user opens directly (Ctrl+T or Cmd+T, the "+" button, the "New tab" entry of the Chrome menu) goes to the start of the Unpinned Tabs, as in Arc. The panel lists the Unpinned Tabs in tab strip order, so Sidearc moves the tab to the start of the Chrome tab strip. Chrome keeps its own pinned tabs first. The first tab of a new window stays where it is. A tab that a link opens keeps the place that Chrome gives it, next to its opener. The setting "Open new tabs at the top of the list" turns this off. It is on by default.
+- When a tab joins the Unpinned Tabs and its row is not fully visible, the panel scrolls to it. The scroll is smooth, and instant for a user who prefers reduced motion. A row that is already fully visible does not scroll. A new tab inside a collapsed group scrolls to the header of the group. The first state that the panel receives, and a drag in progress, never scroll the panel. The panel keeps the new row in view for one second, because a site group of the tab can arrive just after the tab.
 
 ### Site groups
 
@@ -148,6 +150,7 @@ The options page holds:
 
 - the Auto Archive delay,
 - the switch "Group tabs opened from the same site",
+- the switch "Open new tabs at the top of the list",
 - the background gradient,
 - the density,
 - the JSON export and import.

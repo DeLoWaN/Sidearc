@@ -26,6 +26,7 @@ export function TabRow({ tab, highlighted }: { tab: TabView; highlighted: boolea
   return (
     <li
       ref={row}
+      data-tab-id={tab.id}
       data-drop={placement ?? undefined}
       data-dragging={dragging || undefined}
       onContextMenu={onContextMenu}

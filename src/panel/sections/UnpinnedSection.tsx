@@ -9,6 +9,7 @@ import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
 import { usePanelStore } from '../store';
 import { arrangeUnpinned } from '../tab-groups';
+import { useRevealNewTabs } from '../use-reveal-new-tabs';
 import { useSearchResults } from '../use-search-results';
 
 /** The Unpinned Tabs of all windows, in tab strip order. The active tab of this window is highlighted. */
@@ -21,6 +22,7 @@ export function UnpinnedSection() {
   const siteGroups = usePanelStore((store) => store.state.siteGroups);
   const section = useRef<HTMLElement>(null);
   const { placement } = useDnd(section, { locate: unpinnedSectionTarget });
+  useRevealNewTabs(section);
   // Clear closes every Unpinned Tab, also the ones that a search hides.
   if (results && tabs.length === 0) return null;
   return (

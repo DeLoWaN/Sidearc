@@ -19,6 +19,7 @@ import { useMiddleClickClose } from './use-middle-click-close';
  * A search shows only some members, so it turns these three off.
  */
 export function GroupBlock({
+  groupKey,
   name,
   icon,
   tabs,
@@ -32,6 +33,8 @@ export function GroupBlock({
   site = false,
   dropPlacement,
 }: {
+  /** Tells this block from the other blocks of the list. */
+  groupKey: string;
   /** The text on the header. It is also the accessible name of the block. */
   name: string;
   /** What leads the header: the site icon or a colour dot. */
@@ -70,6 +73,7 @@ export function GroupBlock({
         ref={ref}
         role="group"
         aria-label={name}
+        data-group-key={groupKey}
         data-site-group={site ? '' : undefined}
         data-color={color}
         data-drop={dropPlacement ?? undefined}

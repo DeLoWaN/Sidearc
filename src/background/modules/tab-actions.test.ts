@@ -22,17 +22,54 @@ it('shows a tab of the same window when the panel asks for it', async () => {
   expect(active?.url).toBe('https://a.test/');
 });
 
-it('focuses the window of a tab that is in another window', async () => {
+it('moves a tab of another window into the window of the panel and shows it', async () => {
   const first = await fakeChrome.openWindow(['https://a.test/', 'https://b.test/']);
   const second = await fakeChrome.openWindow(['https://c.test/']);
   const panel = connectPanel(second);
+  const tabId = await tabOf('https://a.test/');
 
-  panel.send({ type: 'tab/activate', tabId: await tabOf('https://a.test/') });
+  panel.send({ type: 'tab/activate', tabId });
   await settle();
 
-  const [active] = await browser.tabs.query({ windowId: first, active: true });
-  expect(active?.url).toBe('https://a.test/');
-  expect((await browser.windows.getCurrent()).id).toBe(first);
+  expect(await urlsOf(second)).toEqual(['https://c.test/', 'https://a.test/']);
+  expect(await urlsOf(first)).toEqual(['https://b.test/']);
+  const [active] = await browser.tabs.query({ windowId: second, active: true });
+  expect(active?.id).toBe(tabId);
+});
+
+it('never creates or reloads a tab when it moves a tab of another window', async () => {
+  await fakeChrome.openWindow(['https://a.test/']);
+  const second = await fakeChrome.openWindow(['https://c.test/']);
+  const panel = connectPanel(second);
+  const tabId = await tabOf('https://a.test/');
+  const created: number[] = [];
+  const updated: unknown[] = [];
+  fakeChrome.events.tabs.onCreated.addListener((tab) => void created.push(tab.id as number));
+  fakeChrome.events.tabs.onUpdated.addListener((_id, change) => void updated.push(change));
+
+  panel.send({ type: 'tab/activate', tabId });
+  await settle();
+
+  expect(created).toEqual([]);
+  expect(updated).toEqual([]);
+  expect(await browser.tabs.query({})).toHaveLength(2);
+  expect((await browser.tabs.get(tabId)).url).toBe('https://a.test/');
+});
+
+it('closes the source window when the moved tab was its only tab, and the panel stays correct', async () => {
+  await fakeChrome.openWindow(['https://a.test/']);
+  const second = await fakeChrome.openWindow(['https://c.test/']);
+  const panel = connectPanel(second);
+  const tabId = await tabOf('https://a.test/');
+
+  panel.send({ type: 'tab/activate', tabId });
+  await settle();
+
+  expect((await browser.windows.getAll()).map((window) => window.id)).toEqual([second]);
+  expect(panel.latest()?.unpinnedTabs.map((tab) => [tab.url, tab.windowId, tab.active])).toEqual([
+    ['https://c.test/', second, false],
+    ['https://a.test/', second, true],
+  ]);
 });
 
 it('closes the tab that the panel asks to close', async () => {

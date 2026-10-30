@@ -23,6 +23,7 @@ export function SiteGroupBlock({ group, tabs }: { group: SiteGroupView; tabs: Ta
   return (
     <GroupBlock
       ref={block}
+      group={{ kind: 'site', groupId: group.id }}
       groupKey={`site-group-${group.id}`}
       dropPlacement={placement}
       site

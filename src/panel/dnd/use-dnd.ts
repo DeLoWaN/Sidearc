@@ -9,6 +9,7 @@ import { type SelectionId, usePanelSelection } from '../selection-store';
 import { usePanelStore } from '../store';
 import { usePanelUi } from '../ui-store';
 import { usePanelDrag } from './drag-store';
+import { showBlockPreview } from './group-preview';
 import type { Locate } from './locators';
 import { planDrop } from './plan-drop';
 import { showSelectionPreview } from './selection-preview';
@@ -17,10 +18,12 @@ import type { DragSource, DropTarget } from './types';
 /** Where the drop indicator shows on an element. */
 export type Placement = 'above' | 'below' | 'inside' | 'before' | 'after';
 
-const placementOf = (target: DropTarget): Placement => {
+const placementOf = (target: DropTarget, dragged: DragSource): Placement => {
   if (target.zone === 'tree-row') return target.placement;
-  if (target.zone === 'tab-row') return target.edge;
+  if (target.zone === 'tab-row' || target.zone === 'group-edge') return target.edge;
   if (target.zone === 'favorite-tile') return target.edge;
+  // A group that drops on the section goes after the last tab: a line marks the end of the list.
+  if (target.zone === 'unpinned' && dragged.type === 'group') return 'below';
   return 'inside';
 };
 
@@ -34,13 +37,22 @@ export function readSource(data: Record<string | symbol, unknown>): DragSource |
   if (data.type === 'selection' && Array.isArray(data.tabIds) && Array.isArray(data.itemIds)) {
     return { type: 'selection', tabIds: data.tabIds, itemIds: data.itemIds };
   }
+  if (data.type === 'group' && data.kind === 'tab' && typeof data.groupId === 'number') {
+    return { type: 'group', kind: 'tab', groupId: data.groupId };
+  }
+  if (data.type === 'group' && data.kind === 'site' && typeof data.groupId === 'string') {
+    return { type: 'group', kind: 'site', groupId: data.groupId };
+  }
   return null;
 }
 
 interface DndOptions {
   /** Makes the element draggable. */
   source?: DragSource;
+  /** False takes the drag away: the element is not draggable at all, so a text field inside it works. */
   canDrag?: boolean;
+  /** The element that a drag of a group shows as its drag image, instead of the dragged element alone. */
+  preview?: () => HTMLElement | null;
   /**
    * The selectable row that the element is. A drag that starts on a selected row carries the whole selection,
    * and every selected row dims while it drags.
@@ -67,7 +79,7 @@ export function useDnd(ref: RefObject<HTMLElement | null>, options: DndOptions) 
       (other) => other.kind === options.row?.kind && other.id === options.row.id,
     ),
   );
-  const isDraggable = Boolean(options.source);
+  const isDraggable = Boolean(options.source) && options.canDrag !== false;
   const isDropTarget = Boolean(options.locate);
 
   useEffect(() => {
@@ -87,7 +99,7 @@ export function useDnd(ref: RefObject<HTMLElement | null>, options: DndOptions) 
       const innermost = location.current.dropTargets[0]?.element === self.element;
       const accepted =
         innermost && dragged && planDrop(usePanelStore.getState().state, dragged, target);
-      setPlacement(accepted ? placementOf(target) : null);
+      setPlacement(dragged && accepted ? placementOf(target, dragged) : null);
     };
     const hide = () => setPlacement(null);
 
@@ -96,7 +108,6 @@ export function useDnd(ref: RefObject<HTMLElement | null>, options: DndOptions) 
       cleanups.push(
         draggable({
           element,
-          canDrag: () => latest.current.canDrag !== false,
           getInitialData: () => {
             const { row, source } = latest.current;
             const carried =
@@ -108,13 +119,18 @@ export function useDnd(ref: RefObject<HTMLElement | null>, options: DndOptions) 
               );
             return { ...(carried || source) };
           },
-          onGenerateDragPreview: ({ nativeSetDragImage, source }) => {
+          onGenerateDragPreview: ({ nativeSetDragImage, source, location }) => {
             const carried = readSource(source.data);
-            if (carried?.type !== 'selection' || !nativeSetDragImage) return;
-            showSelectionPreview(
-              carried.tabIds.length + carried.itemIds.length,
-              nativeSetDragImage,
-            );
+            if (!nativeSetDragImage) return;
+            if (carried?.type === 'selection') {
+              showSelectionPreview(
+                carried.tabIds.length + carried.itemIds.length,
+                nativeSetDragImage,
+              );
+            } else if (carried?.type === 'group') {
+              const block = latest.current.preview?.();
+              if (block) showBlockPreview(block, location.current.input, nativeSetDragImage);
+            }
           },
           onDragStart: () => setDragging(true),
           onDrop: () => setDragging(false),

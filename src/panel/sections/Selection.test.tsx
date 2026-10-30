@@ -198,12 +198,12 @@ describe('ending the selection', () => {
     expect(selectedRows()).toEqual([]);
   });
 
-  it('ends with the Clear button', async () => {
+  it('ends with the Deselect button', async () => {
     renderWorld(world().state);
     ctrlClick('Mail');
 
     const selectionBar = screen.getByRole('status').parentElement as HTMLElement;
-    await userEvent.click(within(selectionBar).getByRole('button', { name: 'Clear' }));
+    await userEvent.click(within(selectionBar).getByRole('button', { name: 'Deselect' }));
 
     expect(selectedRows()).toEqual([]);
     expect(screen.queryByRole('status')).toBeNull();
@@ -252,7 +252,7 @@ describe('what the selection counts', () => {
     const status = screen.getByRole('status');
     expect(status).toHaveTextContent('2 selected');
     const buttons = within(status.parentElement as HTMLElement).getAllByRole('button');
-    expect(buttons.map((button) => button.textContent)).toEqual(['Close', 'Move to…', 'Clear']);
+    expect(buttons.map((button) => button.textContent)).toEqual(['Close', 'Move to…', 'Deselect']);
   });
 
   it('drops the rows that leave the state', () => {

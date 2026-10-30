@@ -28,9 +28,11 @@ function tabGroupSpan(state: SidebarState, groupId: number): TabGroupSpan | unde
   const group = state.tabGroups.find((candidate) => candidate.id === groupId);
   if (!group) return undefined;
   // The tabs of a Tab group sit next to each other, so one listed tab fixes the start.
-  const offset = group.tabIds.findIndex((id) => state.unpinnedTabs.some((tab) => tab.id === id));
-  const listed = state.unpinnedTabs.find((tab) => tab.id === group.tabIds[offset]);
+  const listed = group.tabIds
+    .map((id) => state.unpinnedTabs.find((tab) => tab.id === id))
+    .find((tab) => tab !== undefined);
   if (!listed) return undefined;
+  const offset = group.tabIds.indexOf(listed.id);
   return { windowId: group.windowId, start: listed.index - offset, size: group.tabIds.length };
 }
 
@@ -46,12 +48,8 @@ function siteMembers(state: SidebarState, groupId: string): TabView[] {
 function edgePlace(state: SidebarState, group: GroupRef, edge: 'above' | 'below'): Place | null {
   if (group.kind === 'tab') {
     const span = tabGroupSpan(state, group.groupId);
-    return (
-      span && {
-        windowId: span.windowId,
-        at: edge === 'above' ? span.start : span.start + span.size,
-      }
-    );
+    if (!span) return null;
+    return { windowId: span.windowId, at: edge === 'above' ? span.start : span.start + span.size };
   }
   const [first, ...others] = siteMembers(state, group.groupId);
   if (!first) return null;

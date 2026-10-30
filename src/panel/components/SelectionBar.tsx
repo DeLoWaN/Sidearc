@@ -10,7 +10,7 @@ import { ContextMenu, MenuItem } from './menu';
 const button = 'h-7 shrink-0 rounded-md px-2 hover:bg-(--row-hover)';
 
 /**
- * The bar above the footer while rows are selected: how many, and the buttons Close, Move to… and Clear.
+ * The bar above the footer while rows are selected: how many, and the buttons Close, Move to… and Deselect.
  * It shows nothing without a selection.
  */
 export function SelectionBar() {
@@ -45,8 +45,8 @@ export function SelectionBar() {
       >
         Move to…
       </button>
-      <button type="button" onClick={clear} className={button}>
-        Clear
+      <button type="button" aria-label="Deselect" onClick={clear} className={button}>
+        Deselect
       </button>
       {moveMenu && (
         <ContextMenu

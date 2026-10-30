@@ -97,7 +97,7 @@ it('closes the Tab group with the cross at the right end of its header', async (
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'group/close', groupId: 7 });
 });
 
-it('offers only "Close group" in the right-click menu of a Tab group header', async () => {
+it('offers the moves and "Close group" in the right-click menu of a Tab group header', async () => {
   const tab = makeTab({ title: 'Docs' });
   const state = makeState({ unpinnedTabs: [tab], tabGroups: [makeGroup([tab], { id: 7 })] });
   const { send } = renderPanel(<UnpinnedSection />, { state });
@@ -111,7 +111,7 @@ it('offers only "Close group" in the right-click menu of a Tab group header', as
     within(menu)
       .getAllByRole('menuitem')
       .map((entry) => entry.textContent),
-  ).toEqual(['Close group']);
+  ).toEqual(['Move group up', 'Move group down', 'Close group']);
   await userEvent.click(within(menu).getByRole('menuitem', { name: 'Close group' }));
 
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'group/close', groupId: 7 });

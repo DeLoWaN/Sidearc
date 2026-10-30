@@ -1,9 +1,13 @@
-import { type MouseEvent, type ReactNode, type Ref, useState } from 'react';
+import { type MouseEvent, type ReactNode, type Ref, useRef, useState } from 'react';
 import type { TabView } from '../../shared/types';
 import type { CommandBody } from '../connection';
 import { DropIndicator } from '../dnd/DropIndicator';
-import type { Placement } from '../dnd/use-dnd';
+import { planGroupStep } from '../dnd/plan-group';
+import type { GroupRef } from '../dnd/types';
+import { type Placement, useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
+import { usePanelSelection } from '../selection-store';
+import { usePanelStore } from '../store';
 import { usePanelUi } from '../ui-store';
 import { CloseIcon } from './CloseIcon';
 import { ContextMenu, MenuItem, MenuSeparator } from './menu';
@@ -11,14 +15,34 @@ import { TabRow } from './TabRow';
 import { focusableUnder } from './use-item-context-menu';
 import { useMiddleClickClose } from './use-middle-click-close';
 
+/** The entries "Move group up" and "Move group down". An entry is off when no entry of the Unpinned Tabs lies on that side. */
+function MoveGroupItems({ group }: { group: GroupRef }) {
+  const { send } = usePanel();
+  const state = usePanelStore((store) => store.state);
+  const { up, down } = planGroupStep(state, group);
+  return (
+    <>
+      <MenuItem disabled={up === null} onSelect={() => up && send(up)}>
+        Move group up
+      </MenuItem>
+      <MenuItem disabled={down === null} onSelect={() => down && send(down)}>
+        Move group down
+      </MenuItem>
+    </>
+  );
+}
+
 /**
  * The block of a group, for a Site group and for a Tab group.
  * The header is a row of the same height as a tab row. The member tabs sit one indent step below it.
  * A hover or a keyboard focus anywhere in the block tints the whole block and shows the close button.
  * The close button, the middle click and the "Close group" entry of the right-click menu send `closeCommand`.
  * A search shows only some members, so it turns these three off.
+ * The header drags the whole group. A search, a name field and a selection of several rows turn the drag off.
+ * The right-click menu also moves the group up or down by one entry of the Unpinned Tabs.
  */
 export function GroupBlock({
+  group,
   groupKey,
   name,
   icon,
@@ -33,6 +57,8 @@ export function GroupBlock({
   site = false,
   dropPlacement,
 }: {
+  /** The group that the block shows: what a drag of the header carries. */
+  group: GroupRef;
   /** Tells this block from the other blocks of the list. */
   groupKey: string;
   /** The text on the header. It is also the accessible name of the block. */
@@ -63,6 +89,13 @@ export function GroupBlock({
     event.preventDefault();
     setMenu({ x: event.clientX, y: event.clientY, opener: focusableUnder(event.target) });
   };
+  const header = useRef<HTMLDivElement>(null);
+  const severalSelected = usePanelSelection((selection) => selection.selected.length > 1);
+  const { dragging } = useDnd(header, {
+    source: { type: 'group', ...group },
+    canDrag: !editor && !severalSelected,
+    preview: () => header.current?.closest<HTMLElement>('[role="group"]') ?? null,
+  });
   const shut = collapsed && !searching;
   const hasUnvisited = shut && tabs.some((tab) => tab.unvisited);
 
@@ -77,7 +110,8 @@ export function GroupBlock({
         data-site-group={site ? '' : undefined}
         data-color={color}
         data-drop={dropPlacement ?? undefined}
-        className="group/block relative my-0.5 rounded-[12px] pb-0.5 hover:bg-(--group-tint) has-[:focus-visible]:bg-(--group-tint)"
+        data-dragging={dragging || undefined}
+        className="group/block relative my-0.5 rounded-[12px] pb-0.5 hover:bg-(--group-tint) has-[:focus-visible]:bg-(--group-tint) data-dragging:opacity-40"
       >
         {dropPlacement && <DropIndicator placement={dropPlacement} />}
         {editor ? (
@@ -88,6 +122,7 @@ export function GroupBlock({
         ) : (
           // biome-ignore lint/a11y/noStaticElementInteractions: the buttons inside carry the keyboard actions; the right click and the middle click are pointer shortcuts.
           <div
+            ref={header}
             onContextMenu={searching ? undefined : openMenu}
             {...middleClick}
             className="flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover)"
@@ -161,6 +196,8 @@ export function GroupBlock({
         >
           {menuItems}
           {menuItems && <MenuSeparator />}
+          <MoveGroupItems group={group} />
+          <MenuSeparator />
           <MenuItem danger onSelect={() => send(closeCommand)}>
             Close group
           </MenuItem>

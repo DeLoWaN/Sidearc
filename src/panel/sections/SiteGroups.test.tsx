@@ -104,14 +104,14 @@ it('offers "Ungroup" in the right-click menu of the header and sends the command
     within(menu)
       .getAllByRole('menuitem')
       .map((entry) => entry.textContent),
-  ).toEqual(['Rename group', 'Ungroup', 'Close group']);
+  ).toEqual(['Rename group', 'Ungroup', 'Move group up', 'Move group down', 'Close group']);
   await userEvent.click(within(menu).getByRole('menuitem', { name: 'Ungroup' }));
 
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'site-group/ungroup', groupId: 'site-7' });
   expect(screen.queryByRole('menu')).toBeNull();
 });
 
-it('closes the site group from the "Close group" entry of the header menu, set apart by a separator', async () => {
+it('closes the site group from the "Close group" entry of the header menu, set apart by separators', async () => {
   const [home, guide] = [makeTab(), makeTab()] as [TabView, TabView];
   const state = makeState({
     unpinnedTabs: [home, guide],
@@ -124,8 +124,12 @@ it('closes the site group from the "Close group" entry of the header menu, set a
     target: screen.getByRole('button', { name: 'docs.test' }),
   });
   const menu = screen.getByRole('menu', { name: 'Actions for docs.test' });
-  expect(within(menu).getAllByRole('separator')).toHaveLength(1);
-  await userEvent.click(within(menu).getByRole('menuitem', { name: 'Close group' }));
+  // One separator before the move entries, and one before "Close group".
+  const separators = within(menu).getAllByRole('separator');
+  expect(separators).toHaveLength(2);
+  const close = within(menu).getByRole('menuitem', { name: 'Close group' });
+  expect(separators[1]?.compareDocumentPosition(close)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  await userEvent.click(close);
 
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'site-group/close', groupId: 'site-7' });
 });

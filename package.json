@@ -2,6 +2,7 @@
   "name": "sidearc",
   "private": true,
   "version": "0.0.0",
+  "license": "GPL-3.0-or-later",
   "type": "module",
   "devDependencies": {
     "@biomejs/biome": "^2.6.4",

@@ -4,7 +4,12 @@ import { defineConfig } from 'wxt';
 export default defineConfig({
   srcDir: 'src',
   modules: ['@wxt-dev/module-react'],
-  vite: () => ({ plugins: [tailwindcss()] }),
+  vite: () => ({
+    plugins: [tailwindcss()],
+    // MIT and Apache-2.0 require the notices of bundled packages in the shipped extension.
+    // Each WXT build writes this file again, so the last build must bundle every package.
+    build: { license: { fileName: 'THIRD_PARTY_LICENSES.md' } },
+  }),
   manifest: {
     name: 'Sidearc',
     description: 'An Arc-like sidebar in the Chrome side panel.',

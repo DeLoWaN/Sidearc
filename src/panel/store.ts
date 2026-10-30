@@ -15,6 +15,7 @@ const emptyState: SidebarState = {
   items: [],
 
   // tab groups (#9)
+  tabGroups: [],
 
   // settings (#14)
 };

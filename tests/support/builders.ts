@@ -30,6 +30,7 @@ export function makeState(overrides: Partial<SidebarState> = {}): SidebarState {
     items: [],
 
     // tab groups (#9)
+    tabGroups: [],
 
     // settings (#14)
 

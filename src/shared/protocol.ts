@@ -38,7 +38,12 @@ export type FoldersCommand = never;
 export type FavoritesCommand = never;
 
 // tab groups (#9)
-export type GroupsCommand = never;
+export type GroupsCommand =
+  /** Collapses an expanded Tab group, or expands a collapsed one, in the tab strip too. */
+  | { type: 'group/toggle'; groupId: number }
+  /** Puts the tab at the end of the Tab group. The tab changes window when the group is in another one. */
+  | { type: 'group/add-tab'; tabId: number; groupId: number }
+  | { type: 'group/remove-tab'; tabId: number };
 
 // archive (#8, #10)
 export type ArchiveCommand = never;

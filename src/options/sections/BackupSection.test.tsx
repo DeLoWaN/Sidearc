@@ -109,6 +109,17 @@ it('keeps the data when the user cancels', async () => {
   expect(ask).not.toHaveBeenCalledWith('backup/import', expect.anything());
 });
 
+it('keeps the data when the user presses Escape', async () => {
+  const { ask } = renderBackup();
+  await userEvent.upload(await screen.findByLabelText('Backup file'), backupFile());
+  await screen.findByRole('alertdialog');
+
+  await userEvent.keyboard('{Escape}');
+
+  expect(screen.queryByRole('alertdialog')).toBeNull();
+  expect(ask).not.toHaveBeenCalledWith('backup/import', expect.anything());
+});
+
 it('shows the precise error of the worker and asks nothing for a refused file', async () => {
   const error = 'Unknown backup version 2: this Sidearc reads version 1';
   const { ask } = renderBackup(() => ({ ok: false, error }));
@@ -130,4 +141,28 @@ it('shows the error when the import is refused after the question', async () => 
   await userEvent.click(await screen.findByRole('button', { name: 'Replace my data' }));
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Broke');
+});
+
+it('shows an error when the worker cannot check the file', async () => {
+  renderBackup(() => {
+    throw new Error('Worker is asleep');
+  });
+
+  await userEvent.upload(await screen.findByLabelText('Backup file'), backupFile());
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Worker is asleep');
+  expect(screen.queryByRole('alertdialog')).toBeNull();
+});
+
+it('shows an error when the import request fails after the question', async () => {
+  let calls = 0;
+  renderBackup(() => {
+    if (++calls === 1) return { ok: true, summary: SUMMARY };
+    throw new Error('Worker is gone');
+  });
+  await userEvent.upload(await screen.findByLabelText('Backup file'), backupFile());
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Replace my data' }));
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Worker is gone');
 });

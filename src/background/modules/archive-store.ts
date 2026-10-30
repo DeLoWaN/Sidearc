@@ -1,7 +1,7 @@
 import type { ArchiveEntry } from '../../shared/types';
 import { createQueue } from '../queue';
 import { registerCommand } from '../registry';
-import { notifySidebarChanged, registerSidebarSection } from '../sidebar-hub';
+import { notifyOnStorageChange, registerSidebarSection } from '../sidebar-hub';
 import type { WorkerModule } from '../worker-module';
 
 const STORAGE_KEY = 'archive';
@@ -59,9 +59,7 @@ const archiveStore: WorkerModule = {
       }),
     );
 
-    browser.storage.onChanged.addListener((changes, area) => {
-      if (area === 'local' && STORAGE_KEY in changes) notifySidebarChanged();
-    });
+    notifyOnStorageChange('local', STORAGE_KEY);
   },
 };
 export default archiveStore;

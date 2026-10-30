@@ -8,6 +8,18 @@ beforeEach(async () => {
   await startWorker();
 });
 
+it('refuses to add an item under a parent that is not a Folder, with a named error', async () => {
+  const { addItem, NotAFolderError } = await import('./item-store');
+  const pinned = await addItem({ kind: 'pinned', title: 'A', url: 'https://a.test/' });
+
+  await expect(
+    addItem({ kind: 'pinned', title: 'B', url: 'https://b.test/', parentId: pinned.id }),
+  ).rejects.toThrow(NotAFolderError);
+  await expect(
+    addItem({ kind: 'pinned', title: 'B', url: 'https://b.test/', parentId: 'missing' }),
+  ).rejects.toThrow('Not a Folder: missing');
+});
+
 const tabOf = async (url: string) => (await browser.tabs.query({ url }))[0] as chrome.tabs.Tab;
 
 async function connectedPanel(urls: string[][]) {

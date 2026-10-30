@@ -3,7 +3,7 @@ import { parseSettingsPatch, readSettings } from '../../shared/settings';
 import type { Settings } from '../../shared/types';
 import { createQueue } from '../queue';
 import { registerCommand, registerRpc } from '../registry';
-import { notifySidebarChanged, registerSidebarSection } from '../sidebar-hub';
+import { notifyOnStorageChange, registerSidebarSection } from '../sidebar-hub';
 import type { WorkerModule } from '../worker-module';
 
 const STORAGE_KEY = 'settings';
@@ -37,9 +37,7 @@ const settings: WorkerModule = {
     registerRpc('settings/save', (patch) => saveSettings(patch));
     registerCommand('options/open', () => browser.runtime.openOptionsPage());
 
-    browser.storage.onChanged.addListener((changes, area) => {
-      if (area === 'local' && STORAGE_KEY in changes) notifySidebarChanged();
-    });
+    notifyOnStorageChange('local', STORAGE_KEY);
   },
 };
 export default settings;

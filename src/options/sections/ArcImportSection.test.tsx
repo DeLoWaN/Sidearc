@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, it, vi } from 'vitest';
 import type { ArcImportResult } from '../../shared/arc-import';
+import { MAX_FAVORITES } from '../../shared/item-tree';
 import { type Ask, OptionsContext } from '../options-context';
 import { ArcImportSection } from './ArcImportSection';
 
@@ -122,4 +123,52 @@ it('shows the error of the worker when it refuses the import', async () => {
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Sidearc already has items.');
   expect(screen.queryByRole('status')).not.toBeInTheDocument();
+});
+
+it('shows an error when the worker does not answer the availability question', async () => {
+  const ask = vi.fn(async () => {
+    throw new Error('Worker is asleep');
+  });
+  render(
+    <OptionsContext value={ask as unknown as Ask}>
+      <ArcImportSection />
+    </OptionsContext>,
+  );
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Worker is asleep');
+});
+
+it('shows an error when the import request fails', async () => {
+  const ask = vi.fn(async (rpc: string) => {
+    if (rpc === 'arc-import/available') return true;
+    throw new Error('Worker is gone');
+  });
+  render(
+    <OptionsContext value={ask as unknown as Ask}>
+      <ArcImportSection />
+    </OptionsContext>,
+  );
+  await chooseFile(arcFile());
+  await userEvent.selectOptions(await screen.findByRole('combobox', { name: 'Arc space' }), ALPHA);
+
+  await userEvent.click(screen.getByRole('button', { name: 'Import' }));
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Worker is gone');
+});
+
+it('names the Favorite limit with the shared constant', async () => {
+  renderSection({
+    result: {
+      ok: true,
+      report: { favorites: 12, pinnedTabs: 0, folders: 0, favoritesIgnored: 1, skipped: 0 },
+    },
+  });
+  await chooseFile(arcFile());
+  await userEvent.selectOptions(await screen.findByRole('combobox', { name: 'Arc space' }), ALPHA);
+
+  await userEvent.click(screen.getByRole('button', { name: 'Import' }));
+
+  expect(await screen.findByRole('status')).toHaveTextContent(
+    `Sidearc keeps ${MAX_FAVORITES} Favorites at most`,
+  );
 });

@@ -36,6 +36,13 @@ export function notifySidebarChanged() {
   flush().catch(console.error);
 }
 
+/** Sends the state again each time the key changes in that storage area. */
+export function notifyOnStorageChange(area: 'local' | 'session', key: string) {
+  browser.storage.onChanged.addListener((changes, changedArea) => {
+    if (changedArea === area && key in changes) notifySidebarChanged();
+  });
+}
+
 async function flush() {
   try {
     while (dirty) {

@@ -2,16 +2,24 @@ import { endPosition, isFolderOrRoot, MAX_FAVORITES, subtreeIds } from '../../sh
 import type { ItemKind, ItemRecord } from '../../shared/types';
 import { createQueue } from '../queue';
 import { registerCommand } from '../registry';
-import { notifySidebarChanged } from '../sidebar-hub';
+import { notifyOnStorageChange } from '../sidebar-hub';
 import { UserError } from '../user-error';
 import type { WorkerModule } from '../worker-module';
 
-const STORAGE_KEY = 'items';
+export const ITEMS_STORAGE_KEY = 'items';
 
 /** The profile has 12 Favorites already. */
 export class FavoriteLimitError extends UserError {
   constructor() {
     super(`Sidearc keeps ${MAX_FAVORITES} Favorites at most. Remove one first.`);
+  }
+}
+
+/** The target parent is not a Folder. Only a bug in the caller causes it, so the user never sees it. */
+export class NotAFolderError extends Error {
+  constructor(parentId: string | null) {
+    super(`Not a Folder: ${parentId}`);
+    this.name = 'NotAFolderError';
   }
 }
 
@@ -22,8 +30,8 @@ const countFavorites = (items: ItemRecord[]) =>
 const writes = createQueue();
 
 async function readItems(): Promise<ItemRecord[]> {
-  const stored = await browser.storage.local.get(STORAGE_KEY);
-  return (stored[STORAGE_KEY] as ItemRecord[] | undefined) ?? [];
+  const stored = await browser.storage.local.get(ITEMS_STORAGE_KEY);
+  return (stored[ITEMS_STORAGE_KEY] as ItemRecord[] | undefined) ?? [];
 }
 
 /** Every item, ordered by position. */
@@ -34,7 +42,7 @@ export async function getItems(): Promise<ItemRecord[]> {
 
 async function change(update: (items: ItemRecord[]) => ItemRecord[]) {
   await writes.run(async () => {
-    await browser.storage.local.set({ [STORAGE_KEY]: update(await readItems()) });
+    await browser.storage.local.set({ [ITEMS_STORAGE_KEY]: update(await readItems()) });
   });
 }
 
@@ -54,7 +62,7 @@ export async function addItem(input: {
   const parentId = favorite ? null : (input.parentId ?? null);
   let added: ItemRecord | undefined;
   await change((items) => {
-    if (!isFolderOrRoot(items, parentId)) throw new Error(`Not a Folder: ${parentId}`);
+    if (!isFolderOrRoot(items, parentId)) throw new NotAFolderError(parentId);
     if (favorite && countFavorites(items) >= MAX_FAVORITES) throw new FavoriteLimitError();
     added = {
       id: crypto.randomUUID(),
@@ -186,9 +194,7 @@ const itemStore: WorkerModule = {
     registerCommand('item/delete', ({ itemId }) => deleteItem(itemId));
     registerCommand('item/favorite', ({ itemId, index }) => makeFavorite(itemId, index));
 
-    browser.storage.onChanged.addListener((changes, area) => {
-      if (area === 'local' && STORAGE_KEY in changes) notifySidebarChanged();
-    });
+    notifyOnStorageChange('local', ITEMS_STORAGE_KEY);
   },
 };
 export default itemStore;

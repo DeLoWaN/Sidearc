@@ -1,4 +1,5 @@
 import type { Density, Settings } from './types';
+import { isObject, show } from './validation';
 
 export const DENSITIES: readonly Density[] = ['compact', 'normal', 'spacious'];
 
@@ -13,8 +14,6 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 const COLOUR = /^#[0-9a-f]{6}$/i;
-
-const show = (value: unknown) => JSON.stringify(value) ?? String(value);
 
 /** Checks one value. Returns the clean value, or the error text. */
 function checkSetting(
@@ -49,8 +48,7 @@ function checkSetting(
 export function parseSettingsPatch(
   input: unknown,
 ): { ok: true; patch: Partial<Settings> } | { ok: false; error: string } {
-  if (input === null || typeof input !== 'object' || Array.isArray(input))
-    return { ok: false, error: 'The settings must be an object' };
+  if (!isObject(input)) return { ok: false, error: 'The settings must be an object' };
 
   const patch: Record<string, unknown> = {};
   for (const [name, value] of Object.entries(input)) {
@@ -65,7 +63,7 @@ export function parseSettingsPatch(
 /** Merges stored data over the defaults. A stored value that is not valid gives its default back. */
 export function readSettings(stored: unknown): Settings {
   const settings: Record<string, unknown> = { ...DEFAULT_SETTINGS };
-  if (stored === null || typeof stored !== 'object') return settings as unknown as Settings;
+  if (!isObject(stored)) return settings as unknown as Settings;
   for (const [name, value] of Object.entries(stored)) {
     if (!(name in DEFAULT_SETTINGS)) continue;
     const checked = checkSetting(name as keyof Settings, value);

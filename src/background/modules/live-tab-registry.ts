@@ -1,9 +1,9 @@
 import { createQueue } from '../queue';
-import { notifySidebarChanged } from '../sidebar-hub';
+import { notifyOnStorageChange } from '../sidebar-hub';
 import type { WorkerModule } from '../worker-module';
 import { getItems } from './item-store';
 
-const STORAGE_KEY = 'liveTabs';
+export const LIVE_TABS_STORAGE_KEY = 'liveTabs';
 
 /** Item id to the id of its live tab. Session storage keeps it when the worker stops, not when Chrome quits. */
 type Links = Record<string, number>;
@@ -11,13 +11,13 @@ type Links = Record<string, number>;
 const writes = createQueue();
 
 async function readLinks(): Promise<Links> {
-  const stored = await browser.storage.session.get(STORAGE_KEY);
-  return (stored[STORAGE_KEY] as Links | undefined) ?? {};
+  const stored = await browser.storage.session.get(LIVE_TABS_STORAGE_KEY);
+  return (stored[LIVE_TABS_STORAGE_KEY] as Links | undefined) ?? {};
 }
 
 async function change(update: (links: Links) => Links | Promise<Links>) {
   await writes.run(async () => {
-    await browser.storage.session.set({ [STORAGE_KEY]: await update(await readLinks()) });
+    await browser.storage.session.set({ [LIVE_TABS_STORAGE_KEY]: await update(await readLinks()) });
   });
 }
 
@@ -72,9 +72,7 @@ const liveTabRegistry: WorkerModule = {
       ).catch(console.error);
     });
 
-    browser.storage.onChanged.addListener((changes, area) => {
-      if (area === 'session' && STORAGE_KEY in changes) notifySidebarChanged();
-    });
+    notifyOnStorageChange('session', LIVE_TABS_STORAGE_KEY);
   },
 };
 export default liveTabRegistry;

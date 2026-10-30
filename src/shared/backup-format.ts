@@ -2,6 +2,7 @@ import { MAX_FAVORITES } from './item-tree';
 import type { BackupSummary } from './protocol';
 import { DEFAULT_SETTINGS, parseSettingsPatch } from './settings';
 import type { ArchiveEntry, ItemKind, ItemRecord, Settings } from './types';
+import { type Fail, fail, isObject, show } from './validation';
 
 export const BACKUP_FORMAT = 'sidearc-backup';
 export const BACKUP_VERSION = 1;
@@ -25,14 +26,6 @@ export function backupFileName(date: Date): string {
 
 const KINDS: Record<ItemKind, true> = { pinned: true, folder: true, favorite: true };
 const ITEM_KINDS: readonly string[] = Object.keys(KINDS);
-
-const show = (value: unknown) => JSON.stringify(value) ?? String(value);
-
-type Fail = { ok: false; error: string };
-const fail = (error: string): Fail => ({ ok: false, error });
-
-const isObject = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
 
 type FieldChecks = Record<string, [accepts: (value: unknown) => boolean, expected: string]>;
 

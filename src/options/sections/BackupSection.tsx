@@ -1,21 +1,24 @@
 import { useState } from 'react';
 import { backupFileName } from '../../shared/backup-format';
+import { plural } from '../../shared/plural';
 import type { BackupSummary } from '../../shared/protocol';
+import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import { useAsk } from '../options-context';
 import { Section } from '../Section';
 import { useSettings } from '../settings-context';
 
-const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
-
 function describeSummary(summary: BackupSummary) {
   return [
-    plural(summary.favorites, 'Favorite', 'Favorites'),
-    plural(summary.pinnedTabs, 'Pinned Tab', 'Pinned Tabs'),
-    plural(summary.folders, 'Folder', 'Folders'),
+    plural(summary.favorites, 'Favorite'),
+    plural(summary.pinnedTabs, 'Pinned Tab'),
+    plural(summary.folders, 'Folder'),
   ]
     .join(', ')
-    .concat(` and ${plural(summary.archivedTabs, 'archived tab', 'archived tabs')}`);
+    .concat(` and ${plural(summary.archivedTabs, 'archived tab')}`);
 }
+
+const describeFailure = (failure: unknown) =>
+  failure instanceof Error ? failure.message : String(failure);
 
 /** The page saves the text that the worker gives. The page never reads the stored data itself. */
 function download(text: string, name: string) {
@@ -48,26 +51,37 @@ export function BackupSection() {
     try {
       download(await ask('backup/export', null), backupFileName(new Date()));
     } catch (failure) {
-      setError(`The export failed: ${String(failure)}`);
+      setError(`The export failed: ${describeFailure(failure)}`);
     }
   };
 
   const chooseFile = async (file: File | undefined) => {
     clear();
     if (!file) return;
-    const text = await file.text();
-    const result = await ask('backup/inspect', text);
-    if (result.ok) setPending({ text, summary: result.summary });
-    else setError(result.error);
+    try {
+      const text = await file.text();
+      const result = await ask('backup/inspect', text);
+      if (result.ok) setPending({ text, summary: result.summary });
+      else setError(result.error);
+    } catch (failure) {
+      setError(`The file could not be checked: ${describeFailure(failure)}`);
+    }
   };
 
   const replaceData = async () => {
     if (!pending) return;
-    const result = await ask('backup/import', pending.text);
-    setPending(undefined);
-    if (!result.ok) return setError(result.error);
-    setDone(`Backup imported: ${describeSummary(result.summary)}.`);
-    await refresh();
+    try {
+      const result = await ask('backup/import', pending.text);
+      setPending(undefined);
+      if (!result.ok) return setError(result.error);
+      setDone(`Backup imported: ${describeSummary(result.summary)}.`);
+    } catch (failure) {
+      setPending(undefined);
+      return setError(`The import failed: ${describeFailure(failure)}`);
+    }
+    await refresh().catch((failure) =>
+      setError(`The settings could not be read again: ${describeFailure(failure)}`),
+    );
   };
 
   const button = 'rounded-md px-3 py-1.5 hover:bg-(--row-hover)';
@@ -94,35 +108,15 @@ export function BackupSection() {
         </label>
       </div>
       {pending && (
-        <div
-          role="alertdialog"
-          aria-label="Replace your data?"
-          aria-describedby="backup-confirm-text"
-          className="mt-3 rounded-xl bg-(--menu-bg) p-4"
+        <ConfirmDialog
+          label="Replace your data?"
+          confirmLabel="Replace my data"
+          onCancel={clear}
+          onConfirm={replaceData}
         >
-          <p id="backup-confirm-text" className="mb-3">
-            This file holds {describeSummary(pending.summary)}. Importing it replaces all your
-            Favorites, Pinned Tabs, Folders, settings and View Archive.
-          </p>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              // biome-ignore lint/a11y/noAutofocus: the safe answer takes the focus, so Enter never replaces the data by accident.
-              autoFocus
-              className={button}
-              onClick={clear}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className={`${button} font-semibold text-red-600`}
-              onClick={replaceData}
-            >
-              Replace my data
-            </button>
-          </div>
-        </div>
+          This file holds {describeSummary(pending.summary)}. Importing it replaces all your
+          Favorites, Pinned Tabs, Folders, settings and View Archive.
+        </ConfirmDialog>
       )}
       {error && (
         <p role="alert" className="mt-2 text-(--g-red)">

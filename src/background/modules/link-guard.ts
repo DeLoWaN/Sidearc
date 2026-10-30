@@ -2,7 +2,8 @@ import type { LinkGuardPush } from '../../shared/protocol';
 import { createQueue } from '../queue';
 import { registerRpc } from '../registry';
 import type { WorkerModule } from '../worker-module';
-import { getLiveTabs } from './live-tab-registry';
+import { ITEMS_STORAGE_KEY } from './item-store';
+import { getLiveTabs, LIVE_TABS_STORAGE_KEY } from './live-tab-registry';
 
 const WEB_TABS = ['http://*/*', 'https://*/*'];
 
@@ -55,7 +56,12 @@ const linkGuard: WorkerModule = {
 
     // The live tabs change when an item gets or loses its tab, and when an item is deleted.
     browser.storage.onChanged.addListener((changes, area) => {
-      const changed = area === 'session' ? 'liveTabs' : area === 'local' ? 'items' : undefined;
+      const changed =
+        area === 'session'
+          ? LIVE_TABS_STORAGE_KEY
+          : area === 'local'
+            ? ITEMS_STORAGE_KEY
+            : undefined;
       if (changed && changed in changes) pushLiveStatus().catch(console.error);
     });
   },

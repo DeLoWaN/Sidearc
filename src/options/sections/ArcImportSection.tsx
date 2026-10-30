@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { type ArcImportReport, type ArcSpace, listArcSpaces } from '../../shared/arc-import';
+import { MAX_FAVORITES } from '../../shared/item-tree';
+import { plural } from '../../shared/plural';
 import { useAsk } from '../options-context';
 import { Section } from '../Section';
 
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+const describeFailure = (failure: unknown) =>
+  failure instanceof Error ? failure.message : String(failure);
 
 function Report({ report }: { report: ArcImportReport }) {
   return (
@@ -14,8 +17,8 @@ function Report({ report }: { report: ArcImportReport }) {
       </p>
       {report.favoritesIgnored > 0 && (
         <p>
-          {plural(report.favoritesIgnored, 'Favorite')} left out: Sidearc keeps 12 Favorites at
-          most.
+          {plural(report.favoritesIgnored, 'Favorite')} left out: Sidearc keeps {MAX_FAVORITES}{' '}
+          Favorites at most.
         </p>
       )}
       {report.skipped > 0 && <p>{plural(report.skipped, 'Arc-only item')} skipped.</p>}
@@ -37,10 +40,14 @@ export function ArcImportSection() {
   const [report, setReport] = useState<ArcImportReport>();
 
   useEffect(() => {
-    ask('arc-import/available', null).then(setAvailable);
+    ask('arc-import/available', null)
+      .then(setAvailable)
+      .catch((failure) =>
+        setError(`Sidearc could not check the import: ${describeFailure(failure)}`),
+      );
   }, [ask]);
 
-  if (!available && !report) return null;
+  if (!available && !report && !error) return null;
 
   const chooseFile = async (file: File | undefined) => {
     setText(undefined);
@@ -48,21 +55,29 @@ export function ArcImportSection() {
     setSpaceId('');
     setError(undefined);
     if (!file) return;
-    const content = await file.text();
-    const listed = listArcSpaces(content);
-    if (!listed.ok) return setError(listed.error);
-    setText(content);
-    setSpaces(listed.spaces);
+    try {
+      const content = await file.text();
+      const listed = listArcSpaces(content);
+      if (!listed.ok) return setError(listed.error);
+      setText(content);
+      setSpaces(listed.spaces);
+    } catch (failure) {
+      setError(`Sidearc could not read the file: ${describeFailure(failure)}`);
+    }
   };
 
   const runImport = async () => {
     if (text === undefined) return;
-    const result = await ask('arc-import/run', { text, spaceId });
-    if (result.ok) {
-      setReport(result.report);
-      setError(undefined);
-    } else {
-      setError(result.error);
+    try {
+      const result = await ask('arc-import/run', { text, spaceId });
+      if (result.ok) {
+        setReport(result.report);
+        setError(undefined);
+      } else {
+        setError(result.error);
+      }
+    } catch (failure) {
+      setError(`The import failed: ${describeFailure(failure)}`);
     }
   };
 

@@ -4,6 +4,7 @@
  */
 import { MAX_FAVORITES } from './item-tree';
 import type { ItemRecord } from './types';
+import { type Fail, fail, isObject } from './validation';
 
 export interface ArcSpace {
   id: string;
@@ -23,14 +24,9 @@ export interface ArcImportReport {
 
 export type ArcImportResult = { ok: true; report: ArcImportReport } | { ok: false; error: string };
 
-type Failure = { ok: false; error: string };
 type Json = Record<string, unknown>;
 
 const NOT_ARC = 'This is not an Arc sidebar file:';
-
-const fail = (error: string): Failure => ({ ok: false, error });
-const isObject = (value: unknown): value is Json =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** Compares two JSON values, whatever the order of the keys. */
 function sameJson(a: unknown, b: unknown): boolean {
@@ -59,7 +55,7 @@ interface Sidebar {
   objects: Map<string, Json>;
 }
 
-function readSidebar(text: string): { ok: true; sidebar: Sidebar } | Failure {
+function readSidebar(text: string): { ok: true; sidebar: Sidebar } | Fail {
   let root: unknown;
   try {
     root = JSON.parse(text);
@@ -89,7 +85,7 @@ function readSidebar(text: string): { ok: true; sidebar: Sidebar } | Failure {
 }
 
 /** The spaces of the file, for the user to choose one. */
-export function listArcSpaces(text: string): { ok: true; spaces: ArcSpace[] } | Failure {
+export function listArcSpaces(text: string): { ok: true; spaces: ArcSpace[] } | Fail {
   const read = readSidebar(text);
   if (!read.ok) return read;
   const spaces = read.sidebar.spaces
@@ -151,7 +147,7 @@ export function importArcSpace(
   text: string,
   spaceId: string,
   newId: () => string = () => crypto.randomUUID(),
-): { ok: true; items: ItemRecord[]; report: ArcImportReport } | Failure {
+): { ok: true; items: ItemRecord[]; report: ArcImportReport } | Fail {
   const read = readSidebar(text);
   if (!read.ok) return read;
   const { spaces, topApps, objects } = read.sidebar;
@@ -197,7 +193,7 @@ export function importArcSpace(
     for (const childId of childrenOf(object)) countSkipped(childId);
   };
 
-  let failure: Failure | undefined;
+  let failure: Fail | undefined;
   const walk = (parentArcId: string, parentId: string | null) => {
     let position = 0;
     for (const id of childrenOf(objects.get(parentArcId) as Json)) {

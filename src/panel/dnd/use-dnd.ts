@@ -49,8 +49,8 @@ export function useDnd(ref: RefObject<HTMLElement | null>, options: DndOptions) 
   latest.current = options;
   const [placement, setPlacement] = useState<Placement | null>(null);
   const [dragging, setDragging] = useState(false);
-  const draggable_ = Boolean(options.source);
-  const droppable = Boolean(options.locate);
+  const isDraggable = Boolean(options.source);
+  const isDropTarget = Boolean(options.locate);
 
   useEffect(() => {
     const element = ref.current;
@@ -73,8 +73,8 @@ export function useDnd(ref: RefObject<HTMLElement | null>, options: DndOptions) 
     };
     const hide = () => setPlacement(null);
 
-    const cleanups = [];
-    if (draggable_) {
+    const cleanups: (() => void)[] = [];
+    if (isDraggable) {
       cleanups.push(
         draggable({
           element,
@@ -85,7 +85,7 @@ export function useDnd(ref: RefObject<HTMLElement | null>, options: DndOptions) 
         }),
       );
     }
-    if (droppable) {
+    if (isDropTarget) {
       const locate = (args: Parameters<Locate>[0]) => latest.current.locate?.(args) ?? null;
       cleanups.push(
         dropTargetForElements({
@@ -106,7 +106,7 @@ export function useDnd(ref: RefObject<HTMLElement | null>, options: DndOptions) 
       );
     }
     return combine(...cleanups);
-  }, [ref, searching, draggable_, droppable]);
+  }, [ref, searching, isDraggable, isDropTarget]);
 
   return { placement, dragging };
 }

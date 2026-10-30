@@ -51,7 +51,10 @@ export const strip = (serviceWorker: Worker, titles: string[]) =>
 
 export const hasLiveTab = (serviceWorker: Worker, itemId: string) =>
   serviceWorker.evaluate(async (id) => {
-    const links = (await chrome.storage.session.get('liveTabs')).liveTabs ?? {};
+    const links = ((await chrome.storage.session.get('liveTabs')).liveTabs ?? {}) as Record<
+      string,
+      number
+    >;
     return id in links;
   }, itemId);
 

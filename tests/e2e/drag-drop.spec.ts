@@ -88,10 +88,8 @@ test('an Unpinned Tab is reordered, joins a Tab group between two of its tabs, a
   const panel = await openPanel(context, extensionId);
   await serviceWorker.evaluate(async () => {
     const tabs = await chrome.tabs.query({});
-    const ids = ['other', 'blank'].map(
-      (title) => tabs.find((tab) => tab.title === title)?.id as number,
-    );
-    const group = await chrome.tabs.group({ tabIds: ids });
+    const idOf = (title: string) => tabs.find((tab) => tab.title === title)?.id as number;
+    const group = (await chrome.tabs.group({ tabIds: [idOf('other'), idOf('blank')] })) as number;
     await chrome.tabGroups.update(group, { title: 'G' });
   });
   const unpinned = panel.getByRole('region', { name: 'Unpinned Tabs' });

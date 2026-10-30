@@ -3,6 +3,7 @@
  * Each ticket edits only the types of its own section, so merges stay clean.
  * A section that no ticket has filled yet is `never`.
  */
+import type { ArcImportResult } from './arc-import';
 import type { Settings, SidebarState } from './types';
 
 export const PANEL_PORT = 'sidearc-panel';
@@ -155,10 +156,35 @@ export interface SettingsRpc {
 }
 
 // backup (#15)
-export type BackupRpc = unknown;
+/** The number of items of each kind in a backup, and its archived tabs. */
+export interface BackupSummary {
+  favorites: number;
+  pinnedTabs: number;
+  folders: number;
+  archivedTabs: number;
+}
+
+export type BackupCheckResult = { ok: true; summary: BackupSummary } | { ok: false; error: string };
+
+export interface BackupRpc {
+  /** Answers with the text of a backup file that holds all the data of Sidearc. */
+  'backup/export': { request: null; response: string };
+  /** Checks the text of a backup file and counts its content. Changes nothing. */
+  'backup/inspect': { request: string; response: BackupCheckResult };
+  /** Checks the text, then replaces all the data with its content. A refused text changes nothing. */
+  'backup/import': { request: string; response: BackupCheckResult };
+}
 
 // Arc import (#16)
-export type ArcImportRpc = unknown;
+export interface ArcImportRpc {
+  /** True while Sidearc has no item, the one case where the import runs. */
+  'arc-import/available': { request: null; response: boolean };
+  /**
+   * Imports one space of the Arc file, all items at once. The text is the content of `StorableSidebar.json`.
+   * Changes nothing and gives the reason when the file is refused or Sidearc has items.
+   */
+  'arc-import/run': { request: { text: string; spaceId: string }; response: ArcImportResult };
+}
 
 /** Maps the name of a request to its request type and its response type. */
 export type RpcMap = MiscRpc & LinkGuardRpc & SettingsRpc & BackupRpc & ArcImportRpc;

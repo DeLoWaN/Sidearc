@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, it } from 'vitest';
 import { renderOptions } from '../../tests/support/render-options';
@@ -77,6 +77,30 @@ it('shows the gradient colours of the settings and saves another one', async () 
   fireEvent.change(from, { target: { value: '#112233' } });
 
   expect(ask).toHaveBeenCalledWith('settings/save', { gradientFrom: '#112233' });
+});
+
+// --- backup
+
+it('shows the imported settings after a backup replaced them', async () => {
+  let stored = { ...DEFAULT_SETTINGS };
+  const summary = { favorites: 0, pinnedTabs: 1, folders: 0, archivedTabs: 0 };
+  renderOptions(<OptionsApp />, {
+    answers: {
+      'settings/get': () => stored,
+      'backup/inspect': () => ({ ok: true, summary }),
+      'backup/import': () => {
+        stored = { ...stored, density: 'compact', autoArchiveHours: 72 };
+        return { ok: true, summary };
+      },
+    },
+  });
+  const file = new File(['{}'], 'backup.json', { type: 'application/json' });
+  await userEvent.upload(await screen.findByLabelText('Backup file'), file);
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Replace my data' }));
+
+  await waitFor(() => expect(screen.getByRole('radio', { name: 'Compact' })).toBeChecked());
+  expect(screen.getByRole('spinbutton', { name: 'Auto Archive delay in hours' })).toHaveValue(72);
 });
 
 it('uses the saved gradient and density for its own look', async () => {

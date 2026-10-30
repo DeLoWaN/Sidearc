@@ -1,4 +1,120 @@
-/** The Arc import. Renders nothing until ticket #16. */
+import { useEffect, useState } from 'react';
+import { type ArcImportReport, type ArcSpace, listArcSpaces } from '../../shared/arc-import';
+import { useAsk } from '../options-context';
+import { Section } from '../Section';
+
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
+function Report({ report }: { report: ArcImportReport }) {
+  return (
+    <div role="status">
+      <p>
+        Imported {plural(report.favorites, 'Favorite')}, {plural(report.pinnedTabs, 'Pinned Tab')}{' '}
+        and {plural(report.folders, 'Folder')}.
+      </p>
+      {report.favoritesIgnored > 0 && (
+        <p>
+          {plural(report.favoritesIgnored, 'Favorite')} left out: Sidearc keeps 12 Favorites at
+          most.
+        </p>
+      )}
+      {report.skipped > 0 && <p>{plural(report.skipped, 'Arc-only item')} skipped.</p>}
+    </div>
+  );
+}
+
+/**
+ * The Arc import: pick `StorableSidebar.json`, pick one space, import.
+ * It shows nothing once Sidearc has items, except the report of the import that just ran.
+ */
 export function ArcImportSection() {
-  return null;
+  const ask = useAsk();
+  const [available, setAvailable] = useState(false);
+  const [text, setText] = useState<string>();
+  const [spaces, setSpaces] = useState<ArcSpace[]>([]);
+  const [spaceId, setSpaceId] = useState('');
+  const [error, setError] = useState<string>();
+  const [report, setReport] = useState<ArcImportReport>();
+
+  useEffect(() => {
+    ask('arc-import/available', null).then(setAvailable);
+  }, [ask]);
+
+  if (!available && !report) return null;
+
+  const chooseFile = async (file: File | undefined) => {
+    setText(undefined);
+    setSpaces([]);
+    setSpaceId('');
+    setError(undefined);
+    if (!file) return;
+    const content = await file.text();
+    const listed = listArcSpaces(content);
+    if (!listed.ok) return setError(listed.error);
+    setText(content);
+    setSpaces(listed.spaces);
+  };
+
+  const runImport = async () => {
+    if (text === undefined) return;
+    const result = await ask('arc-import/run', { text, spaceId });
+    if (result.ok) {
+      setReport(result.report);
+      setError(undefined);
+    } else {
+      setError(result.error);
+    }
+  };
+
+  return (
+    <Section title="Import from Arc">
+      {report ? (
+        <Report report={report} />
+      ) : (
+        <div className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1">
+            Arc sidebar file
+            <input
+              type="file"
+              accept=".json,application/json"
+              onChange={(event) => chooseFile(event.target.files?.[0])}
+            />
+          </label>
+          <p className="text-xs opacity-70">
+            Choose StorableSidebar.json, in the Arc folder of Application Support.
+          </p>
+          {spaces.length > 0 && (
+            <label className="flex flex-col gap-1">
+              Arc space
+              <select
+                value={spaceId}
+                onChange={(event) => setSpaceId(event.target.value)}
+                className="rounded-md bg-(--menu-bg) px-2 py-1"
+              >
+                <option value="">Choose a space</option>
+                {spaces.map((space) => (
+                  <option key={space.id} value={space.id}>
+                    {space.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <button
+            type="button"
+            disabled={!spaceId}
+            onClick={runImport}
+            className="self-start rounded-md bg-(--menu-bg) px-3 py-1 disabled:opacity-50"
+          >
+            Import
+          </button>
+          {error && (
+            <p role="alert" className="text-(--g-red)">
+              {error}
+            </p>
+          )}
+        </div>
+      )}
+    </Section>
+  );
 }

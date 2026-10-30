@@ -288,7 +288,7 @@ it('keeps the Pinned Tabs, at rest, after Chrome restarted', async () => {
   // Chrome quits: tabs and session storage are gone, local storage stays.
   fakeChrome.reset();
   await browser.storage.local.set(stored);
-  const window = await fakeChrome.openWindow(['https://a.test/', 'https://b.test/']);
+  const window = await fakeChrome.openWindow(['https://b.test/', 'https://c.test/']);
   await startWorker();
   const panel = connectPanel(window);
   await settle();
@@ -297,7 +297,7 @@ it('keeps the Pinned Tabs, at rest, after Chrome restarted', async () => {
     ['https://a.test/', undefined],
   ]);
   expect(panel.latest()?.unpinnedTabs.map((tab) => tab.url)).toEqual([
-    'https://a.test/',
     'https://b.test/',
+    'https://c.test/',
   ]);
 });

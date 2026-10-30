@@ -101,6 +101,18 @@ class FakeChrome {
 
   // ---- test helpers -------------------------------------------------------------------------
 
+  /**
+   * Simulates Chrome quitting: tabs, windows, listeners and session storage go, local storage stays.
+   * Ids keep counting up, so a restored tab never gets the id of a tab from before.
+   */
+  async restartBrowser() {
+    const local = await fakeBrowser.storage.local.get(null);
+    const counters = [this.nextTabId, this.nextWindowId, this.nextGroupId];
+    this.reset();
+    [this.nextTabId, this.nextWindowId, this.nextGroupId] = counters as [number, number, number];
+    await fakeBrowser.storage.local.set(local);
+  }
+
   /** Opens a window holding one tab per URL (the last one active). Returns the window id. */
   async openWindow(urls: string[] = ['chrome://newtab/']): Promise<number> {
     const id = this.nextWindowId++;

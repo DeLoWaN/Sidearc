@@ -13,6 +13,7 @@ Sidearc uses the vocabulary of Arc. Each term below has one meaning in this file
 - **Live tab**: the real Chrome tab that belongs to a Favorite or a Pinned Tab. Each Favorite or Pinned Tab has one live tab at most, across all windows.
 - **Unpinned Tab**: an open Chrome tab that belongs to no Favorite and no Pinned Tab. The Unpinned Tabs section is also called **Today**.
 - **Tab group**: a Chrome tab group, with a title and a colour.
+- **Site group**: Unpinned Tabs that opened from one another on the same site. Only the Sidearc panel shows it. It is not a Tab group.
 - **Reset**: the action that sends a live tab back to the saved URL of its Pinned Tab or Favorite.
 - **Auto Archive**: the automatic closing of an Unpinned Tab after a delay without a visit.
 - **View Archive**: the list of tabs that Auto Archive closed. The user can reopen a tab from this list.
@@ -40,7 +41,7 @@ The panel shows, from top to bottom:
 1. The Favorites, as a grid of large icons.
 2. The Pinned Tabs, as a tree of Folders.
 3. A divider with a "Clear" button, which closes all Unpinned Tabs.
-4. The Unpinned Tabs of all windows, in the order of the Chrome tab strip. Tab groups show as blocks that the user can collapse.
+4. The Unpinned Tabs of all windows, in the order of the Chrome tab strip. Tab groups and site groups show as blocks that the user can collapse.
 5. At the bottom: a search field and a button that opens View Archive.
 
 The search filters the Favorites, the Pinned Tabs and the Unpinned Tabs. It does not search the Chrome history.
@@ -64,6 +65,20 @@ The search filters the Favorites, the Pinned Tabs and the Unpinned Tabs. It does
 - A click on an Unpinned Tab of another window moves the tab into the current window (Tab Handoff).
 - A move in the panel also moves the tab in the Chrome tab strip.
 - Collapsing a Tab group in the panel collapses it in the Chrome tab strip, and the reverse.
+
+### Site groups
+
+A site group is not a Chrome tab group. The Chrome tab strip does not change, nothing syncs with the Google account, and closing a group gives no Chrome warning. The panel and `chrome.storage.session` hold the group, so Chrome keeps it when the service worker restarts and forgets it when Chrome quits.
+
+- A new tab joins a site group when it has an opener, its address is known, and its site equals the site of its opener. The site is the host in lower case without a leading `www.`. Another subdomain is another site.
+- Both tabs must be Unpinned Tabs, and neither is in a Tab group. A Tab group wins over a site group.
+- When the opener is already in a site group, the new tab joins that group. Otherwise the two tabs form a new group. A tab is in one site group at most.
+- A tab leaves its group when it closes, when it becomes the live tab of a Pinned Tab or a Favorite, when it joins a Tab group, and when the user chooses "Remove from group" in its right-click menu. A group with fewer than 2 tabs disappears. A member that navigates to another site stays in the group.
+- The panel shows the group as one block at the place of its first member in the tab strip. The block lists all members in tab strip order, even when another tab sits between them. The header shows the site icon, the host and the member count. A click on the header collapses or expands the block. A collapsed header shows the "not visited yet" dot when a hidden member has not been visited. The right-click menu of the header has "Ungroup".
+- A search expands the groups and lists only the matching members.
+- A drag of a member tab works as for any Unpinned Tab. It does not change the membership.
+- Tab Handoff keeps the membership when a member moves to another window.
+- The option "Group tabs opened from the same site" turns the grouping on or off. It is on by default. When it is off, no new group forms, and the groups that exist stay until a rule above dissolves them or the user removes them.
 
 ### Tab Handoff
 
@@ -112,6 +127,7 @@ Tab IDs change when Chrome restarts. When Chrome restores the tabs, Sidearc link
 The options page holds:
 
 - the Auto Archive delay,
+- the switch "Group tabs opened from the same site",
 - the background gradient,
 - the density,
 - the JSON export and import.

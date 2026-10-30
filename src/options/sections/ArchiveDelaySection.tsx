@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MAX_ARCHIVE_HOURS, MIN_ARCHIVE_HOURS } from '../../shared/settings';
 import { Section } from '../Section';
 import { useSettings } from '../settings-context';
@@ -8,6 +8,9 @@ export function ArchiveDelaySection() {
   const { settings, save } = useSettings();
   const [draft, setDraft] = useState(String(settings.autoArchiveHours));
   const [error, setError] = useState<string>();
+
+  // The settings change under the field when a backup is imported.
+  useEffect(() => setDraft(String(settings.autoArchiveHours)), [settings.autoArchiveHours]);
 
   const commit = async () => {
     if (draft === String(settings.autoArchiveHours)) return;

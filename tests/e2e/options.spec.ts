@@ -72,3 +72,69 @@ test('the Auto Archive delay stays after a reload and a refused delay shows an e
   await options.reload();
   await expect(delay).toHaveValue('72');
 });
+
+test('a backup exported from the options page restores the panel after the data is lost', async ({
+  context,
+  extensionId,
+  serviceWorker,
+  site,
+}, testInfo) => {
+  const saved = { id: 'saved', kind: 'pinned', title: 'Saved docs', url: `${site.origin}/other` };
+  await serviceWorker.evaluate(async (item) => {
+    await chrome.storage.local.set({
+      items: [{ ...item, parentId: null, position: 0, collapsed: false }],
+      settings: { density: 'compact' },
+    });
+  }, saved);
+  const panel = await context.newPage();
+  await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
+  await expect(panel.getByRole('button', { name: 'Saved docs' })).toBeVisible();
+  const options = await context.newPage();
+  await options.goto(`chrome-extension://${extensionId}/options.html`);
+
+  const downloading = options.waitForEvent('download');
+  await options.getByRole('button', { name: 'Export backup' }).click();
+  const download = await downloading;
+  expect(download.suggestedFilename()).toMatch(/^sidearc-backup-\d{4}-\d{2}-\d{2}\.json$/);
+  const file = testInfo.outputPath('backup.json');
+  await download.saveAs(file);
+
+  await serviceWorker.evaluate(() =>
+    chrome.storage.local.set({ items: [], settings: { density: 'normal' } }),
+  );
+  await expect(panel.getByRole('button', { name: 'Saved docs' })).toBeHidden();
+  await options.reload();
+
+  await options.getByLabel('Backup file').setInputFiles(file);
+  const question = options.getByRole('alertdialog');
+  await expect(question).toContainText('1 Pinned Tab');
+  await question.getByRole('button', { name: 'Replace my data' }).click();
+
+  await expect(options.getByRole('status')).toContainText('Backup imported');
+  await expect(options.getByRole('radio', { name: 'Compact' })).toBeChecked();
+  await expect(panel.getByRole('button', { name: 'Saved docs' })).toBeVisible();
+});
+
+test('a backup with an unknown version is refused with its error and changes nothing', async ({
+  context,
+  extensionId,
+  serviceWorker,
+}) => {
+  await serviceWorker.evaluate(() =>
+    chrome.storage.local.set({ settings: { density: 'compact' } }),
+  );
+  const options = await context.newPage();
+  await options.goto(`chrome-extension://${extensionId}/options.html`);
+
+  await options.getByLabel('Backup file').setInputFiles({
+    name: 'future.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({ format: 'sidearc-backup', version: 2 })),
+  });
+
+  await expect(options.getByRole('alert')).toContainText(
+    'Unknown backup version 2: this Sidearc reads version 1',
+  );
+  await expect(options.getByRole('alertdialog')).toHaveCount(0);
+  await expect(options.getByRole('radio', { name: 'Compact' })).toBeChecked();
+});

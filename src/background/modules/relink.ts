@@ -37,7 +37,7 @@ async function linkByUrl(tabs: chrome.tabs.Tab[]) {
 }
 
 /** Links every open tab that has a URL. Remembers the tabs that have none. */
-function relinkOpenTabs() {
+export function relinkOpenTabs() {
   return passes.run(async () => {
     const tabs = await browser.tabs.query({});
     await linkByUrl(tabs.filter(urlOf));

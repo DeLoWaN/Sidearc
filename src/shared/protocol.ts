@@ -132,7 +132,24 @@ export interface SettingsRpc {
 }
 
 // backup (#15)
-export type BackupRpc = unknown;
+/** The number of items of each kind in a backup, and its archived tabs. */
+export interface BackupSummary {
+  favorites: number;
+  pinnedTabs: number;
+  folders: number;
+  archivedTabs: number;
+}
+
+export type BackupCheckResult = { ok: true; summary: BackupSummary } | { ok: false; error: string };
+
+export interface BackupRpc {
+  /** Answers with the text of a backup file that holds all the data of Sidearc. */
+  'backup/export': { request: null; response: string };
+  /** Checks the text of a backup file and counts its content. Changes nothing. */
+  'backup/inspect': { request: string; response: BackupCheckResult };
+  /** Checks the text, then replaces all the data with its content. A refused text changes nothing. */
+  'backup/import': { request: string; response: BackupCheckResult };
+}
 
 // Arc import (#16)
 export interface ArcImportRpc {

@@ -11,7 +11,7 @@ export function makeTab(overrides: Partial<TabView> = {}): TabView {
     index: id - 1,
     title: `Tab ${id}`,
     url: `https://site-${id}.test/`,
-    iconUrl: '',
+    iconUrl: `https://site-${id}.test/icon.png`,
     active: false,
     ...overrides,
   };

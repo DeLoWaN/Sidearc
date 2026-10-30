@@ -84,6 +84,8 @@ class FakeChrome {
   /** Every windowId that received sidePanel.open(), in call order. */
   sidePanelOpened: number[] = [];
   panelBehavior = { openPanelOnActionClick: false };
+  /** Every message that the worker sent to a tab with tabs.sendMessage, in call order. */
+  tabMessages: { tabId: number; message: unknown; frameId?: number }[] = [];
 
   reset() {
     this.wins = [];
@@ -95,6 +97,7 @@ class FakeChrome {
     this.lastFocusedId = undefined;
     this.sidePanelOpened = [];
     this.panelBehavior = { openPanelOnActionClick: false };
+    this.tabMessages = [];
     for (const area of Object.values(this.events)) for (const ev of Object.values(area)) ev.clear();
     fakeBrowser.reset(); // storage, alarms, runtime
   }
@@ -122,6 +125,17 @@ class FakeChrome {
     const tab = this.mustTab(tabId);
     Object.assign(tab, change);
     await this.events.tabs.onUpdated.trigger(tabId, change, { ...tab });
+  }
+
+  /** Sends a runtime message like the content script of this tab does. Returns the answer of the worker. */
+  async messageFromTab(tabId: number, message: unknown): Promise<unknown> {
+    const sender = { tab: { ...this.mustTab(tabId) }, frameId: 0 };
+    let answer: (value: unknown) => void = () => {};
+    const answered = new Promise((resolve) => {
+      answer = resolve;
+    });
+    const results = await fakeBrowser.runtime.onMessage.trigger(message, sender, answer);
+    return results.some((result) => result === true) ? answered : undefined;
   }
 
   /** Sets lastAccessed without any event (Chrome sends none either). */
@@ -368,6 +382,10 @@ class FakeChrome {
         }
       },
       reload: async () => {},
+      sendMessage: async (tabId: number, message: unknown, options?: { frameId?: number }) => {
+        this.mustTab(tabId);
+        this.tabMessages.push({ tabId, message, frameId: options?.frameId });
+      },
       group: async (o: {
         tabIds: number | number[];
         groupId?: number;

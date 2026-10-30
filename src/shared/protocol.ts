@@ -3,6 +3,7 @@
  * Each ticket edits only the types of its own section, so merges stay clean.
  * A section that no ticket has filled yet is `never`.
  */
+import type { ArcImportResult } from './arc-import';
 import type { Settings, SidebarState } from './types';
 
 export const PANEL_PORT = 'sidearc-panel';
@@ -134,7 +135,15 @@ export interface SettingsRpc {
 export type BackupRpc = unknown;
 
 // Arc import (#16)
-export type ArcImportRpc = unknown;
+export interface ArcImportRpc {
+  /** True while Sidearc has no item, the one case where the import runs. */
+  'arc-import/available': { request: null; response: boolean };
+  /**
+   * Imports one space of the Arc file, all items at once. The text is the content of `StorableSidebar.json`.
+   * Changes nothing and gives the reason when the file is refused or Sidearc has items.
+   */
+  'arc-import/run': { request: { text: string; spaceId: string }; response: ArcImportResult };
+}
 
 /** Maps the name of a request to its request type and its response type. */
 export type RpcMap = MiscRpc & LinkGuardRpc & SettingsRpc & BackupRpc & ArcImportRpc;

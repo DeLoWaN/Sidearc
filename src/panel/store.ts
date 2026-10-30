@@ -12,6 +12,7 @@ const emptyState: SidebarState = {
   unpinnedTabs: [],
 
   // items (#4, #5, #6)
+  items: [],
 
   // tab groups (#9)
 

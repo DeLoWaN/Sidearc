@@ -1,15 +1,8 @@
 import type { TabView } from '../../shared/types';
+import { iconUrl } from '../icons';
 import { notifySidebarChanged, registerSidebarSection } from '../sidebar-hub';
 import type { WorkerModule } from '../worker-module';
-
-/** The page icon when Chrome knows it, else the Chrome cache of site icons (permission `favicon`). */
-function iconUrl(tab: chrome.tabs.Tab): string {
-  if (tab.favIconUrl) return tab.favIconUrl;
-  const cache = new URL(browser.runtime.getURL('/_favicon/' as never));
-  cache.searchParams.set('pageUrl', tab.url ?? '');
-  cache.searchParams.set('size', '32');
-  return cache.toString();
-}
+import { getLiveTabs } from './live-tab-registry';
 
 function toTabView(tab: chrome.tabs.Tab): TabView {
   return {
@@ -18,7 +11,7 @@ function toTabView(tab: chrome.tabs.Tab): TabView {
     index: tab.index,
     title: tab.title || tab.url || '',
     url: tab.url ?? '',
-    iconUrl: iconUrl(tab),
+    iconUrl: iconUrl(tab.url ?? '', tab.favIconUrl),
     active: tab.active,
   };
 }
@@ -28,7 +21,9 @@ const unpinnedTabs: WorkerModule = {
   order: 20,
   start() {
     registerSidebarSection('unpinned-tabs', async () => {
-      const tabs = await browser.tabs.query({});
+      const [allTabs, liveTabs] = await Promise.all([browser.tabs.query({}), getLiveTabs()]);
+      const liveTabIds = new Set(liveTabs.values());
+      const tabs = allTabs.filter((tab) => !liveTabIds.has(tab.id as number));
       tabs.sort((a, b) => a.windowId - b.windowId || a.index - b.index);
       return { unpinnedTabs: tabs.map(toTabView) };
     });

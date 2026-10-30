@@ -21,7 +21,15 @@ export type TabsCommand =
   | { type: 'tab/move'; tabId: number; index: number };
 
 // items (#4, #5, #6)
-export type ItemsCommand = never;
+export type ItemsCommand =
+  /** Opens the live tab of the item, or shows it when it is open. Never makes a second tab. */
+  | { type: 'item/open'; itemId: string }
+  /** Sends the live tab of the item back to the saved URL. Does nothing at rest. */
+  | { type: 'item/reset'; itemId: string }
+  /** Does nothing when the title is blank. */
+  | { type: 'item/rename'; itemId: string; title: string }
+  /** Deletes the item. Its live tab stays open and becomes an Unpinned Tab. */
+  | { type: 'item/delete'; itemId: string };
 
 // folders (#4, #5)
 export type FoldersCommand = never;

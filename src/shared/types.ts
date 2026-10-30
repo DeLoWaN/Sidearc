@@ -26,7 +26,49 @@ export type TabsState = {
 };
 
 // items (#4, #5, #6)
-export type ItemsState = unknown;
+
+/** What an item is. Tickets #5 and #6 add 'folder' and 'favorite'. */
+export type ItemKind = 'pinned';
+
+/** One item as the worker stores it, in `chrome.storage.local`. */
+export interface ItemRecord {
+  /** Made by Sidearc. It never is a Chrome id. */
+  id: string;
+  kind: ItemKind;
+  /** The title that the user sees at rest. The user can rename it. */
+  title: string;
+  /** The saved URL. Reset sends the live tab back to it. */
+  url: string;
+  /** The Folder that holds the item, or null at the root. */
+  parentId: string | null;
+  /** Place among the items of the same parent, from 0. */
+  position: number;
+  collapsed: boolean;
+}
+
+/** The live tab of an item, as the panel shows it. */
+export interface LiveTabView {
+  tabId: number;
+  windowId: number;
+  /** The title of the page now, not the saved title. */
+  title: string;
+  /** True when the tab is on screen in its window. */
+  active: boolean;
+  /** True when the tab is not on the saved URL any more. */
+  away: boolean;
+}
+
+/** One item, with the status of its live tab. */
+export interface ItemView extends ItemRecord {
+  iconUrl: string;
+  /** Missing when the item is at rest. */
+  live?: LiveTabView;
+}
+
+export type ItemsState = {
+  /** Every item, in the order of its parent and its position. */
+  items: ItemView[];
+};
 
 // tab groups (#9)
 export type GroupsState = unknown;

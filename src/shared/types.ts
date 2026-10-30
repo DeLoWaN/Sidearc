@@ -52,6 +52,8 @@ export interface LiveTabView {
   windowId: number;
   /** The title of the page now, not the saved title. */
   title: string;
+  /** The address of the page now, not the saved URL. Empty while the tab has not loaded. */
+  url: string;
   /** True when the tab is on screen in its window. */
   active: boolean;
   /** True when the tab is not on the saved URL any more. */

@@ -80,7 +80,7 @@ export function ItemMenu() {
           >
             Rename
           </button>
-          {item.kind === 'pinned' && (
+          {item.kind !== 'folder' && (
             <>
               <button
                 type="button"

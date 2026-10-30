@@ -27,8 +27,8 @@ export type TabsState = {
 
 // items (#4, #5, #6)
 
-/** What an item is. Ticket #6 adds 'favorite'. */
-export type ItemKind = 'pinned' | 'folder';
+/** What an item is. A Favorite is flat: it has no parent. */
+export type ItemKind = 'pinned' | 'folder' | 'favorite';
 
 /** One item as the worker stores it, in `chrome.storage.local`. */
 export interface ItemRecord {

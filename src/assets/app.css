@@ -12,6 +12,7 @@
   --menu-bg: #fff;
   --row-height: 32px;
   --favorite-size: 44px;
+  --favorite-bg: rgb(255 255 255 / 0.55);
   --g-grey: #5f6368;
   --g-blue: #1a73e8;
   --g-red: #d93025;
@@ -33,6 +34,7 @@
     --row-active: rgb(255 255 255 / 0.14);
     --icon-fallback: rgb(255 255 255 / 0.18);
     --menu-bg: #2e3340;
+    --favorite-bg: rgb(255 255 255 / 0.08);
     --g-grey: #9aa0a6;
     --g-blue: #8ab4f8;
     --g-red: #f28b82;

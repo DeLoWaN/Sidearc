@@ -8,6 +8,7 @@ import { usePanel } from '../panel-context';
 import { usePanelUi } from '../ui-store';
 import { ItemList } from './ItemTree';
 import { RenameField } from './RenameField';
+import { useItemContextMenu } from './use-item-context-menu';
 
 const folderIcon = (
   <svg
@@ -26,7 +27,8 @@ const folderIcon = (
 /** A Folder: a row that collapses or expands it, and its content. */
 export function FolderRow({ item, nodes }: { item: ItemView; nodes: TreeNode[] }) {
   const { send } = usePanel();
-  const { openMenu, renamingId } = usePanelUi();
+  const { renamingId } = usePanelUi();
+  const onContextMenu = useItemContextMenu(item.id);
   const header = useRef<HTMLDivElement>(null);
   const { placement, dragging } = useDnd(header, {
     source: { type: 'item', itemId: item.id },
@@ -39,10 +41,7 @@ export function FolderRow({ item, nodes }: { item: ItemView; nodes: TreeNode[] }
       <div
         ref={header}
         data-dragging={dragging || undefined}
-        onContextMenu={(event) => {
-          event.preventDefault();
-          openMenu(item.id, event.clientX, event.clientY);
-        }}
+        onContextMenu={onContextMenu}
         className="relative flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover) data-dragging:opacity-40"
       >
         {placement && <DropIndicator placement={placement} />}

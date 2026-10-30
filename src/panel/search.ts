@@ -16,7 +16,8 @@ export interface ItemResults {
 /** True when the query has text other than spaces. Only then does the panel show search results. */
 export const isSearching = (query: string): boolean => query.trim() !== '';
 
-const contains = (query: string, ...texts: string[]) => {
+/** True when one of the texts contains the query, in any letter case. Spaces around the query do not count. */
+export const contains = (query: string, ...texts: string[]) => {
   const needle = query.trim().toLowerCase();
   return texts.some((text) => text.toLowerCase().includes(needle));
 };

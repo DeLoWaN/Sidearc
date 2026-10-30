@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { usePanelUi } from '../ui-store';
+import { CloseIcon } from './CloseIcon';
 
 const SHOW_MS = 5000;
 
@@ -27,7 +28,7 @@ export function Notice() {
         onClick={dismissNotice}
         className="grid size-5 shrink-0 place-items-center rounded-md text-(--text-muted) hover:bg-(--row-hover)"
       >
-        ✕
+        <CloseIcon />
       </button>
     </div>
   );

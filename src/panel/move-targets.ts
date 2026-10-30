@@ -8,7 +8,7 @@ import {
   removeTabFromGroupCommand,
   unpinCommand,
 } from './commands';
-import type { MoveTarget } from './components/MoveToMenu';
+import type { MoveTarget } from './move-target';
 
 /** Every Folder of the tree in display order, with its depth (1 at the root). */
 function listFolders(nodes: TreeNode[], depth = 1): { folder: ItemView; depth: number }[] {

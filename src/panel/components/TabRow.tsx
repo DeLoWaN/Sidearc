@@ -4,6 +4,7 @@ import { DropIndicator } from '../dnd/DropIndicator';
 import { tabRowTarget } from '../dnd/locators';
 import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
+import { CloseIcon } from './CloseIcon';
 import { SiteIcon } from './SiteIcon';
 import { useTabGroupMenu } from './TabGroupMenu';
 
@@ -41,17 +42,7 @@ export function TabRow({ tab, highlighted }: { tab: TabView; highlighted: boolea
         onClick={() => send({ type: 'tab/close', tabId: tab.id })}
         className="mr-2 grid size-5 shrink-0 place-items-center rounded-md text-(--text-muted) opacity-0 hover:bg-(--row-hover) focus-visible:opacity-100 group-hover:opacity-100"
       >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 12 12"
-          className="size-3"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        >
-          <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" />
-        </svg>
+        <CloseIcon />
       </button>
       {menu}
     </li>

@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { countBelow } from '../../shared/item-tree';
+import { useDismiss } from '../../ui/use-dismiss';
 import { itemMoveTargets } from '../move-targets';
 import { usePanel } from '../panel-context';
 import { usePanelStore } from '../store';
@@ -22,19 +23,7 @@ export function ItemMenu() {
   const root = useRef<HTMLDivElement>(null);
   useFocusFirstEntry(root, menu);
 
-  useEffect(() => {
-    if (!menu) return;
-    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && closeMenu();
-    const onPointer = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) closeMenu();
-    };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', onPointer);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('pointerdown', onPointer);
-    };
-  }, [menu, closeMenu]);
+  useDismiss(root, closeMenu, Boolean(menu));
 
   if (!menu || (menu.itemId !== null && !item)) return null;
 

@@ -7,6 +7,7 @@ import { usePanel } from '../panel-context';
 import { usePanelUi } from '../ui-store';
 import { RenameField } from './RenameField';
 import { SiteIcon } from './SiteIcon';
+import { useItemContextMenu } from './use-item-context-menu';
 
 /**
  * One Favorite: a large icon. The title is the tooltip.
@@ -15,7 +16,8 @@ import { SiteIcon } from './SiteIcon';
  */
 export function FavoriteTile({ item, highlighted }: { item: ItemView; highlighted: boolean }) {
   const { send } = usePanel();
-  const { openMenu, renamingId } = usePanelUi();
+  const { renamingId } = usePanelUi();
+  const onContextMenu = useItemContextMenu(item.id);
   const { live } = item;
   const renaming = renamingId === item.id;
   const tile = useRef<HTMLLIElement>(null);
@@ -32,10 +34,7 @@ export function FavoriteTile({ item, highlighted }: { item: ItemView; highlighte
       data-dragging={dragging || undefined}
       data-live={live ? true : undefined}
       data-highlighted={highlighted || undefined}
-      onContextMenu={(event) => {
-        event.preventDefault();
-        openMenu(item.id, event.clientX, event.clientY);
-      }}
+      onContextMenu={onContextMenu}
       className={`group relative grid h-(--favorite-size) place-items-center rounded-xl bg-(--favorite-bg) hover:bg-(--row-active) data-dragging:opacity-40 data-highlighted:bg-(--row-active) data-highlighted:shadow-sm ${renaming ? 'col-span-full' : ''}`}
     >
       {placement && <DropIndicator placement={placement} />}

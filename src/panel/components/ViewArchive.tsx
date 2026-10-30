@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ArchiveEntry } from '../../shared/types';
+import { useEscape } from '../../ui/use-dismiss';
 import { useArchiveUi } from '../archive-ui-store';
 import { usePanel } from '../panel-context';
+import { contains } from '../search';
 import { usePanelStore } from '../store';
+import { CloseIcon } from './CloseIcon';
 import { SiteIcon } from './SiteIcon';
 
 const MINUTE = 60 * 1000;
@@ -20,9 +22,6 @@ function formatClosedAt(closedAt: number): string {
   return relative.format(-Math.floor(age / DAY), 'day');
 }
 
-const matches = (entry: ArchiveEntry, query: string) =>
-  entry.title.toLowerCase().includes(query) || entry.url.toLowerCase().includes(query);
-
 /** The list of closed tabs, with a search by title and URL. A click on an entry reopens the tab. */
 export function ViewArchive() {
   const { send } = usePanel();
@@ -31,12 +30,7 @@ export function ViewArchive() {
   const [query, setQuery] = useState('');
   const search = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const closeOnEscape = (event: KeyboardEvent) => event.key === 'Escape' && closeArchive();
-    document.addEventListener('keydown', closeOnEscape);
-    return () => document.removeEventListener('keydown', closeOnEscape);
-  }, [open, closeArchive]);
+  useEscape(closeArchive, open);
 
   useEffect(() => {
     if (open) search.current?.focus();
@@ -45,8 +39,7 @@ export function ViewArchive() {
 
   if (!open) return null;
 
-  const needle = query.trim().toLowerCase();
-  const shown = archive.filter((entry) => matches(entry, needle));
+  const shown = archive.filter((entry) => contains(query, entry.title, entry.url));
 
   return (
     <div
@@ -62,17 +55,7 @@ export function ViewArchive() {
           onClick={closeArchive}
           className="grid size-6 place-items-center rounded-md text-(--text-muted) hover:bg-(--row-hover)"
         >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 12 12"
-            className="size-3"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          >
-            <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" />
-          </svg>
+          <CloseIcon />
         </button>
       </div>
       <input

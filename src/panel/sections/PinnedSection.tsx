@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { buildTree } from '../build-tree';
 import { ItemList } from '../components/ItemTree';
 import { PinnedRow } from '../components/PinnedRow';
+import { useItemContextMenu } from '../components/use-item-context-menu';
 import { DropIndicator } from '../dnd/DropIndicator';
 import { pinnedSectionTarget } from '../dnd/locators';
 import { useDnd } from '../dnd/use-dnd';
@@ -20,7 +21,8 @@ const heading = (
 export function PinnedSection() {
   const { windowId } = usePanel();
   const items = usePanelStore((store) => store.state.items);
-  const { openMenu, startCreateFolder } = usePanelUi();
+  const { startCreateFolder } = usePanelUi();
+  const onRootContextMenu = useItemContextMenu(null);
   const results = useSearchResults();
   const section = useRef<HTMLElement>(null);
   const { placement } = useDnd(section, { locate: pinnedSectionTarget });
@@ -50,12 +52,7 @@ export function PinnedSection() {
       aria-label="Pinned Tabs"
       data-drop={placement ?? undefined}
       className="relative"
-      onContextMenu={(event) => {
-        // A row has its own menu and has already handled the click.
-        if (event.defaultPrevented) return;
-        event.preventDefault();
-        openMenu(null, event.clientX, event.clientY);
-      }}
+      onContextMenu={onRootContextMenu}
     >
       <div className="flex h-7 items-center justify-between px-2.5">
         {heading}

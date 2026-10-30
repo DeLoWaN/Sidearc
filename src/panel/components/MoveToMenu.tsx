@@ -1,16 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import { useDismiss } from '../../ui/use-dismiss';
 import type { CommandBody } from '../connection';
+import type { MoveTarget } from '../move-target';
 import { moveFocusWithKeys, useFocusFirstEntry } from './menu-keys';
-
-/** One place that "Move to…" can send an item or a tab to. */
-export interface MoveTarget {
-  key: string;
-  label: string;
-  /** How deep the target sits in the tree. It indents the label. */
-  depth?: number;
-  /** The command that does the move. */
-  command: CommandBody;
-}
 
 /**
  * The "Move to…" menu: a list of targets at a place on screen.
@@ -33,18 +25,7 @@ export function MoveToMenu({
   const root = useRef<HTMLDivElement>(null);
   useFocusFirstEntry(root, true);
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
-    const onPointer = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', onPointer);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('pointerdown', onPointer);
-    };
-  }, [onClose]);
+  useDismiss(root, onClose);
 
   return (
     <div

@@ -7,6 +7,7 @@ import { usePanel } from '../panel-context';
 import { usePanelUi } from '../ui-store';
 import { RenameField } from './RenameField';
 import { SiteIcon } from './SiteIcon';
+import { useItemContextMenu } from './use-item-context-menu';
 
 const iconButton =
   'mr-1 grid size-5 shrink-0 place-items-center rounded-md text-(--text-muted) hover:bg-(--row-hover) focus-visible:opacity-100';
@@ -26,7 +27,8 @@ export function PinnedRow({
   path?: string[];
 }) {
   const { send } = usePanel();
-  const { openMenu, renamingId } = usePanelUi();
+  const { renamingId } = usePanelUi();
+  const onContextMenu = useItemContextMenu(item.id);
   const { live } = item;
   const row = useRef<HTMLLIElement>(null);
   const { placement, dragging } = useDnd(row, {
@@ -42,10 +44,7 @@ export function PinnedRow({
       data-dragging={dragging || undefined}
       data-live={live ? true : undefined}
       data-highlighted={highlighted || undefined}
-      onContextMenu={(event) => {
-        event.preventDefault();
-        openMenu(item.id, event.clientX, event.clientY);
-      }}
+      onContextMenu={onContextMenu}
       className="group relative flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover) data-dragging:opacity-40 data-highlighted:bg-(--row-active) data-highlighted:shadow-sm"
     >
       {placement && <DropIndicator placement={placement} />}

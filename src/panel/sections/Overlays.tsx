@@ -1,6 +1,12 @@
 import { ItemMenu } from '../components/ItemMenu';
+import { ViewArchive } from '../components/ViewArchive';
 
-/** The right-click menu of items. Tickets #5 and #10 add the confirm dialog and View Archive. */
+/** The right-click menu of items and View Archive. Ticket #5 adds the confirm dialog. */
 export function Overlays() {
-  return <ItemMenu />;
+  return (
+    <>
+      <ItemMenu />
+      <ViewArchive />
+    </>
+  );
 }

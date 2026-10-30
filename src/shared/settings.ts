@@ -68,6 +68,11 @@ export function readSettings(stored: unknown): Settings {
   if (stored === null || typeof stored !== 'object') return settings as unknown as Settings;
   for (const [name, value] of Object.entries(stored)) {
     if (!(name in DEFAULT_SETTINGS)) continue;
+    // Any positive stored delay stands, so a test can store a few seconds.
+    if (name === 'autoArchiveHours' && typeof value === 'number' && value > 0) {
+      settings[name] = value;
+      continue;
+    }
     const checked = checkSetting(name as keyof Settings, value);
     if ('value' in checked) settings[name] = checked.value;
   }

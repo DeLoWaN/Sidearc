@@ -100,9 +100,17 @@ it('ignores a stored setting that is not valid any more', async () => {
   expect(await getSettings()).toMatchObject({ density: 'normal', autoArchiveHours: 6 });
 });
 
+it('keeps a stored delay of a fraction of an hour, which the options page cannot save', async () => {
+  await browser.storage.local.set({ settings: { autoArchiveHours: 0.5 } });
+  expect(await getSettings()).toMatchObject({ autoArchiveHours: 0.5 });
+
+  await browser.storage.local.set({ settings: { autoArchiveHours: 0 } });
+  expect(await getSettings()).toMatchObject({ autoArchiveHours: 12 });
+});
+
 it('sends the settings to a panel that connects', async () => {
   const window = await fakeChrome.openWindow(['https://a.test/']);
-  const panel = connectPanel(window.id as number);
+  const panel = connectPanel(window);
   await settle();
 
   expect(panel.latest()?.settings).toEqual(await getSettings());
@@ -111,7 +119,7 @@ it('sends the settings to a panel that connects', async () => {
 it('sends the new settings to every open panel at once', async () => {
   const first = await fakeChrome.openWindow(['https://a.test/']);
   const second = await fakeChrome.openWindow(['https://b.test/']);
-  const panels = [connectPanel(first.id as number), connectPanel(second.id as number)];
+  const panels = [connectPanel(first), connectPanel(second)];
   await settle();
 
   await saveSettings({ density: 'spacious', gradientTo: '#102030' });
@@ -123,7 +131,7 @@ it('sends the new settings to every open panel at once', async () => {
 
 it('sends nothing new to the panels when the settings are refused', async () => {
   const window = await fakeChrome.openWindow(['https://a.test/']);
-  const panel = connectPanel(window.id as number);
+  const panel = connectPanel(window);
   await settle();
   const before = panel.states.length;
 
@@ -136,7 +144,7 @@ it('sends nothing new to the panels when the settings are refused', async () => 
 it('opens the options page when the panel asks for it', async () => {
   const open = vi.spyOn(browser.runtime, 'openOptionsPage').mockResolvedValue();
   const window = await fakeChrome.openWindow(['https://a.test/']);
-  const panel = connectPanel(window.id as number);
+  const panel = connectPanel(window);
 
   panel.send({ type: 'options/open' });
   await settle();

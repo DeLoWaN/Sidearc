@@ -17,10 +17,12 @@ it.each([
 it('puts the normal density between variants A and C of the prototype', () => {
   // Variant A: rows of 36px, Favorite tiles of 52px. Variant C: rows of 26px, tiles of 30px.
   const normal = look('normal');
-  expect(Number.parseInt(normal['--row-height'] as string)).toBeGreaterThan(26);
-  expect(Number.parseInt(normal['--row-height'] as string)).toBeLessThan(36);
-  expect(Number.parseInt(normal['--favorite-size'] as string)).toBeGreaterThan(30);
-  expect(Number.parseInt(normal['--favorite-size'] as string)).toBeLessThan(52);
+  const row = Number.parseInt(normal['--row-height'] as string, 10);
+  const tile = Number.parseInt(normal['--favorite-size'] as string, 10);
+  expect(row).toBeGreaterThan(26);
+  expect(row).toBeLessThan(36);
+  expect(tile).toBeGreaterThan(30);
+  expect(tile).toBeLessThan(52);
 });
 
 it('mixes each colour with white in light mode and with black in dark mode', () => {

@@ -8,11 +8,13 @@ import { PinnedSection } from './sections/PinnedSection';
 import { SearchStatus } from './sections/SearchStatus';
 import { UnpinnedSection } from './sections/UnpinnedSection';
 import { usePanelStore } from './store';
+import { useUndoShortcut } from './use-undo-shortcut';
 
 export function App() {
   useAppearance(usePanelStore((store) => store.state.settings));
   const scroller = useRef<HTMLElement>(null);
   usePanelDnd(scroller);
+  useUndoShortcut();
   return (
     <div className="panel-background flex h-screen flex-col">
       <main ref={scroller} aria-label="Sidearc" className="min-h-0 flex-1 overflow-y-auto p-2.5">

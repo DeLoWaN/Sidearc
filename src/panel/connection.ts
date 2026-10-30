@@ -15,6 +15,20 @@ export interface Connection {
   send(command: CommandBody): void;
 }
 
+/** The text of the Undo toast for a command that the worker can undo, or undefined for any other command. */
+function undoToastFor(command: CommandBody): string | undefined {
+  const { items, unpinnedTabs } = usePanelStore.getState().state;
+  if (command.type === 'item/delete') {
+    const item = items.find((candidate) => candidate.id === command.itemId);
+    return item && `Deleted "${item.title}"`;
+  }
+  // The close of a live tab is not undoable: only an Unpinned Tab is in this list.
+  if (command.type === 'tab/close') {
+    const tab = unpinnedTabs.find((candidate) => candidate.id === command.tabId);
+    return tab && `Closed "${tab.title}"`;
+  }
+}
+
 /**
  * Opens the port to the worker and feeds the store with every state it sends.
  * Opens a new port when the worker stops, which also wakes the worker.
@@ -28,11 +42,24 @@ export async function connectToWorker(): Promise<Connection> {
     port = browser.runtime.connect({ name: PANEL_PORT });
     port.onMessage.addListener((message: PortMessage) => {
       if (message.type === 'state') usePanelStore.getState().receive(message.state);
-      if (message.type === 'notice') usePanelUi.getState().showNotice(message.message);
+      if (message.type === 'notice') {
+        usePanelUi.getState().dismissUndoToast();
+        usePanelUi.getState().showNotice(message.message);
+      }
     });
     port.onDisconnect.addListener(open);
   };
   open();
 
-  return { windowId, send: (command) => port.postMessage({ ...command, windowId }) };
+  return {
+    windowId,
+    send(command) {
+      port.postMessage({ ...command, windowId });
+      // Any command ends the toast of the one before it.
+      const ui = usePanelUi.getState();
+      const toast = undoToastFor(command);
+      if (toast) ui.showUndoToast(toast);
+      else ui.dismissUndoToast();
+    },
+  };
 }

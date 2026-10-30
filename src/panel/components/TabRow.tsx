@@ -13,7 +13,7 @@ import { useMiddleClickClose } from './use-middle-click-close';
 export function TabRow({ tab, highlighted }: { tab: TabView; highlighted: boolean }) {
   const { send } = usePanel();
   const { onContextMenu, menu } = useTabGroupMenu(tab);
-  const middleClick = useMiddleClickClose(tab.id);
+  const middleClick = useMiddleClickClose({ type: 'tab/close', tabId: tab.id });
   const row = useRef<HTMLLIElement>(null);
   const { placement, dragging } = useDnd(row, {
     source: { type: 'tab', tabId: tab.id },

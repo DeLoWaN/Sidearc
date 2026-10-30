@@ -5,6 +5,7 @@ import { pinnedRowTarget } from '../dnd/locators';
 import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
 import { usePanelUi } from '../ui-store';
+import { CloseIcon } from './CloseIcon';
 import { RenameField } from './RenameField';
 import { SiteIcon } from './SiteIcon';
 import { useItemContextMenu } from './use-item-context-menu';
@@ -15,6 +16,7 @@ const iconButton =
 
 /**
  * One Pinned Tab. At rest the row is faded. With an open live tab it shows a close button.
+ * A delete cross shows on hover, and a middle click deletes the item too.
  * When the live tab left the saved URL, the row adds "/", the current title and Reset.
  */
 export function PinnedRow({
@@ -31,7 +33,7 @@ export function PinnedRow({
   const { renamingId } = usePanelUi();
   const onContextMenu = useItemContextMenu(item.id);
   const { live } = item;
-  const middleClick = useMiddleClickClose(live?.tabId);
+  const middleClick = useMiddleClickClose({ type: 'item/delete', itemId: item.id });
   const row = useRef<HTMLLIElement>(null);
   const { placement, dragging } = useDnd(row, {
     source: { type: 'item', itemId: item.id },
@@ -104,7 +106,7 @@ export function PinnedRow({
           type="button"
           aria-label={`Close ${item.title}`}
           onClick={() => send({ type: 'tab/close', tabId: live.tabId })}
-          className={`${iconButton} mr-2 opacity-0 group-hover:opacity-100`}
+          className={`${iconButton} opacity-0 group-hover:opacity-100`}
         >
           <svg
             aria-hidden="true"
@@ -119,6 +121,14 @@ export function PinnedRow({
           </svg>
         </button>
       )}
+      <button
+        type="button"
+        aria-label={`Delete ${item.title}`}
+        onClick={() => send({ type: 'item/delete', itemId: item.id })}
+        className={`${iconButton} mr-2 opacity-0 group-hover:opacity-100`}
+      >
+        <CloseIcon />
+      </button>
     </li>
   );
 }

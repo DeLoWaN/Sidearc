@@ -19,7 +19,11 @@ type PanelUi = {
   searching: boolean;
   /** A short text from the worker, for example that it refused a command. */
   notice?: string;
+  /** The toast that offers to undo what the user just did, for example `Deleted "Mail"`. */
+  undoToast?: string;
   setSearchQuery: (query: string) => void;
+  showUndoToast: (message: string) => void;
+  dismissUndoToast: () => void;
   showNotice: (message: string) => void;
   dismissNotice: () => void;
   openMenu: (itemId: string | null, x: number, y: number) => void;
@@ -38,6 +42,8 @@ export const usePanelUi = create<PanelUi>()((set) => ({
   searchQuery: '',
   searching: false,
   setSearchQuery: (query) => set({ searchQuery: query, searching: isSearching(query) }),
+  showUndoToast: (message) => set({ undoToast: message }),
+  dismissUndoToast: () => set({ undoToast: undefined }),
   showNotice: (message) => set({ notice: message }),
   dismissNotice: () => set({ notice: undefined }),
   openMenu: (itemId, x, y) => set({ menu: { itemId, x, y } }),
@@ -61,6 +67,7 @@ export const resetPanelUi = () =>
     creatingIn: undefined,
     confirmingDeleteId: undefined,
     notice: undefined,
+    undoToast: undefined,
     searchQuery: '',
     searching: false,
   });

@@ -20,7 +20,7 @@ export function FavoriteTile({ item, highlighted }: { item: ItemView; highlighte
   const { renamingId } = usePanelUi();
   const onContextMenu = useItemContextMenu(item.id);
   const { live } = item;
-  const middleClick = useMiddleClickClose(live?.tabId);
+  const middleClick = useMiddleClickClose(live && { type: 'tab/close', tabId: live.tabId });
   const renaming = renamingId === item.id;
   const tile = useRef<HTMLLIElement>(null);
   const { placement, dragging } = useDnd(tile, {

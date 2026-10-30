@@ -1,16 +1,17 @@
 @import "tailwindcss";
 
-/* Colours of variant A of the panel prototype. The settings can override the variables. */
+/* Colours of variant A of the panel prototype. The settings override the sizes and the gradient. */
 :root {
   --panel-from: #e9e3f7;
   --panel-to: #dfe9f6;
   --text: #1f1f1f;
-  --text-muted: #5f6368;
+  --text-muted: #4a4e53;
   --row-hover: rgb(255 255 255 / 0.35);
   --row-active: rgb(255 255 255 / 0.9);
   --icon-fallback: rgb(0 0 0 / 0.12);
   --menu-bg: #fff;
-  --row-height: 36px;
+  --row-height: 32px;
+  --favorite-size: 44px;
   --g-grey: #5f6368;
   --g-blue: #1a73e8;
   --g-red: #d93025;
@@ -27,7 +28,7 @@
     --panel-from: #2b2640;
     --panel-to: #1f2a38;
     --text: #e8eaed;
-    --text-muted: #9aa0a6;
+    --text-muted: #b4b9bf;
     --row-hover: rgb(255 255 255 / 0.06);
     --row-active: rgb(255 255 255 / 0.14);
     --icon-fallback: rgb(255 255 255 / 0.18);
@@ -87,6 +88,21 @@ body {
     sans-serif;
 }
 
+/* The settings set the -light and -dark variables on the root element: see src/shared/appearance.ts. */
 .panel-background {
-  background: linear-gradient(170deg, var(--panel-from) 0%, var(--panel-to) 100%);
+  background: linear-gradient(
+    170deg,
+    var(--panel-from-light, var(--panel-from)) 0%,
+    var(--panel-to-light, var(--panel-to)) 100%
+  );
+}
+
+@media (prefers-color-scheme: dark) {
+  .panel-background {
+    background: linear-gradient(
+      170deg,
+      var(--panel-from-dark, var(--panel-from)) 0%,
+      var(--panel-to-dark, var(--panel-to)) 100%
+    );
+  }
 }

@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it } from 'vitest';
 import { makeState, makeTab } from '../../../tests/support/builders';
@@ -106,4 +106,16 @@ it('shows a Clear button above the tabs that closes all Unpinned Tabs', async ()
 it('disables Clear when there is no Unpinned Tab', () => {
   renderPanel(<UnpinnedSection />);
   expect(screen.getByRole('button', { name: 'Clear' })).toBeDisabled();
+});
+
+it('marks a tab that the user has not visited yet, for sight and for screen readers', () => {
+  const state = makeState({
+    unpinnedTabs: [makeTab({ title: 'Mail', unvisited: true }), makeTab({ title: 'Wiki' })],
+  });
+  renderPanel(<UnpinnedSection />, { state });
+
+  const [mail, wiki] = screen.getAllByRole('listitem');
+  const marker = within(mail as HTMLElement).getByRole('img', { name: 'Not visited yet' });
+  expect(marker).toHaveAttribute('title', 'Not visited yet');
+  expect(within(wiki as HTMLElement).queryByRole('img', { name: 'Not visited yet' })).toBeNull();
 });

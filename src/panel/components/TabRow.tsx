@@ -36,8 +36,18 @@ export function TabRow({ tab, highlighted }: { tab: TabView; highlighted: boolea
         onClick={() => send({ type: 'tab/activate', tabId: tab.id })}
         className="flex h-full min-w-0 flex-1 items-center gap-2.5 rounded-[10px] px-2.5 text-left"
       >
-        <SiteIcon iconUrl={tab.iconUrl} title={tab.title} />
-        <span className="truncate">{tab.title}</span>
+        <span className="relative shrink-0">
+          <SiteIcon iconUrl={tab.iconUrl} title={tab.title} />
+          {tab.unvisited && (
+            <span
+              role="img"
+              aria-label="Not visited yet"
+              title="Not visited yet"
+              className="absolute -top-1 -left-1 size-2 rounded-full bg-(--unvisited)"
+            />
+          )}
+        </span>
+        <span className={tab.unvisited ? 'truncate font-semibold' : 'truncate'}>{tab.title}</span>
       </button>
       <button
         type="button"

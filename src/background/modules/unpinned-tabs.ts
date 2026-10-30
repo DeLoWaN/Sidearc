@@ -3,8 +3,9 @@ import { iconUrl } from '../icons';
 import { notifySidebarChanged, registerSidebarSection } from '../sidebar-hub';
 import type { WorkerModule } from '../worker-module';
 import { getLiveTabs } from './live-tab-registry';
+import { getUnvisitedTabIds } from './unvisited-tabs';
 
-function toTabView(tab: chrome.tabs.Tab): TabView {
+function toTabView(tab: chrome.tabs.Tab, unvisited: Set<number>): TabView {
   return {
     id: tab.id as number,
     windowId: tab.windowId,
@@ -13,6 +14,7 @@ function toTabView(tab: chrome.tabs.Tab): TabView {
     url: tab.url ?? '',
     iconUrl: iconUrl(tab.url ?? '', tab.favIconUrl),
     active: tab.active,
+    unvisited: unvisited.has(tab.id as number),
   };
 }
 
@@ -21,11 +23,15 @@ const unpinnedTabs: WorkerModule = {
   order: 20,
   start() {
     registerSidebarSection('unpinned-tabs', async () => {
-      const [allTabs, liveTabs] = await Promise.all([browser.tabs.query({}), getLiveTabs()]);
+      const [allTabs, liveTabs, unvisited] = await Promise.all([
+        browser.tabs.query({}),
+        getLiveTabs(),
+        getUnvisitedTabIds(),
+      ]);
       const liveTabIds = new Set(liveTabs.values());
       const tabs = allTabs.filter((tab) => !liveTabIds.has(tab.id as number));
       tabs.sort((a, b) => a.windowId - b.windowId || a.index - b.index);
-      return { unpinnedTabs: tabs.map(toTabView) };
+      return { unpinnedTabs: tabs.map((tab) => toTabView(tab, unvisited)) };
     });
 
     const { tabs, windows } = browser;

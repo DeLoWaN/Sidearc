@@ -20,6 +20,7 @@ export function makeTab(overrides: Partial<TabView> = {}): TabView {
     url: `https://site-${id}.test/`,
     iconUrl: `https://site-${id}.test/icon.png`,
     active: false,
+    unvisited: false,
     ...overrides,
   };
 }

@@ -16,6 +16,8 @@ export interface TabView {
   iconUrl: string;
   /** True for the tab on screen in its window. */
   active: boolean;
+  /** True when the tab opened in the background from another tab and the user has not shown it yet. */
+  unvisited: boolean;
 }
 
 export type TabsState = {

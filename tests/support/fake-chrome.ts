@@ -342,6 +342,7 @@ class FakeChrome {
           audible: false,
           status: 'complete',
           lastAccessed: Date.now(),
+          ...(props.openerTabId === undefined ? {} : { openerTabId: props.openerTabId }),
         } as Tab;
         for (const t of siblings) if (t.index >= index) t.index += 1;
         this.tabList.push(tab);

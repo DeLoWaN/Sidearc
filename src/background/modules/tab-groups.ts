@@ -18,6 +18,12 @@ async function composeTabGroups(): Promise<TabGroupView[]> {
   return views.sort((a, b) => firstTab(a) - firstTab(b));
 }
 
+/** Puts the tab at the end of the Tab group. The tab changes window when the group is in another one. */
+export const addTabToGroup = (tabId: number, groupId: number) =>
+  browser.tabs.group({ tabIds: [tabId], groupId });
+
+export const removeTabFromGroup = (tabId: number) => browser.tabs.ungroup(tabId);
+
 const tabGroups: WorkerModule = {
   name: 'tab-groups',
   order: 21,
@@ -29,11 +35,9 @@ const tabGroups: WorkerModule = {
       await browser.tabGroups.update(groupId, { collapsed: !group.collapsed });
     });
 
-    registerCommand('group/add-tab', ({ tabId, groupId }) =>
-      browser.tabs.group({ tabIds: [tabId], groupId }),
-    );
+    registerCommand('group/add-tab', ({ tabId, groupId }) => addTabToGroup(tabId, groupId));
 
-    registerCommand('group/remove-tab', ({ tabId }) => browser.tabs.ungroup(tabId));
+    registerCommand('group/remove-tab', ({ tabId }) => removeTabFromGroup(tabId));
 
     // A tab joins or leaves a group through tabs.onUpdated, so the tab events matter too.
     const { tabs, tabGroups } = browser;

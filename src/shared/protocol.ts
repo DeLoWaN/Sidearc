@@ -17,8 +17,11 @@ export type TabsCommand =
   /** Shows the tab. The worker focuses its window when it is not the window of the panel. */
   | { type: 'tab/activate'; tabId: number }
   | { type: 'tab/close'; tabId: number }
-  /** Puts the tab at this position of the tab strip of its own window. */
-  | { type: 'tab/move'; tabId: number; index: number }
+  /**
+   * Puts the tab at this position of the tab strip of its own window.
+   * `groupId` puts the tab in that Tab group first, and `null` takes it out of its group first. Without it the group stays.
+   */
+  | { type: 'tab/move'; tabId: number; index: number; groupId?: number | null }
   /** Closes every Unpinned Tab and puts it in View Archive. A window left empty gets a blank tab. */
   | { type: 'tab/clear' };
 

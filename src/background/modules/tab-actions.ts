@@ -3,6 +3,7 @@ import { registerCommand } from '../registry';
 import type { WorkerModule } from '../worker-module';
 import { addItem, getItems } from './item-store';
 import { getLiveTabs, linkLiveTab } from './live-tab-registry';
+import { addTabToGroup, removeTabFromGroup } from './tab-groups';
 
 // "Is there a live tab?" and "make one" must not overlap, or two clicks would open two tabs.
 export const itemActions = createQueue();
@@ -48,8 +49,13 @@ const tabActions: WorkerModule = {
 
     registerCommand('tab/close', ({ tabId }) => browser.tabs.remove(tabId));
 
-    // Without a window id, Chrome keeps the tab in its own window.
-    registerCommand('tab/move', ({ tabId, index }) => browser.tabs.move(tabId, { index }));
+    registerCommand('tab/move', async ({ tabId, index, groupId }) => {
+      // The group change comes first: joining a group puts the tab at its end, and the move then sets the place.
+      if (groupId === null) await removeTabFromGroup(tabId);
+      else if (groupId !== undefined) await addTabToGroup(tabId, groupId);
+      // Without a window id, Chrome keeps the tab in its own window.
+      await browser.tabs.move(tabId, { index });
+    });
 
     registerCommand('item/open', ({ itemId, windowId }) =>
       itemActions.run(async () => {

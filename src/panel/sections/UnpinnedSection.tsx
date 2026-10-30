@@ -4,15 +4,20 @@ import { TabRow } from '../components/TabRow';
 import { usePanel } from '../panel-context';
 import { usePanelStore } from '../store';
 import { arrangeUnpinned } from '../tab-groups';
+import { useSearchResults } from '../use-search-results';
 
 /** The Unpinned Tabs of all windows, in tab strip order. The active tab of this window is highlighted. */
 export function UnpinnedSection() {
   const { windowId } = usePanel();
-  const tabs = usePanelStore((store) => store.state.unpinnedTabs);
+  const allTabs = usePanelStore((store) => store.state.unpinnedTabs);
+  const results = useSearchResults();
+  const tabs = results?.tabs ?? allTabs;
   const groups = usePanelStore((store) => store.state.tabGroups);
+  // Clear closes every Unpinned Tab, also the ones that a search hides.
+  if (results && tabs.length === 0) return null;
   return (
     <section aria-label="Unpinned Tabs">
-      <ClearDivider disabled={tabs.length === 0} />
+      {!results && <ClearDivider disabled={tabs.length === 0} />}
       <ul>
         {arrangeUnpinned(tabs, groups).map((entry) =>
           entry.kind === 'group' ? (

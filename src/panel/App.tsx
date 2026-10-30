@@ -3,6 +3,7 @@ import { FavoritesSection } from './sections/FavoritesSection';
 import { FooterBar } from './sections/FooterBar';
 import { Overlays } from './sections/Overlays';
 import { PinnedSection } from './sections/PinnedSection';
+import { SearchStatus } from './sections/SearchStatus';
 import { UnpinnedSection } from './sections/UnpinnedSection';
 import { usePanelStore } from './store';
 
@@ -14,6 +15,7 @@ export function App() {
         <FavoritesSection />
         <PinnedSection />
         <UnpinnedSection />
+        <SearchStatus />
       </main>
       <FooterBar />
       <Overlays />

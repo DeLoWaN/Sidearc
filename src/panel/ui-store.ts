@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { isSearching } from './search';
 
 /** What the panel itself remembers: no part of it goes to the worker. */
 type PanelUi = {
@@ -12,8 +13,13 @@ type PanelUi = {
   creatingIn?: { parentId: string | null };
   /** The Folder that waits for the user to confirm its deletion. */
   confirmingDeleteId?: string;
+  /** The text in the search field, as typed. */
+  searchQuery: string;
+  /** True while the search field has text other than spaces: the panel shows results, and drags are off. */
+  searching: boolean;
   /** A short text from the worker, for example that it refused a command. */
   notice?: string;
+  setSearchQuery: (query: string) => void;
   showNotice: (message: string) => void;
   dismissNotice: () => void;
   openMenu: (itemId: string | null, x: number, y: number) => void;
@@ -29,6 +35,9 @@ type PanelUi = {
 };
 
 export const usePanelUi = create<PanelUi>()((set) => ({
+  searchQuery: '',
+  searching: false,
+  setSearchQuery: (query) => set({ searchQuery: query, searching: isSearching(query) }),
   showNotice: (message) => set({ notice: message }),
   dismissNotice: () => set({ notice: undefined }),
   openMenu: (itemId, x, y) => set({ menu: { itemId, x, y } }),
@@ -52,4 +61,6 @@ export const resetPanelUi = () =>
     creatingIn: undefined,
     confirmingDeleteId: undefined,
     notice: undefined,
+    searchQuery: '',
+    searching: false,
   });

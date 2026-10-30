@@ -14,9 +14,9 @@ beforeEach(async () => {
 });
 
 /** Asks the worker like the options page does. */
-const available = () =>
-  browser.runtime.sendMessage({ rpc: 'arc-import/available', request: null }) as Promise<
-    ArcImportRpc['arc-import/available']['response']
+const status = () =>
+  browser.runtime.sendMessage({ rpc: 'arc-import/status', request: null }) as Promise<
+    ArcImportRpc['arc-import/status']['response']
   >;
 const importSpace = (text: string, spaceId: string) =>
   browser.runtime.sendMessage({
@@ -34,14 +34,18 @@ const savedItem = {
   collapsed: false,
 };
 
-it('offers the import while Sidearc has no items', async () => {
-  expect(await available()).toBe(true);
-});
+/** What the user sees of the items: no ids, because each import makes new ones. */
+const shape = (items: { kind: string; title: string; url: string; position: number }[]) =>
+  items
+    .map(({ kind, title, url, position }) => ({ kind, title, url, position }))
+    .sort((a, b) => `${a.kind}${a.title}`.localeCompare(`${b.kind}${b.title}`));
 
-it('stops offering the import once Sidearc has items', async () => {
+it('counts the items of Sidearc', async () => {
+  expect(await status()).toEqual({ itemCount: 0 });
+
   await browser.storage.local.set({ items: [savedItem] });
 
-  expect(await available()).toBe(false);
+  expect(await status()).toEqual({ itemCount: 1 });
 });
 
 it('stores every item of the space at once and answers with the report', async () => {
@@ -58,7 +62,7 @@ it('stores every item of the space at once and answers with the report', async (
     'Chat',
     'Calendar',
   ]);
-  expect(await available()).toBe(false);
+  expect(await status()).toEqual({ itemCount: 17 });
 });
 
 it('shows the imported items in the panels', async () => {
@@ -72,42 +76,104 @@ it('shows the imported items in the panels', async () => {
   expect(panel.latest()?.items.filter((item) => item.kind === 'favorite')).toHaveLength(3);
 });
 
-it('refuses to import when Sidearc has items, and changes nothing', async () => {
+it('replaces the items of Sidearc with the space, as an import into an empty Sidearc gives them', async () => {
+  await importSpace(fixture, ALPHA);
+  const expected = shape(await getItems());
   await browser.storage.local.set({ items: [savedItem] });
 
   const result = await importSpace(fixture, ALPHA);
 
-  expect(result).toEqual({
-    ok: false,
-    error: 'Sidearc already has items. The Arc import runs only on an empty Sidearc.',
-  });
-  expect(await getItems()).toEqual([savedItem]);
+  expect(result).toMatchObject({ ok: true });
+  const items = await getItems();
+  expect(items.map((item) => item.id)).not.toContain('saved-1');
+  expect(shape(items)).toEqual(expected);
 });
 
-it('refuses a file that is not an Arc sidebar, and stores nothing', async () => {
+it('keeps the settings and View Archive when it replaces the items', async () => {
+  const archive = [
+    { id: 'a1', url: 'https://old.test/', title: 'Old', iconUrl: '', closedAt: 1 },
+  ];
+  await browser.storage.local.set({
+    items: [savedItem],
+    archive,
+    settings: { autoArchiveHours: 72 },
+  });
+
+  await importSpace(fixture, ALPHA);
+
+  const stored = await browser.storage.local.get(['archive', 'settings']);
+  expect(stored.archive).toEqual(archive);
+  expect(stored.settings).toEqual({ autoArchiveHours: 72 });
+});
+
+it('refuses a file that is not an Arc sidebar, and keeps the items', async () => {
+  await browser.storage.local.set({ items: [savedItem] });
+
   const result = await importSpace('{"hello":"world"}', ALPHA);
 
   expect(result).toEqual({
     ok: false,
     error: 'This is not an Arc sidebar file: "sidebar.containers" is missing.',
   });
-  expect(await getItems()).toEqual([]);
+  expect(await getItems()).toEqual([savedItem]);
 });
 
-it('refuses a space that is not in the file, and stores nothing', async () => {
+it('refuses a space that is not in the file, and keeps the items', async () => {
+  await browser.storage.local.set({ items: [savedItem] });
+
   const result = await importSpace(fixture, 'missing-space');
 
   expect(result).toMatchObject({ ok: false });
-  expect(await getItems()).toEqual([]);
+  expect(await getItems()).toEqual([savedItem]);
 });
 
-it('refuses a second import', async () => {
+it('puts the old live tabs at rest, then links the open tabs that show the new URLs', async () => {
+  await browser.storage.local.set({
+    items: [{ ...savedItem, url: 'https://elsewhere.test/' }],
+  });
+  const windowId = await fakeChrome.openWindow([
+    'https://docs.example.test/',
+    'https://elsewhere.test/',
+  ]);
+  const [, elsewhere] = await browser.tabs.query({ windowId });
+  await browser.storage.session.set({ liveTabs: { 'saved-1': elsewhere?.id } });
+  const panel = connectPanel(windowId);
+  await settle();
+  expect(panel.latest()?.items[0]?.live).toBeDefined();
+
   await importSpace(fixture, ALPHA);
+  await settle();
 
-  const second = await importSpace(fixture, ALPHA);
+  const items = panel.latest()?.items ?? [];
+  expect(items.map((item) => item.id)).not.toContain('saved-1');
+  expect(items.filter((item) => item.live).map((item) => item.url)).toEqual([
+    'https://docs.example.test/',
+  ]);
+});
 
-  expect(second).toMatchObject({ ok: false });
-  expect(await getItems()).toHaveLength(17);
+it('lets the user undo the replacement with the Undo button', async () => {
+  await browser.storage.local.set({ items: [savedItem] });
+  const panel = connectPanel(1);
+  await settle();
+
+  await importSpace(fixture, ALPHA);
+  await settle();
+  expect(panel.latest()?.undo).toEqual({ label: 'Import from Arc' });
+  panel.send({ type: 'undo' });
+  await settle();
+
+  expect(await getItems()).toEqual([savedItem]);
+  expect(panel.latest()?.undo).toBeNull();
+});
+
+it('records nothing to undo when the file is refused', async () => {
+  const panel = connectPanel(1);
+  await settle();
+
+  await importSpace('{"hello":"world"}', ALPHA);
+  await settle();
+
+  expect(panel.latest()?.undo).toBeNull();
 });
 
 it('keeps the imported items when Chrome stops and restarts the worker', async () => {
@@ -115,6 +181,6 @@ it('keeps the imported items when Chrome stops and restarts the worker', async (
   stopWorker();
   await startWorker();
 
-  expect(await available()).toBe(false);
+  expect(await status()).toEqual({ itemCount: 17 });
   expect(await getItems()).toHaveLength(17);
 });

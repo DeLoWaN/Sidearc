@@ -190,11 +190,13 @@ export interface BackupRpc {
 
 // Arc import
 export interface ArcImportRpc {
-  /** True while Sidearc has no item, the one case where the import runs. */
-  'arc-import/available': { request: null; response: boolean };
+  /** Counts the items of Sidearc, so that the page asks before the import replaces them. */
+  'arc-import/status': { request: null; response: { itemCount: number } };
   /**
-   * Imports one space of the Arc file, all items at once. The text is the content of `StorableSidebar.json`.
-   * Changes nothing and gives the reason when the file is refused or Sidearc has items.
+   * Replaces the Favorites, Pinned Tabs and Folders with one space of the Arc file, all items at once.
+   * The text is the content of `StorableSidebar.json`. The settings and View Archive stay.
+   * Changes nothing and gives the reason when the file is refused.
+   * The Undo button of the panel reverts it.
    */
   'arc-import/run': { request: { text: string; spaceId: string }; response: ArcImportResult };
 }

@@ -122,6 +122,18 @@ async function undoable(command: Command, run: () => Promise<void>) {
   if (entry) await pushEntry(entry);
 }
 
+/**
+ * Runs a change of the items that no command makes, and adds it to the Undo list under the label.
+ * Adds nothing when `run` throws.
+ */
+export function undoableItemsChange(label: string, run: () => Promise<void>): Promise<void> {
+  return turns.run(async () => {
+    const [items, links] = await Promise.all([getItems(), readLiveLinks()]);
+    await run();
+    await pushEntry({ kind: 'items', label, items, links });
+  });
+}
+
 async function reopenTab(entry: TabEntry, panelWindowId: number) {
   const windowId = (await exists(browser.windows.get(entry.windowId)))
     ? entry.windowId

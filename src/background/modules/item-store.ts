@@ -79,19 +79,6 @@ export async function addItem(input: {
   return added as ItemRecord;
 }
 
-/**
- * Stores the given items, which hold their own ids, parents and positions.
- * Stores nothing and returns false when Sidearc already has an item.
- */
-export async function addItemsToEmptyStore(newItems: ItemRecord[]): Promise<boolean> {
-  let stored = false;
-  await change((items) => {
-    stored = items.length === 0;
-    return stored ? newItems : items;
-  });
-  return stored;
-}
-
 /** Replaces every item with the given list. */
 export async function replaceItems(items: ItemRecord[]) {
   await change(() => items);

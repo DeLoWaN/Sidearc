@@ -46,6 +46,27 @@ export function linkLiveTab(itemId: string, tabId: number) {
   });
 }
 
+/**
+ * Gives each saved link back when its item exists, its tab is open, and neither has another link now.
+ * Keeps the links that exist now.
+ */
+export function restoreLiveTabs(saved: Record<string, number>) {
+  return change(async (links) => {
+    const current = await withoutDeadLinks(links);
+    const taken = new Set(Object.values(current));
+    const restorable = await withoutDeadLinks(saved);
+    for (const [itemId, tabId] of Object.entries(restorable)) {
+      if (itemId in current || taken.has(tabId)) continue;
+      current[itemId] = tabId;
+      taken.add(tabId);
+    }
+    return current;
+  });
+}
+
+/** Item id to live tab id, as stored, with no check that the item or the tab still exists. */
+export const readLiveLinks = readLinks;
+
 /** Puts every item at rest. */
 export function clearLiveTabs() {
   return change(() => ({}));

@@ -40,6 +40,9 @@ export function makeState(overrides: Partial<SidebarState> = {}): SidebarState {
     // archive
     archive: [],
 
+    // undo
+    undo: null,
+
     // settings
     settings: DEFAULT_SETTINGS,
 

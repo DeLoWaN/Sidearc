@@ -32,6 +32,15 @@ function renderPinned(items: ItemView[], windowId = 1) {
 const rightClick = (name: string | RegExp) =>
   fireEvent.contextMenu(screen.getByRole('button', { name }));
 
+it('shows a delete cross on a Pinned Tab inside a Folder, and none on the Folder', () => {
+  const work = makeFolder({ title: 'Work' });
+  const mail = makeItem({ title: 'Mail', parentId: work.id });
+  renderPinned([work, mail]);
+
+  expect(screen.getByRole('button', { name: 'Delete Mail' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Delete Work' })).toBeNull();
+});
+
 it('shows Folders and Pinned Tabs as a tree, ordered by position inside each parent', () => {
   const work = makeFolder({ title: 'Work', position: 0 });
   const projects = makeFolder({ title: 'Projects', parentId: work.id, position: 1 });
@@ -42,7 +51,10 @@ it('shows Folders and Pinned Tabs as a tree, ordered by position inside each par
 
   const tree = within(screen.getByRole('list', { name: 'Pinned Tabs list' }));
   const labels = (scope: ReturnType<typeof within>) =>
-    scope.getAllByRole('button').map((button: HTMLElement) => button.textContent);
+    scope
+      .getAllByRole('button')
+      .filter((button: HTMLElement) => !button.getAttribute('aria-label')?.startsWith('Delete '))
+      .map((button: HTMLElement) => button.textContent);
   expect(labels(tree)).toEqual(['Work', 'Mail', 'Projects', 'Deep', 'Wiki']);
   // Each level sits inside the list of its Folder.
   const inWork = within(screen.getByRole('list', { name: 'Work content' }));

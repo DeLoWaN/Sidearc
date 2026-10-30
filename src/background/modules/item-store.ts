@@ -92,6 +92,11 @@ export async function addItemsToEmptyStore(newItems: ItemRecord[]): Promise<bool
   return stored;
 }
 
+/** Replaces every item with the given list. */
+export async function replaceItems(items: ItemRecord[]) {
+  await change(() => items);
+}
+
 /** Gives the item a new title. Ignores a blank title and an unknown item. */
 async function renameItem(id: string, title: string) {
   const trimmed = title.trim();

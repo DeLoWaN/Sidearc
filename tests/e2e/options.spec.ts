@@ -88,7 +88,7 @@ test('a backup exported from the options page restores the panel after the data 
   }, saved);
   const panel = await context.newPage();
   await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
-  await expect(panel.getByRole('button', { name: 'Saved docs' })).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Saved docs', exact: true })).toBeVisible();
   const options = await context.newPage();
   await options.goto(`chrome-extension://${extensionId}/options.html`);
 
@@ -102,7 +102,7 @@ test('a backup exported from the options page restores the panel after the data 
   await serviceWorker.evaluate(() =>
     chrome.storage.local.set({ items: [], settings: { density: 'normal' } }),
   );
-  await expect(panel.getByRole('button', { name: 'Saved docs' })).toBeHidden();
+  await expect(panel.getByRole('button', { name: 'Saved docs', exact: true })).toBeHidden();
   await options.reload();
 
   await options.getByLabel('Backup file').setInputFiles(file);
@@ -112,7 +112,7 @@ test('a backup exported from the options page restores the panel after the data 
 
   await expect(options.getByRole('status')).toContainText('Backup imported');
   await expect(options.getByRole('radio', { name: 'Compact' })).toBeChecked();
-  await expect(panel.getByRole('button', { name: 'Saved docs' })).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Saved docs', exact: true })).toBeVisible();
 });
 
 test('a backup with an unknown version is refused with its error and changes nothing', async ({

@@ -1,12 +1,16 @@
-import { act, screen } from '@testing-library/react';
-import { beforeEach, expect, it } from 'vitest';
-import { makeState, makeTab } from '../../tests/support/builders';
+import { act, fireEvent, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { makeItem, makeState, makeTab } from '../../tests/support/builders';
 import { renderPanel } from '../../tests/support/render-panel';
 import { DEFAULT_SETTINGS } from '../shared/settings';
 import { App } from './App';
 import { resetPanelStore, usePanelStore } from './store';
+import { resetPanelUi, usePanelUi } from './ui-store';
 
-beforeEach(resetPanelStore);
+beforeEach(() => {
+  resetPanelStore();
+  resetPanelUi();
+});
 
 it('shows the tabs of the state in the Sidearc page', () => {
   const state = makeState({ unpinnedTabs: [makeTab({ title: 'Mail' })] });
@@ -64,4 +68,50 @@ it('shows every new state that the worker sends', () => {
     usePanelStore.getState().receive(makeState({ unpinnedTabs: [makeTab({ title: 'Wiki' })] })),
   );
   expect(screen.getAllByRole('listitem').map((row) => row.textContent)).toEqual(['Wiki']);
+});
+
+describe('Ctrl+Z and Cmd+Z', () => {
+  const withUndo = makeState({ undo: { label: 'Delete "Mail"' } });
+
+  it('sends undo when the focus is on the page', () => {
+    const { send } = renderPanel(<App />, { state: withUndo });
+
+    expect(fireEvent.keyDown(document.body, { key: 'z', ctrlKey: true })).toBe(false);
+    fireEvent.keyDown(document.body, { key: 'z', metaKey: true });
+
+    expect(send.mock.calls).toEqual([[{ type: 'undo' }], [{ type: 'undo' }]]);
+  });
+
+  it('leaves the key to the search field, so the field can undo its own typing', () => {
+    const { send } = renderPanel(<App />, { state: withUndo });
+    const field = screen.getByRole('searchbox', { name: 'Search' });
+    field.focus();
+
+    expect(fireEvent.keyDown(field, { key: 'z', ctrlKey: true })).toBe(true);
+
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('leaves the key to the rename field', () => {
+    const item = makeItem({ title: 'Mail' });
+    const { send } = renderPanel(<App />, {
+      state: makeState({ items: [item], undo: { label: 'Move "Mail"' } }),
+    });
+    act(() => usePanelUi.getState().startRename(item.id));
+    const field = screen.getByRole('textbox', { name: 'Name of Mail' });
+
+    expect(fireEvent.keyDown(field, { key: 'z', ctrlKey: true })).toBe(true);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when nothing can be undone, and ignores Shift and a plain Z', () => {
+    const { send } = renderPanel(<App />);
+    fireEvent.keyDown(document.body, { key: 'z', ctrlKey: true });
+    expect(send).not.toHaveBeenCalled();
+
+    act(() => usePanelStore.getState().receive(withUndo));
+    fireEvent.keyDown(document.body, { key: 'z' });
+    fireEvent.keyDown(document.body, { key: 'z', ctrlKey: true, shiftKey: true });
+    expect(send).not.toHaveBeenCalled();
+  });
 });

@@ -154,6 +154,30 @@ export function restoreSiteGroup(original: Omit<SiteGroupView, 'id' | 'tabIds'>,
   }));
 }
 
+/**
+ * Makes the tabs members of the site group. A tab leaves its Tab group and its other site group first.
+ * Another site group that keeps fewer than 2 tabs disappears. Does nothing when the group does not exist.
+ */
+export async function addTabsToSiteGroup(groupId: string, tabIds: number[]) {
+  if (!(await shownSiteGroup(groupId))) return;
+  const grouped = (await browser.tabs.query({}))
+    .filter((tab) => tabIds.includes(tab.id as number) && (tab.groupId ?? NO_GROUP) !== NO_GROUP)
+    .map((tab) => tab.id as number);
+  if (grouped.length > 0) await browser.tabs.ungroup(grouped as [number, ...number[]]);
+  await change((stored) => {
+    if (!stored.groups.some((group) => group.id === groupId)) return stored;
+    const groups = stored.groups
+      .map((group) => {
+        if (group.id !== groupId)
+          return { ...group, tabIds: group.tabIds.filter((id) => !tabIds.includes(id)) };
+        const joined = tabIds.filter((id) => !group.tabIds.includes(id));
+        return { ...group, tabIds: [...group.tabIds, ...joined] };
+      })
+      .filter((group) => group.id === groupId || group.tabIds.length >= 2);
+    return { groups, pending: stored.pending.filter((id) => !tabIds.includes(id)) };
+  });
+}
+
 const siteGroups: WorkerModule = {
   name: 'site-groups',
   order: 22,

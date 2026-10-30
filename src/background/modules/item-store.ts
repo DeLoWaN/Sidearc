@@ -1,4 +1,10 @@
-import { endPosition, isFolderOrRoot, MAX_FAVORITES, subtreeIds } from '../../shared/item-tree';
+import {
+  endPosition,
+  isFolderOrRoot,
+  MAX_FAVORITES,
+  subtreeIds,
+  topLevelIds,
+} from '../../shared/item-tree';
 import type { ItemKind, ItemRecord } from '../../shared/types';
 import { createQueue } from '../queue';
 import { registerCommand } from '../registry';
@@ -74,7 +80,7 @@ export async function addItem(input: {
       collapsed: false,
     };
     const all = [...items, added];
-    return input.index === undefined ? all : place(all, added.id, {}, input.index);
+    return input.index === undefined ? all : place(all, [added.id], {}, input.index);
   });
   return added as ItemRecord;
 }
@@ -116,22 +122,30 @@ function renumber(items: ItemRecord[], list: string | null): ItemRecord[] {
 }
 
 /**
- * Puts the item in a list at an index, and renumbers the list it leaves and the list it enters.
- * The index counts the items of the target list without the moved item. It is clamped to the list.
+ * Puts the items in one list at an index, in the given order, and renumbers the lists they leave and the list they enter.
+ * The index counts the items of the target list without the moved items. It is clamped to the list.
+ * `target` sets the fields that change on every moved item.
  */
-function place(items: ItemRecord[], id: string, target: Partial<ItemRecord>, index?: number) {
-  const moved = items.find((item) => item.id === id) as ItemRecord;
-  const placed = { ...moved, ...target };
+function place(items: ItemRecord[], ids: string[], target: Partial<ItemRecord>, index?: number) {
+  const moving = new Set(ids);
+  const before = ids.map((id) => items.find((item) => item.id === id) as ItemRecord);
+  const placed = before.map((item) => ({ ...item, ...target }));
+  const list = listOf(placed[0] as ItemRecord);
   const entered = items
-    .filter((item) => item.id !== id && listOf(item) === listOf(placed))
+    .filter((item) => !moving.has(item.id) && listOf(item) === list)
     .sort((a, b) => a.position - b.position);
   const at = Math.min(Math.max(index ?? entered.length, 0), entered.length);
-  const ordered = [...entered.slice(0, at), placed, ...entered.slice(at)];
+  const ordered = [...entered.slice(0, at), ...placed, ...entered.slice(at)];
   const rank = new Map(ordered.map((item, i) => [item.id, i]));
+  const placedById = new Map(placed.map((item) => [item.id, item]));
   const result = items.map((item) =>
-    rank.has(item.id) ? { ...(item.id === id ? placed : item), position: rank.get(item.id) } : item,
+    rank.has(item.id)
+      ? { ...(placedById.get(item.id) ?? item), position: rank.get(item.id) }
+      : item,
   ) as ItemRecord[];
-  return listOf(moved) === listOf(placed) ? result : renumber(result, listOf(moved));
+  const left = new Set(before.map(listOf));
+  left.delete(list);
+  return [...left].reduce(renumber, result);
 }
 
 /**
@@ -148,7 +162,26 @@ export async function moveItem(id: string, parentId: string | null, index?: numb
     const wasFavorite = moved.kind === 'favorite';
     if (!wasFavorite && moved.parentId === parentId && index === undefined) return items;
     if (parentId !== null && subtreeIds(items, id).has(parentId)) return items;
-    return place(items, id, { kind: wasFavorite ? 'pinned' : moved.kind, parentId }, index);
+    return place(items, [id], { kind: wasFavorite ? 'pinned' : moved.kind, parentId }, index);
+  });
+}
+
+/**
+ * Puts Pinned Tabs and Folders in one Folder, or at the root when `parentId` is null, at the index or at the end.
+ * The items keep the given order. The index counts the items of the target without the moved items.
+ * An item below another item of the list moves with it. Ignores unknown ids and Favorites.
+ * Does nothing when the target is not a Folder, or is one of the items or lies below one of them.
+ */
+export async function moveItems(ids: string[], parentId: string | null, index?: number) {
+  await change((items) => {
+    const kindOf = new Map(items.map((item) => [item.id, item.kind]));
+    const moving = topLevelIds(
+      items,
+      ids.filter((id) => kindOf.get(id) !== 'favorite'),
+    );
+    if (moving.length === 0 || !isFolderOrRoot(items, parentId)) return items;
+    if (parentId !== null && moving.some((id) => subtreeIds(items, id).has(parentId))) return items;
+    return place(items, moving, { parentId }, index);
   });
 }
 
@@ -162,18 +195,23 @@ export async function makeFavorite(id: string, index?: number) {
   await change((items) => {
     const moved = items.find((item) => item.id === id);
     if (moved?.kind === 'favorite') {
-      return index === undefined ? items : place(items, id, {}, index);
+      return index === undefined ? items : place(items, [id], {}, index);
     }
     if (moved?.kind !== 'pinned') return items;
     if (countFavorites(items) >= MAX_FAVORITES) throw new FavoriteLimitError();
-    return place(items, id, { kind: 'favorite', parentId: null }, index);
+    return place(items, [id], { kind: 'favorite', parentId: null }, index);
   });
 }
 
 /** Deletes the item and, for a Folder, everything below it. */
 export async function deleteItem(id: string) {
+  await deleteItems([id]);
+}
+
+/** Deletes the items and, for each Folder, everything below it. Ignores unknown ids. */
+export async function deleteItems(ids: string[]) {
   await change((items) => {
-    const doomed = subtreeIds(items, id);
+    const doomed = new Set(ids.flatMap((id) => [...subtreeIds(items, id)]));
     return items.filter((item) => !doomed.has(item.id));
   });
 }

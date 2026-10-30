@@ -1,4 +1,5 @@
-import { subtreeIds } from '../../shared/item-tree';
+import { isFolderOrRoot, subtreeIds, topLevelIds } from '../../shared/item-tree';
+import type { SelectionTarget } from '../../shared/protocol';
 import type { ItemView, SidebarState, TabView } from '../../shared/types';
 import {
   addTabToGroupCommand,
@@ -6,17 +7,27 @@ import {
   itemFromTabCommand,
   moveItemCommand,
   moveTabCommand,
+  selectionMoveCommand,
   unpinCommand,
 } from '../commands';
 import type { CommandBody } from '../connection';
 import type { DragSource, DropTarget } from './types';
 
+type SelectionSource = Extract<DragSource, { type: 'selection' }>;
+
 const byPosition = (a: ItemView, b: ItemView) => a.position - b.position;
 
 /** The Pinned Tabs and Folders inside one parent, in order, without the item that moves. */
-function treeSiblings(items: ItemView[], parentId: string | null, leaving?: string): ItemView[] {
+function treeSiblings(
+  items: ItemView[],
+  parentId: string | null,
+  leaving: readonly string[] = [],
+): ItemView[] {
   return items
-    .filter((item) => item.kind !== 'favorite' && item.parentId === parentId && item.id !== leaving)
+    .filter(
+      (item) =>
+        item.kind !== 'favorite' && item.parentId === parentId && !leaving.includes(item.id),
+    )
     .sort(byPosition);
 }
 
@@ -29,7 +40,7 @@ function treePlace(
   items: ItemView[],
   row: ItemView,
   placement: 'above' | 'below' | 'inside',
-  leaving?: string,
+  leaving?: readonly string[],
 ): { parentId: string | null; index?: number } | null {
   if (placement === 'inside') {
     if (row.kind !== 'folder') return null;
@@ -52,7 +63,7 @@ function planItemDrop(
       const row = items.find((item) => item.id === target.itemId);
       // A Folder cannot go inside itself, and a row of the tree is never a Favorite.
       if (!row || row.kind === 'favorite' || subtreeIds(items, source.id).has(row.id)) return null;
-      const place = treePlace(items, row, target.placement, source.id);
+      const place = treePlace(items, row, target.placement, [source.id]);
       return place && moveItemCommand(source.id, place.parentId, place.index);
     }
     case 'pinned-root':
@@ -160,6 +171,83 @@ function planTabDrop(state: SidebarState, source: TabView, target: DropTarget): 
 }
 
 /**
+ * The command that moves a selection to one place, or null when Sidearc refuses the move and changes nothing.
+ * "Move to…" and the drops of a selection both come here, so they send the same command.
+ */
+export function planSelectionMove(
+  state: SidebarState,
+  { tabIds, itemIds }: Pick<SelectionSource, 'tabIds' | 'itemIds'>,
+  target: SelectionTarget,
+): CommandBody | null {
+  const { items } = state;
+  const roots = topLevelIds(
+    items,
+    itemIds.filter((id) => items.some((item) => item.id === id && item.kind !== 'favorite')),
+  );
+  if (roots.length + tabIds.length === 0) return null;
+  const chosen = { tabIds, itemIds: roots };
+  switch (target.kind) {
+    case 'pinned': {
+      if (!isFolderOrRoot(items, target.parentId)) return null;
+      const { parentId } = target;
+      if (parentId !== null && roots.some((id) => subtreeIds(items, id).has(parentId))) return null;
+      return selectionMoveCommand(chosen, target);
+    }
+    case 'unpinned': {
+      const hasFolder = items.some((item) => roots.includes(item.id) && item.kind === 'folder');
+      return roots.length === 0 || hasFolder ? null : selectionMoveCommand(chosen, target);
+    }
+    case 'tab-group': {
+      const group = state.tabGroups.find((candidate) => candidate.id === target.groupId);
+      const joins = tabIds.some((id) => !group?.tabIds.includes(id));
+      return group && roots.length === 0 && joins ? selectionMoveCommand(chosen, target) : null;
+    }
+    case 'site-group': {
+      const group = state.siteGroups.find((candidate) => candidate.id === target.groupId);
+      const joins = tabIds.some((id) => !group?.tabIds.includes(id));
+      return group && roots.length === 0 && joins ? selectionMoveCommand(chosen, target) : null;
+    }
+  }
+}
+
+function planSelectionDrop(
+  state: SidebarState,
+  source: SelectionSource,
+  target: DropTarget,
+): CommandBody | null {
+  const { items } = state;
+  switch (target.zone) {
+    case 'tree-row': {
+      const row = items.find((item) => item.id === target.itemId);
+      if (!row || row.kind === 'favorite') return null;
+      const roots = topLevelIds(items, source.itemIds);
+      // A row of the selection, or inside a selected Folder, cannot be a place for the selection.
+      if (roots.some((id) => subtreeIds(items, id).has(row.id))) return null;
+      const place = treePlace(items, row, target.placement, roots);
+      return (
+        place &&
+        planSelectionMove(state, source, {
+          kind: 'pinned',
+          parentId: place.parentId,
+          ...(place.index === undefined ? {} : { index: place.index }),
+        })
+      );
+    }
+    case 'pinned-root':
+      return planSelectionMove(state, source, { kind: 'pinned', parentId: null });
+    case 'tab-group':
+      return planSelectionMove(state, source, { kind: 'tab-group', groupId: target.groupId });
+    case 'site-group':
+      return planSelectionMove(state, source, { kind: 'site-group', groupId: target.groupId });
+    case 'unpinned':
+    case 'tab-row':
+      return planSelectionMove(state, source, { kind: 'unpinned' });
+    default:
+      return null;
+  }
+}
+
+/**
  * The command that a drop sends, or null when Sidearc refuses the drop and changes nothing.
  * The worker still refuses what depends on its own data, such as a 13th Favorite.
  */
@@ -168,6 +256,7 @@ export function planDrop(
   source: DragSource,
   target: DropTarget,
 ): CommandBody | null {
+  if (source.type === 'selection') return planSelectionDrop(state, source, target);
   if (source.type === 'item') {
     const item = state.items.find((candidate) => candidate.id === source.itemId);
     return item ? planItemDrop(state, item, target) : null;

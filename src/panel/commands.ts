@@ -1,3 +1,4 @@
+import type { SelectionTarget } from '../shared/protocol';
 import type { CommandBody } from './connection';
 
 /**
@@ -67,4 +68,23 @@ export function moveTabCommand(
     ...(groupId === undefined ? {} : { groupId }),
     ...(targetWindowId === undefined ? {} : { targetWindowId }),
   };
+}
+
+/** The Unpinned Tabs and the Pinned Tabs and Folders of a selection, in the order of the panel. */
+export interface ChosenRows {
+  tabIds: number[];
+  itemIds: string[];
+}
+
+/** Closes the selected Unpinned Tabs and deletes the selected Pinned Tabs and Folders. */
+export function selectionCloseCommand({ tabIds, itemIds }: ChosenRows): Of<'selection/close'> {
+  return { type: 'selection/close', tabIds, itemIds };
+}
+
+/** Moves the selected rows to one target. "Move to…" and drag and drop build it here. */
+export function selectionMoveCommand(
+  { tabIds, itemIds }: ChosenRows,
+  target: SelectionTarget,
+): Of<'selection/move'> {
+  return { type: 'selection/move', tabIds, itemIds, target };
 }

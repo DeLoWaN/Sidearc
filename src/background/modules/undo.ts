@@ -1,3 +1,4 @@
+import { plural } from '../../shared/plural';
 import type { Command, CommandType } from '../../shared/protocol';
 import type { ItemRecord, SiteGroupView } from '../../shared/types';
 import { createQueue } from '../queue';
@@ -7,6 +8,7 @@ import type { WorkerModule } from '../worker-module';
 import { getItems, replaceItems } from './item-store';
 import { getLiveTabs, readLiveLinks, restoreLiveTabs } from './live-tab-registry';
 import { relinkOpenTabs } from './relink';
+import { selectedRoots, selectedTabs } from './selection';
 import { restoreSiteGroup, shownSiteGroup } from './site-groups';
 import { addTabToGroup, restoreTabGroup, shownTabGroup } from './tab-groups';
 
@@ -15,12 +17,23 @@ export const UNDO_STORAGE_KEY = 'undoStack';
 /** The Undo list holds this many actions. A new action pushes the oldest one out. */
 export const UNDO_LIMIT = 20;
 
-/** A change of the items, with the items and the live tab links from before it. */
+/** An Unpinned Tab that a command closed: where Undo opens it again. */
+interface ClosedTab {
+  url: string;
+  windowId: number;
+  index: number;
+}
+
+/**
+ * A change of the items, with the items and the live tab links from before it.
+ * `tabs` holds the tabs that the same command closed, in tab strip order.
+ */
 interface ItemsEntry {
   kind: 'items';
   label: string;
   items: ItemRecord[];
   links: Record<string, number>;
+  tabs?: ClosedTab[];
 }
 
 /** The close of an Unpinned Tab, with what the tab was. */
@@ -43,7 +56,7 @@ type Regrouping =
 interface GroupEntry {
   kind: 'group';
   label: string;
-  tabs: { url: string; windowId: number; index: number }[];
+  tabs: ClosedTab[];
   regrouping: Regrouping;
 }
 
@@ -143,7 +156,7 @@ async function recordGroupClose(
   const before = await groupBefore(command);
   await run();
   if (!before) return undefined;
-  const gone: GroupEntry['tabs'] = [];
+  const gone: ClosedTab[] = [];
   for (const tab of before.tabs) {
     if (await exists(browser.tabs.get(tab.id as number))) continue;
     gone.push({
@@ -159,6 +172,58 @@ async function recordGroupClose(
     tabs: gone,
     regrouping: before.regrouping,
   };
+}
+
+type SelectionCommand = Extract<Command, { type: 'selection/close' | 'selection/move' }>;
+
+/** Takes the snapshot of the items and of the tabs, runs the close, and returns the entry for what is gone. */
+async function recordSelectionClose(
+  command: Extract<SelectionCommand, { type: 'selection/close' }>,
+  run: () => Promise<void>,
+): Promise<Entry | undefined> {
+  const [items, links, tabs] = await Promise.all([
+    getItems(),
+    readLiveLinks(),
+    selectedTabs(command.tabIds),
+  ]);
+  const roots = selectedRoots(items, command.itemIds);
+  await run();
+  const remaining = new Set((await getItems()).map((item) => item.id));
+  const goneRoots = roots.filter((id) => !remaining.has(id));
+  const goneTabs: ClosedTab[] = [];
+  for (const tab of tabs) {
+    if (await exists(browser.tabs.get(tab.id as number))) continue;
+    goneTabs.push({
+      url: tab.url || tab.pendingUrl || 'chrome://newtab/',
+      windowId: tab.windowId,
+      index: tab.index,
+    });
+  }
+  const count = goneRoots.length + goneTabs.length;
+  if (count === 0) return undefined;
+  return {
+    kind: 'items',
+    label: `Close ${plural(count, 'item')}`,
+    items,
+    links,
+    tabs: goneTabs,
+  };
+}
+
+/** Takes the snapshot of the items, runs the move, and returns the entry when the items changed. */
+async function recordSelectionMove(
+  command: Extract<SelectionCommand, { type: 'selection/move' }>,
+  run: () => Promise<void>,
+): Promise<Entry | undefined> {
+  const [items, links, tabs] = await Promise.all([
+    getItems(),
+    readLiveLinks(),
+    selectedTabs(command.tabIds),
+  ]);
+  const count = selectedRoots(items, command.itemIds).length + tabs.length;
+  await run();
+  if (JSON.stringify(await getItems()) === JSON.stringify(items)) return undefined;
+  return { kind: 'items', label: `Move ${plural(count, 'item')}`, items, links };
 }
 
 const exists = (lookup: Promise<unknown>) =>
@@ -177,6 +242,8 @@ async function undoable(command: Command, run: () => Promise<void>) {
   if (command.type === 'tab/close') entry = await recordTabClose(command.tabId, run);
   else if (command.type === 'group/close' || command.type === 'site-group/close')
     entry = await recordGroupClose(command, run);
+  else if (command.type === 'selection/close') entry = await recordSelectionClose(command, run);
+  else if (command.type === 'selection/move') entry = await recordSelectionMove(command, run);
   else if (verb) entry = await recordItemCommand(command, verb, run);
   else return run();
   if (entry) await pushEntry(entry);
@@ -212,11 +279,15 @@ async function reopenTab(entry: TabEntry, panelWindowId: number) {
   await browser.tabs.move(tab.id as number, { index: entry.index });
 }
 
-async function reopenGroup(entry: GroupEntry, panelWindowId: number) {
+/** Opens the closed tabs again, not active, in their windows. A window that is gone sends its tabs to the panel window. */
+async function reopenTabs(
+  closedTabs: ClosedTab[],
+  panelWindowId: number,
+): Promise<chrome.tabs.Tab[]> {
   const windows = new Map<number, boolean>();
   const created: chrome.tabs.Tab[] = [];
   // Tabs come in tab strip order, so each one lands at its own index when the earlier ones are back.
-  for (const closed of entry.tabs) {
+  for (const closed of closedTabs) {
     if (!windows.has(closed.windowId))
       windows.set(closed.windowId, await exists(browser.windows.get(closed.windowId)));
     const sameWindow = windows.get(closed.windowId);
@@ -230,6 +301,11 @@ async function reopenGroup(entry: GroupEntry, panelWindowId: number) {
       }),
     );
   }
+  return created;
+}
+
+async function reopenGroup(entry: GroupEntry, panelWindowId: number) {
+  const created = await reopenTabs(entry.tabs, panelWindowId);
   const tabIds = created.map((tab) => tab.id as number);
   const { regrouping } = entry;
   if (regrouping.kind === 'site-group') {
@@ -265,8 +341,10 @@ const undoModule: WorkerModule = {
         if (!entry) return;
         // The entry leaves the list first, so an entry that fails never blocks the ones below it.
         await writeStack(stack);
-        if (entry.kind === 'items') await restoreItems(entry);
-        else if (entry.kind === 'group') await reopenGroup(entry, windowId);
+        if (entry.kind === 'items') {
+          await restoreItems(entry);
+          if (entry.tabs) await reopenTabs(entry.tabs, windowId);
+        } else if (entry.kind === 'group') await reopenGroup(entry, windowId);
         else await reopenTab(entry, windowId);
       }),
     );

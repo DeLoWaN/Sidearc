@@ -125,6 +125,35 @@ export type DragCommand =
    */
   | { type: 'item/unpin'; itemId: string };
 
+// selection
+/** Where "selection/move" puts the selected rows. */
+export type SelectionTarget =
+  /** The Pinned Tabs: a Folder, or the root when `parentId` is null. The rows go to `index` among its items, or to the end. */
+  | { kind: 'pinned'; parentId: string | null; index?: number }
+  /** The Unpinned Tabs. A Pinned Tab becomes an Unpinned Tab. An Unpinned Tab stays where it is. */
+  | { kind: 'unpinned' }
+  /** A Chrome Tab group. Tabs only. */
+  | { kind: 'tab-group'; groupId: number }
+  /** A site group. Tabs only. */
+  | { kind: 'site-group'; groupId: string };
+
+export type SelectionCommand =
+  /**
+   * Closes the Unpinned Tabs and deletes the Pinned Tabs and Folders, with their content, in one step.
+   * A live tab of a deleted item stays open as an Unpinned Tab.
+   * An item below a Folder of the same command counts through the Folder. An unknown id and a Favorite are ignored.
+   * The Undo button of the panel reverts the whole command: it restores the items and reopens the closed tabs.
+   */
+  | { type: 'selection/close'; tabIds: number[]; itemIds: string[] }
+  /**
+   * Moves Unpinned Tabs, Pinned Tabs and Folders to one target. The ids come in the order of the panel, and they keep it.
+   * Changes nothing when the target does not fit the whole selection, for example a Folder moved into itself,
+   * a Folder moved to the Unpinned Tabs, or a Pinned Tab moved into a Tab group.
+   * An Unpinned Tab moved to the Pinned Tabs becomes a Pinned Tab and keeps its live tab.
+   * The Undo button of the panel reverts the items of the whole command.
+   */
+  | { type: 'selection/move'; tabIds: number[]; itemIds: string[]; target: SelectionTarget };
+
 // undo
 export type UndoCommand =
   /** Reverts the newest undoable action and removes it from the Undo list. Does nothing when the list is empty. */
@@ -146,6 +175,7 @@ export type Command = { windowId: number } & (
   | SiteGroupNameCommand
   | ArchiveCommand
   | DragCommand
+  | SelectionCommand
   | UndoCommand
   | SettingsCommand
 );

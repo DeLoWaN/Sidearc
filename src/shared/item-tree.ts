@@ -43,3 +43,19 @@ export function endPosition(
     .map((i) => i.position);
   return Math.max(-1, ...positions) + 1;
 }
+
+/**
+ * The ids that stand for themselves and their content, in the given order.
+ * Drops an id that is unknown, a repeated id, and an id below another id of the list.
+ */
+export function topLevelIds(items: ItemRecord[], ids: string[]): string[] {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  const wanted = new Set(ids);
+  const hasWantedAncestor = (id: string) => {
+    for (let parent = byId.get(id)?.parentId; parent; parent = byId.get(parent)?.parentId) {
+      if (wanted.has(parent)) return true;
+    }
+    return false;
+  };
+  return [...new Set(ids)].filter((id) => byId.has(id) && !hasWantedAncestor(id));
+}

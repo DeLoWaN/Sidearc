@@ -124,22 +124,25 @@ it('shows the live tab of a Pinned Tab that is open, without a second tab', asyn
   expect(await urlsOf(windows[0] as number)).toEqual(['https://a.test/', 'https://b.test/']);
 });
 
-it('focuses the window of a live tab that is in another window', async () => {
+it('moves the live tab of another window into the window of the panel and keeps the link', async () => {
   const { windows, panel, items } = await connectedPanel([
     ['https://a.test/'],
     ['https://b.test/', 'https://c.test/'],
   ]);
   await pin(await tabOf('https://b.test/'));
-  const second = windows[1] as number;
-  await fakeChrome.focusWindow(windows[0] as number);
+  const liveTabId = await idOf('https://b.test/');
+  const [first, second] = windows as [number, number];
+  await fakeChrome.focusWindow(first);
 
   panel.send({ type: 'item/open', itemId: items()[0]?.id as string });
   await settle();
 
-  const [active] = await browser.tabs.query({ windowId: second, active: true });
-  expect(active?.url).toBe('https://b.test/');
-  expect((await browser.windows.getCurrent()).id).toBe(second);
+  expect(await urlsOf(first)).toEqual(['https://a.test/', 'https://b.test/']);
+  expect(await urlsOf(second)).toEqual(['https://c.test/']);
+  const [active] = await browser.tabs.query({ windowId: first, active: true });
+  expect(active?.id).toBe(liveTabId);
   expect(await browser.tabs.query({ url: 'https://b.test/' })).toHaveLength(1);
+  expect(items()[0]?.live).toMatchObject({ tabId: liveTabId });
 });
 
 it('puts the Pinned Tab back to rest when its live tab closes in the tab strip', async () => {
@@ -288,7 +291,7 @@ it('keeps the Pinned Tabs, at rest, after Chrome restarted', async () => {
   // Chrome quits: tabs and session storage are gone, local storage stays.
   fakeChrome.reset();
   await browser.storage.local.set(stored);
-  const window = await fakeChrome.openWindow(['https://a.test/', 'https://b.test/']);
+  const window = await fakeChrome.openWindow(['https://b.test/', 'https://c.test/']);
   await startWorker();
   const panel = connectPanel(window);
   await settle();
@@ -297,7 +300,7 @@ it('keeps the Pinned Tabs, at rest, after Chrome restarted', async () => {
     ['https://a.test/', undefined],
   ]);
   expect(panel.latest()?.unpinnedTabs.map((tab) => tab.url)).toEqual([
-    'https://a.test/',
     'https://b.test/',
+    'https://c.test/',
   ]);
 });

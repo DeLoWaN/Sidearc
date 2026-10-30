@@ -1,57 +1,31 @@
 import { useRef } from 'react';
 import type { TabGroupView, TabView } from '../../shared/types';
-import { DropIndicator } from '../dnd/DropIndicator';
 import { tabGroupTarget } from '../dnd/locators';
 import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
-import { usePanelUi } from '../ui-store';
-import { TabRow } from './TabRow';
+import { GroupBlock } from './GroupBlock';
 
-/** A Tab group: a coloured header that collapses or expands the group, and its tabs. */
+/** A Tab group: a header with a dot in the colour of the group and the title that Chrome gives it, and the member tabs. */
 export function TabGroupBlock({ group, tabs }: { group: TabGroupView; tabs: TabView[] }) {
-  const { windowId, send } = usePanel();
-  const searching = usePanelUi((ui) => ui.searching);
-  const title = group.title || 'Untitled group';
+  const { send } = usePanel();
   const block = useRef<HTMLDivElement>(null);
   const { placement } = useDnd(block, { locate: tabGroupTarget(group.id) });
-  // A search shows the matching tabs of a collapsed group and leaves the group state alone.
-  const collapsed = group.collapsed && !searching;
   return (
-    <li role="none">
-      {/* biome-ignore lint/a11y/useSemanticElements: a fieldset is a form control, not a block. */}
-      <div
-        ref={block}
-        role="group"
-        aria-label={title}
-        data-color={group.color}
-        data-drop={placement ?? undefined}
-        className="relative my-1 ml-1.5 rounded-[3px] border-l-[3px] border-(--group-color) pl-1"
-      >
-        {placement && <DropIndicator placement={placement} />}
-        <button
-          type="button"
-          aria-label={title}
-          aria-expanded={!collapsed}
-          disabled={searching}
-          onClick={() => send({ type: 'group/toggle', groupId: group.id })}
-          className="flex w-full items-center gap-1 rounded-md px-2 py-1 text-left text-[11px] font-semibold text-(--group-color) hover:bg-(--row-hover)"
-        >
-          <span aria-hidden="true">{collapsed ? '▸' : '▾'}</span>
-          <span className="truncate">{title}</span>
-          {collapsed && <span className="font-normal">· {tabs.length}</span>}
-        </button>
-        {!collapsed && (
-          <ul>
-            {tabs.map((tab) => (
-              <TabRow
-                key={tab.id}
-                tab={tab}
-                highlighted={tab.active && tab.windowId === windowId}
-              />
-            ))}
-          </ul>
-        )}
-      </div>
-    </li>
+    <GroupBlock
+      ref={block}
+      name={group.title || 'Untitled group'}
+      icon={
+        <span
+          aria-hidden="true"
+          data-group-dot=""
+          className="mx-0.5 block size-3 rounded-full bg-(--group-color)"
+        />
+      }
+      tabs={tabs}
+      collapsed={group.collapsed}
+      onToggle={() => send({ type: 'group/toggle', groupId: group.id })}
+      color={group.color}
+      dropPlacement={placement}
+    />
   );
 }

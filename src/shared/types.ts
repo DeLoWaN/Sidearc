@@ -110,6 +110,8 @@ export interface SiteGroupView {
   id: string;
   /** The site of the tab that started the group, in lower case and without a leading `www.`. */
   host: string;
+  /** The name that the user gave the group, or null. The panel shows the host when there is none. */
+  name: string | null;
   /** The member tabs in tab strip order: windows by id, tabs by index. A tab that the panel does not list is ignored. */
   tabIds: number[];
   collapsed: boolean;

@@ -10,6 +10,8 @@ type PanelUi = {
   menu?: { itemId: string | null; x: number; y: number; opener: HTMLElement | null };
   /** The item whose title the user is editing. */
   renamingId?: string;
+  /** The site group whose name the user is editing. */
+  renamingGroupId?: string;
   /** The Folder (null for the root) that is getting a new Folder: the panel shows a name field in it. */
   creatingIn?: { parentId: string | null };
   /** The Folder that waits for the user to confirm its deletion. */
@@ -31,6 +33,8 @@ type PanelUi = {
   closeMenu: () => void;
   startRename: (itemId: string) => void;
   stopRename: () => void;
+  startRenameGroup: (groupId: string) => void;
+  stopRenameGroup: () => void;
   startCreateFolder: (parentId: string | null) => void;
   stopCreateFolder: () => void;
   askDeleteConfirmation: (itemId: string) => void;
@@ -49,6 +53,8 @@ export const usePanelUi = create<PanelUi>()((set) => ({
   closeMenu: () => set({ menu: undefined }),
   startRename: (itemId) => set({ renamingId: itemId }),
   stopRename: () => set({ renamingId: undefined }),
+  startRenameGroup: (groupId) => set({ renamingGroupId: groupId }),
+  stopRenameGroup: () => set({ renamingGroupId: undefined }),
   startCreateFolder: (parentId) => set({ creatingIn: { parentId } }),
   stopCreateFolder: () => set({ creatingIn: undefined }),
   askDeleteConfirmation: (itemId) => set({ confirmingDeleteId: itemId }),
@@ -60,6 +66,7 @@ export const resetPanelUi = () =>
   usePanelUi.setState({
     menu: undefined,
     renamingId: undefined,
+    renamingGroupId: undefined,
     creatingIn: undefined,
     confirmingDeleteId: undefined,
     notice: undefined,

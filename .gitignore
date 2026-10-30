@@ -1,6 +1,9 @@
-node_modules/
-.output/
-.wxt/
-dist/
-*.log
+node_modules
+.output
+.wxt
+.wxt-cache
+test-results
+playwright-report
+web-ext.config.ts
 .DS_Store
+*.log

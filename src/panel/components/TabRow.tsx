@@ -1,12 +1,15 @@
 import type { TabView } from '../../shared/types';
 import { usePanel } from '../panel-context';
 import { SiteIcon } from './SiteIcon';
+import { useTabGroupMenu } from './TabGroupMenu';
 
 /** One open tab. A click shows the tab, the close button closes it. */
 export function TabRow({ tab, highlighted }: { tab: TabView; highlighted: boolean }) {
   const { send } = usePanel();
+  const { onContextMenu, menu } = useTabGroupMenu(tab);
   return (
     <li
+      onContextMenu={onContextMenu}
       data-highlighted={highlighted || undefined}
       className="group flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover) data-highlighted:bg-(--row-active) data-highlighted:shadow-sm"
     >
@@ -37,6 +40,7 @@ export function TabRow({ tab, highlighted }: { tab: TabView; highlighted: boolea
           <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" />
         </svg>
       </button>
+      {menu}
     </li>
   );
 }

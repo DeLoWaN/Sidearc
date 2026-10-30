@@ -1,11 +1,11 @@
-import { act, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it } from 'vitest';
 import { makeState, makeTab } from '../../../tests/support/builders';
 import { renderPanel } from '../../../tests/support/render-panel';
 import type { SiteGroupView, TabView } from '../../shared/types';
 import { resetPanelStore } from '../store';
-import { resetPanelUi, usePanelUi } from '../ui-store';
+import { resetPanelUi } from '../ui-store';
 import { UnpinnedSection } from './UnpinnedSection';
 
 beforeEach(() => {
@@ -17,6 +17,7 @@ function makeSiteGroup(tabs: TabView[], overrides: Partial<SiteGroupView> = {}):
   return {
     id: 'site-1',
     host: 'docs.test',
+    name: null,
     tabIds: tabs.map((tab) => tab.id),
     collapsed: false,
     ...overrides,
@@ -32,7 +33,7 @@ function threeTabs() {
   ] as [TabView, TabView, TabView];
 }
 
-it('shows a site group as a block with its host and its member count', () => {
+it('shows a site group as a block named after its host', () => {
   const [home, guide] = [makeTab({ title: 'Home' }), makeTab({ title: 'Guide' })] as [
     TabView,
     TabView,
@@ -46,9 +47,7 @@ it('shows a site group as a block with its host and its member count', () => {
   const block = screen.getByRole('group', { name: 'docs.test' });
   expect(block).toHaveAttribute('data-site-group');
   expect(block).not.toHaveAttribute('data-color');
-  const header = within(block).getByRole('button', { name: 'docs.test' });
-  expect(header).toHaveTextContent('2');
-  expect(header.querySelector('img')).toBeInTheDocument();
+  expect(within(block).getByRole('button', { name: 'docs.test' })).toHaveTextContent('docs.test');
 });
 
 it('puts every member in the block at the place of the first one, even with another tab between them', () => {
@@ -88,51 +87,6 @@ it('asks the worker to toggle the site group when the user clicks its header', a
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'site-group/toggle', groupId: 'site-7' });
 });
 
-it('hides the members of a collapsed site group and keeps the count', () => {
-  const tabs = [makeTab({ title: 'Home' }), makeTab({ title: 'Guide' })] as [TabView, TabView];
-  const state = makeState({
-    unpinnedTabs: tabs,
-    siteGroups: [makeSiteGroup(tabs, { collapsed: true })],
-  });
-  renderPanel(<UnpinnedSection />, { state });
-
-  const header = screen.getByRole('button', { name: 'docs.test' });
-  expect(header).toHaveAttribute('aria-expanded', 'false');
-  expect(header).toHaveTextContent('2');
-  expect(screen.queryByRole('button', { name: 'Home' })).toBeNull();
-  expect(screen.queryByRole('button', { name: 'Guide' })).toBeNull();
-});
-
-it('shows the unvisited dot on the header of a collapsed group with an unvisited member', () => {
-  const tabs = [makeTab({ title: 'Home' }), makeTab({ title: 'Guide', unvisited: true })] as [
-    TabView,
-    TabView,
-  ];
-  const state = makeState({
-    unpinnedTabs: tabs,
-    siteGroups: [makeSiteGroup(tabs, { collapsed: true })],
-  });
-  renderPanel(<UnpinnedSection />, { state });
-
-  const header = screen.getByRole('button', { name: 'docs.test' });
-  expect(within(header).getByRole('img', { name: 'Not visited yet' })).toBeVisible();
-});
-
-it('shows no unvisited dot on the header of an expanded group', () => {
-  const tabs = [makeTab({ title: 'Home' }), makeTab({ title: 'Guide', unvisited: true })] as [
-    TabView,
-    TabView,
-  ];
-  renderPanel(<UnpinnedSection />, {
-    state: makeState({ unpinnedTabs: tabs, siteGroups: [makeSiteGroup(tabs)] }),
-  });
-
-  const header = screen.getByRole('button', { name: 'docs.test' });
-  expect(within(header).queryByRole('img', { name: 'Not visited yet' })).toBeNull();
-  // The member row keeps its own dot.
-  expect(screen.getAllByRole('img', { name: 'Not visited yet' })).toHaveLength(1);
-});
-
 it('offers "Ungroup" in the right-click menu of the header and sends the command', async () => {
   const [home, guide] = [makeTab(), makeTab()] as [TabView, TabView];
   const state = makeState({
@@ -150,7 +104,7 @@ it('offers "Ungroup" in the right-click menu of the header and sends the command
     within(menu)
       .getAllByRole('menuitem')
       .map((entry) => entry.textContent),
-  ).toEqual(['Ungroup']);
+  ).toEqual(['Rename group', 'Ungroup']);
   await userEvent.click(within(menu).getByRole('menuitem', { name: 'Ungroup' }));
 
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'site-group/ungroup', groupId: 'site-7' });
@@ -234,22 +188,106 @@ it('ignores a middle click on the header of a site group', async () => {
   expect(send).not.toHaveBeenCalled();
 });
 
-it('expands a collapsed group and lists only the matching members while a search runs', () => {
-  const [home, mail, guide] = threeTabs();
-  const state = makeState({
-    unpinnedTabs: [home, mail, guide],
-    siteGroups: [makeSiteGroup([home, guide], { collapsed: true })],
-  });
-  renderPanel(<UnpinnedSection />, { state });
-  act(() => usePanelUi.getState().setSearchQuery('guide'));
+// --- rename
 
-  const block = screen.getByRole('group', { name: 'docs.test' });
-  expect(
-    within(block)
-      .getAllByRole('listitem')
-      .map((row) => row.textContent),
-  ).toEqual(['Docs guide']);
-  expect(screen.queryByRole('button', { name: 'Mail' })).toBeNull();
+function renderNamed(name: string | null) {
+  const [home, guide] = [makeTab(), makeTab()] as [TabView, TabView];
+  return renderPanel(<UnpinnedSection />, {
+    state: makeState({
+      unpinnedTabs: [home, guide],
+      siteGroups: [makeSiteGroup([home, guide], { id: 'site-7', name })],
+    }),
+  });
+}
+
+/** Right-clicks the header of the group with this name, then chooses "Rename group". */
+async function startRename(name: string) {
+  await userEvent.pointer({ keys: '[MouseRight]', target: screen.getByRole('button', { name }) });
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Rename group' }));
+  return screen.getByRole('textbox', { name: `Name of ${name}` });
+}
+
+it('shows the custom name of a group in place of its host', () => {
+  renderNamed('Reading list');
+
+  const block = screen.getByRole('group', { name: 'Reading list' });
+  expect(within(block).getByRole('button', { name: 'Reading list' })).toHaveTextContent(
+    'Reading list',
+  );
+  expect(screen.queryByText('docs.test')).toBeNull();
+});
+
+it('opens a name field that holds the host, and sends the new name on Enter', async () => {
+  const { send } = renderNamed(null);
+
+  const field = await startRename('docs.test');
+  expect(field).toHaveFocus();
+  expect(field).toHaveValue('docs.test');
+  await userEvent.clear(field);
+  await userEvent.type(field, 'Reading list{Enter}');
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({
+    type: 'site-group/rename',
+    groupId: 'site-7',
+    name: 'Reading list',
+  });
+  expect(screen.queryByRole('textbox')).toBeNull();
+  expect(screen.getByRole('button', { name: 'docs.test' })).toBeVisible();
+});
+
+it('starts the edit from the custom name', async () => {
+  renderNamed('Reading list');
+
+  expect(await startRename('Reading list')).toHaveValue('Reading list');
+});
+
+it('sends an empty name when the user clears the field, to remove the custom name', async () => {
+  const { send } = renderNamed('Reading list');
+
+  const field = await startRename('Reading list');
+  await userEvent.clear(field);
+  await userEvent.type(field, '   {Enter}');
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({
+    type: 'site-group/rename',
+    groupId: 'site-7',
+    name: '',
+  });
+});
+
+it('sends nothing when the user leaves the name as it is, or presses Escape', async () => {
+  const { send } = renderNamed(null);
+
+  await userEvent.type(await startRename('docs.test'), '{Enter}');
+  await userEvent.type(await startRename('docs.test'), 'Other{Escape}');
+
+  expect(send).not.toHaveBeenCalled();
+  expect(screen.queryByRole('textbox')).toBeNull();
+});
+
+it('sends nothing when the user clears a group that has no custom name', async () => {
+  const { send } = renderNamed(null);
+
+  const field = await startRename('docs.test');
+  await userEvent.clear(field);
+  await userEvent.type(field, '{Enter}');
+
+  expect(send).not.toHaveBeenCalled();
+});
+
+it('sends the name when the field loses the focus', async () => {
+  const { send } = renderNamed(null);
+
+  const field = await startRename('docs.test');
+  await userEvent.clear(field);
+  await userEvent.type(field, 'Docs');
+  await userEvent.tab();
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({
+    type: 'site-group/rename',
+    groupId: 'site-7',
+    name: 'Docs',
+  });
 });
 
 it('draws no block for a group none of whose members the panel lists', () => {

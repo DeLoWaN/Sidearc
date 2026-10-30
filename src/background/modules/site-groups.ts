@@ -9,9 +9,17 @@ import { getSettings } from './settings';
 
 export const SITE_GROUPS_STORAGE_KEY = 'siteGroups';
 
+const MAX_GROUP_NAME_LENGTH = 60;
+
+/** The name without surrounding spaces, cut to the limit by characters, so no emoji breaks. Empty means no name. */
+const cleanName = (name: string) =>
+  Array.from(name.trim()).slice(0, MAX_GROUP_NAME_LENGTH).join('').trim();
+
 interface StoredGroup {
   id: string;
   host: string;
+  /** The custom name. Absent when the user gave none. */
+  name?: string;
   tabIds: number[];
   collapsed: boolean;
 }
@@ -111,9 +119,10 @@ async function composeSiteGroups(): Promise<SiteGroupView[]> {
     return tab.windowId * 1_000_000 + tab.index;
   };
   return pruned(stored, eligible)
-    .groups.map(({ id, host, tabIds, collapsed }) => ({
+    .groups.map(({ id, host, name, tabIds, collapsed }) => ({
       id,
       host,
+      name: name ?? null,
       tabIds: [...tabIds].sort((a, b) => position(a) - position(b)),
       collapsed,
     }))
@@ -132,6 +141,18 @@ const siteGroups: WorkerModule = {
         groups: stored.groups.map((group) =>
           group.id === groupId ? { ...group, collapsed: !group.collapsed } : group,
         ),
+      })),
+    );
+
+    registerCommand('site-group/rename', ({ groupId, name }) =>
+      change((stored) => ({
+        ...stored,
+        groups: stored.groups.map((group) => {
+          if (group.id !== groupId) return group;
+          const { name: _old, ...rest } = group;
+          const custom = cleanName(name);
+          return custom ? { ...rest, name: custom } : rest;
+        }),
       })),
     );
 

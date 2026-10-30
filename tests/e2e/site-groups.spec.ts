@@ -29,7 +29,10 @@ test('tabs opened from a tab of the same site form a site group that the user ca
 
   await expect(blocks).toHaveCount(1);
   const host = new URL(site.origin).host;
+  // The count shows only while the group is collapsed.
+  await blocks.getByRole('button', { name: host }).click();
   await expect(blocks.getByRole('button', { name: host })).toContainText('2');
+  await blocks.getByRole('button', { name: host }).click();
   await expect(blocks.getByRole('listitem')).toHaveText(['links', 'other']);
 
   await blocks.getByRole('button', { name: host }).click({ button: 'right' });

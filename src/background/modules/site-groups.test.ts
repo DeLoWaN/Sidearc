@@ -41,7 +41,13 @@ it('groups a tab with its opener when both are on the same site', async () => {
   const child = await openFrom('https://docs.test/next');
 
   expect(await siteGroups()).toEqual([
-    { id: expect.any(String), host: 'docs.test', tabIds: [opener, child], collapsed: false },
+    {
+      id: expect.any(String),
+      host: 'docs.test',
+      name: null,
+      tabIds: [opener, child],
+      collapsed: false,
+    },
   ]);
 });
 
@@ -214,7 +220,7 @@ it('keeps the group and its collapsed state after the service worker restarts', 
   await startWorker();
 
   expect(await siteGroups()).toEqual([
-    { id: group?.id, host: 'docs.test', tabIds: [opener, child], collapsed: true },
+    { id: group?.id, host: 'docs.test', name: null, tabIds: [opener, child], collapsed: true },
   ]);
 });
 
@@ -271,6 +277,89 @@ it('does not group the tab again when its page changes after the user removed it
   await settle();
 
   expect(await siteGroups()).toEqual([]);
+});
+
+// --- rename
+
+/** Sends "site-group/rename" for the only group and returns the group that a panel gets afterwards. */
+async function rename(name: string) {
+  const [group] = await siteGroups();
+  connectPanel(windowId).send({
+    type: 'site-group/rename',
+    groupId: group?.id as string,
+    name,
+  });
+  await settle();
+  return (await siteGroups())[0];
+}
+
+it('gives the group a custom name on "rename"', async () => {
+  await openFrom('https://docs.test/next');
+
+  expect((await rename('Reading list'))?.name).toBe('Reading list');
+});
+
+it('keeps the custom name after the service worker restarts', async () => {
+  await openFrom('https://docs.test/next');
+  await rename('Reading list');
+
+  stopWorker();
+  await startWorker();
+
+  expect((await siteGroups())[0]?.name).toBe('Reading list');
+});
+
+it('trims the name', async () => {
+  await openFrom('https://docs.test/next');
+
+  expect((await rename('   Reading list \n'))?.name).toBe('Reading list');
+});
+
+it('limits the name to 60 characters', async () => {
+  await openFrom('https://docs.test/next');
+
+  expect((await rename('a'.repeat(100)))?.name).toBe('a'.repeat(60));
+});
+
+it('does not cut a character in the middle when it limits the name', async () => {
+  await openFrom('https://docs.test/next');
+
+  expect((await rename('😀'.repeat(61)))?.name).toBe('😀'.repeat(60));
+});
+
+it('clears the custom name when the new name is empty or only spaces', async () => {
+  await openFrom('https://docs.test/next');
+  await rename('Reading list');
+
+  expect((await rename('  '))?.name).toBeNull();
+  await rename('Again');
+  expect((await rename(''))?.name).toBeNull();
+});
+
+it('ignores a rename for a group that does not exist', async () => {
+  await openFrom('https://docs.test/next');
+  const [group] = await siteGroups();
+
+  connectPanel(windowId).send({ type: 'site-group/rename', groupId: 'unknown', name: 'Nope' });
+  await settle();
+
+  expect(await siteGroups()).toEqual([group]);
+});
+
+it('does not touch the name of the other groups', async () => {
+  await openFrom('https://docs.test/next');
+  const sibling = await openFrom('https://wiki.test/page');
+  await openFrom('https://wiki.test/other', sibling);
+  const groups = await siteGroups();
+
+  connectPanel(windowId).send({
+    type: 'site-group/rename',
+    groupId: groups[0]?.id as string,
+    name: 'Docs',
+  });
+  await settle();
+
+  expect((await siteGroups()).map((group) => group.name)).toEqual(['Docs', null]);
 });
 
 // --- the setting

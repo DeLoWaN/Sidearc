@@ -80,6 +80,14 @@ export type SiteGroupsCommand =
   /** Takes the tab out of its site group. The group disappears when fewer than 2 tabs are left. */
   | { type: 'site-group/remove-tab'; tabId: number };
 
+// site group names
+export type SiteGroupNameCommand =
+  /**
+   * Gives the site group a name. The worker trims the name and keeps its first 60 characters.
+   * An empty name removes the custom name. Does nothing when the group does not exist.
+   */
+  { type: 'site-group/rename'; groupId: string; name: string };
+
 // archive
 export type ArchiveCommand =
   /** Opens the archived tab in the window of the panel, and removes its entry. */
@@ -124,6 +132,7 @@ export type Command = { windowId: number } & (
   | FavoritesCommand
   | GroupsCommand
   | SiteGroupsCommand
+  | SiteGroupNameCommand
   | ArchiveCommand
   | DragCommand
   | UndoCommand

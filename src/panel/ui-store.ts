@@ -12,6 +12,10 @@ type PanelUi = {
   creatingIn?: { parentId: string | null };
   /** The Folder that waits for the user to confirm its deletion. */
   confirmingDeleteId?: string;
+  /** A short text from the worker, for example that it refused a command. */
+  notice?: string;
+  showNotice: (message: string) => void;
+  dismissNotice: () => void;
   openMenu: (itemId: string | null, x: number, y: number) => void;
   closeMenu: () => void;
   openMoveMenu: (itemId: string, x: number, y: number) => void;
@@ -25,6 +29,8 @@ type PanelUi = {
 };
 
 export const usePanelUi = create<PanelUi>()((set) => ({
+  showNotice: (message) => set({ notice: message }),
+  dismissNotice: () => set({ notice: undefined }),
   openMenu: (itemId, x, y) => set({ menu: { itemId, x, y } }),
   closeMenu: () => set({ menu: undefined }),
   openMoveMenu: (itemId, x, y) => set({ moveMenu: { itemId, x, y } }),
@@ -45,4 +51,5 @@ export const resetPanelUi = () =>
     renamingId: undefined,
     creatingIn: undefined,
     confirmingDeleteId: undefined,
+    notice: undefined,
   });

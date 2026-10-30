@@ -1,5 +1,6 @@
 import { type Command, PANEL_PORT, type PortMessage } from '../shared/protocol';
 import { usePanelStore } from './store';
+import { usePanelUi } from './ui-store';
 
 /** A command as the panel writes it: the connection adds the window id. */
 export type CommandBody = Command extends infer C
@@ -27,6 +28,7 @@ export async function connectToWorker(): Promise<Connection> {
     port = browser.runtime.connect({ name: PANEL_PORT });
     port.onMessage.addListener((message: PortMessage) => {
       if (message.type === 'state') usePanelStore.getState().receive(message.state);
+      if (message.type === 'notice') usePanelUi.getState().showNotice(message.message);
     });
     port.onDisconnect.addListener(open);
   };

@@ -11,10 +11,18 @@ function listFolders(nodes: TreeNode[], depth = 1): { folder: ItemView; depth: n
 }
 
 /**
- * Where a Pinned Tab or a Folder can go: the root, then the Folders in tree order.
- * Leaves out the place where the item already is, and, for a Folder, itself and its content.
+ * Where an item can go. A Favorite can only become a Pinned Tab at the root.
+ * A Pinned Tab can go to the Favorites, then the root, then the Folders in tree order.
+ * A Folder can go to the root and the Folders. Leaves out the place where the item already is,
+ * and, for a Folder, itself and its content.
  */
 export function itemMoveTargets(items: ItemView[], item: ItemView): MoveTarget[] {
+  const root = {
+    key: 'root',
+    label: 'Pinned Tabs',
+    command: { type: 'item/move' as const, itemId: item.id, parentId: null },
+  };
+  if (item.kind === 'favorite') return [root];
   const unavailable = item.kind === 'folder' ? subtreeIds(items, item.id) : new Set<string>();
   const folderTargets = listFolders(buildTree(items))
     .filter(({ folder }) => !unavailable.has(folder.id) && folder.id !== item.parentId)
@@ -24,13 +32,17 @@ export function itemMoveTargets(items: ItemView[], item: ItemView): MoveTarget[]
       depth,
       command: { type: 'item/move' as const, itemId: item.id, parentId: folder.id },
     }));
-  if (item.parentId === null) return folderTargets;
-  const root = {
-    key: 'root',
-    label: 'Pinned Tabs',
-    command: { type: 'item/move' as const, itemId: item.id, parentId: null },
-  };
-  return [root, ...folderTargets];
+  const favorites: MoveTarget[] =
+    item.kind === 'pinned'
+      ? [
+          {
+            key: 'favorites',
+            label: 'Favorites',
+            command: { type: 'item/favorite', itemId: item.id },
+          },
+        ]
+      : [];
+  return [...favorites, ...(item.parentId === null ? [] : [root]), ...folderTargets];
 }
 
 /** Where an Unpinned Tab can go: every Tab group but its own, then "Out of group" when it is in one. */

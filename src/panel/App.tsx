@@ -21,7 +21,7 @@ export function App() {
   useSelectionShortcuts();
   return (
     <div className="panel-background flex h-screen flex-col">
-      <main ref={scroller} aria-label="Sidearc" className="min-h-0 flex-1 overflow-y-auto p-2.5">
+      <main ref={scroller} aria-label="Sidesweep" className="min-h-0 flex-1 overflow-y-auto p-2.5">
         <FavoritesSection />
         <PinnedSection />
         <UnpinnedSection />

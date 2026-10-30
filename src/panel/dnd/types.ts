@@ -1,4 +1,4 @@
-/** One group block of the Unpinned Tabs: a Tab group, which Chrome numbers, or a site group, which Sidearc numbers. */
+/** One group block of the Unpinned Tabs: a Tab group, which Chrome numbers, or a site group, which Sidesweep numbers. */
 export type GroupRef = { kind: 'tab'; groupId: number } | { kind: 'site'; groupId: string };
 
 /**

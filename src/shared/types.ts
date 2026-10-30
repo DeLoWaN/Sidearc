@@ -32,7 +32,7 @@ export type ItemKind = 'pinned' | 'folder' | 'favorite';
 
 /** One item as the worker stores it, in `chrome.storage.local`. */
 export interface ItemRecord {
-  /** Made by Sidearc. It never is a Chrome id. */
+  /** Made by Sidesweep. It never is a Chrome id. */
   id: string;
   kind: ItemKind;
   /** The title that the user sees at rest. The user can rename it. */
@@ -106,7 +106,7 @@ export type GroupsState = {
 
 /** A site group: Unpinned Tabs opened from one another on the same site. Only the panel shows it. */
 export interface SiteGroupView {
-  /** Made by Sidearc. It never is a Chrome id. */
+  /** Made by Sidesweep. It never is a Chrome id. */
   id: string;
   /** The site of the tab that started the group, in lower case and without a leading `www.`. */
   host: string;
@@ -126,7 +126,7 @@ export type SiteGroupsState = {
 
 /** One closed tab in View Archive. */
 export interface ArchiveEntry {
-  /** Made by Sidearc. It never is a Chrome id. */
+  /** Made by Sidesweep. It never is a Chrome id. */
   id: string;
   url: string;
   title: string;

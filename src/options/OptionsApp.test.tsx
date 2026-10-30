@@ -10,14 +10,14 @@ const cssVariable = (name: string) => document.documentElement.style.getProperty
 
 it('shows the options page title', async () => {
   renderOptions(<OptionsApp />);
-  expect(await screen.findByRole('heading', { level: 1, name: 'Sidearc options' })).toBeVisible();
+  expect(await screen.findByRole('heading', { level: 1, name: 'Sidesweep options' })).toBeVisible();
 });
 
 // --- Arc import
 
 const sectionTitles = () => screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
 
-it('puts the Arc import first while Sidearc is empty', async () => {
+it('puts the Arc import first while Sidesweep is empty', async () => {
   renderOptions(<OptionsApp />, {
     answers: { 'arc-import/status': () => ({ itemCount: 0 }) },
   });
@@ -27,7 +27,7 @@ it('puts the Arc import first while Sidearc is empty', async () => {
   expect(sectionTitles()[0]).toBe('Import from Arc');
 });
 
-it('keeps the Arc import in its place, after the backup, once Sidearc holds items', async () => {
+it('keeps the Arc import in its place, after the backup, once Sidesweep holds items', async () => {
   renderOptions(<OptionsApp />, {
     answers: { 'arc-import/status': () => ({ itemCount: 4 }) },
   });
@@ -53,7 +53,7 @@ it('keeps the Arc import in its place when the worker cannot count the items', a
   expect(sectionTitles().at(-1)).toBe('Import from Arc');
 });
 
-it('does not move the Arc import after an import filled Sidearc', async () => {
+it('does not move the Arc import after an import filled Sidesweep', async () => {
   let itemCount = 0;
   const report = { favorites: 0, pinnedTabs: 1, folders: 0, favoritesIgnored: 0, skipped: 0 };
   renderOptions(<OptionsApp />, {

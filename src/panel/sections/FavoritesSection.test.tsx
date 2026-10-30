@@ -260,9 +260,9 @@ it('shows the notice that the worker sends, and hides it with the close button',
   renderFavorites([]);
   expect(screen.queryByRole('status')).toBeNull();
 
-  act(() => usePanelUi.getState().showNotice('Sidearc keeps 12 Favorites at most.'));
+  act(() => usePanelUi.getState().showNotice('Sidesweep keeps 12 Favorites at most.'));
 
-  expect(screen.getByRole('status')).toHaveTextContent('Sidearc keeps 12 Favorites at most.');
+  expect(screen.getByRole('status')).toHaveTextContent('Sidesweep keeps 12 Favorites at most.');
   await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
   expect(screen.queryByRole('status')).toBeNull();
 });
@@ -271,7 +271,7 @@ it('hides the notice by itself after a few seconds', () => {
   vi.useFakeTimers();
   renderFavorites([]);
 
-  act(() => usePanelUi.getState().showNotice('Sidearc keeps 12 Favorites at most.'));
+  act(() => usePanelUi.getState().showNotice('Sidesweep keeps 12 Favorites at most.'));
   expect(screen.getByRole('status')).toBeVisible();
   act(() => vi.advanceTimersByTime(5000));
 

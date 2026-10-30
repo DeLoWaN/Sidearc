@@ -257,7 +257,7 @@ it('refuses a 13th Favorite with a short notice and changes nothing', async () =
 
   expect(favorites()).toHaveLength(12);
   expect(JSON.stringify(items())).toBe(before);
-  expect(panel.notices).toEqual(['Sidearc keeps 12 Favorites at most. Remove one first.']);
+  expect(panel.notices).toEqual(['Sidesweep keeps 12 Favorites at most. Remove one first.']);
   expect((await browser.tabs.query({ url: 'https://a.test/' })).length).toBe(1);
 });
 

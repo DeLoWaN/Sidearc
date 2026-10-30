@@ -17,7 +17,7 @@ export const ITEMS_STORAGE_KEY = 'items';
 /** The profile has 12 Favorites already. */
 export class FavoriteLimitError extends UserError {
   constructor() {
-    super(`Sidearc keeps ${MAX_FAVORITES} Favorites at most. Remove one first.`);
+    super(`Sidesweep keeps ${MAX_FAVORITES} Favorites at most. Remove one first.`);
   }
 }
 
@@ -53,7 +53,7 @@ async function change(update: (items: ItemRecord[]) => ItemRecord[]) {
 }
 
 /**
- * Adds an item at the index among the items of its parent, or at the end. Returns it with the id that Sidearc made.
+ * Adds an item at the index among the items of its parent, or at the end. Returns it with the id that Sidesweep made.
  * A Favorite has no parent and goes in the Favorites.
  * Throws, and adds nothing, when the parent is not a Folder, or when 12 Favorites exist.
  */

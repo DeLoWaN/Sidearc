@@ -172,7 +172,7 @@ function planTabDrop(state: SidebarState, source: TabView, target: DropTarget): 
 }
 
 /**
- * The command that moves a selection to one place, or null when Sidearc refuses the move and changes nothing.
+ * The command that moves a selection to one place, or null when Sidesweep refuses the move and changes nothing.
  * "Move to…" and the drops of a selection both come here, so they send the same command.
  */
 export function planSelectionMove(
@@ -249,7 +249,7 @@ function planSelectionDrop(
 }
 
 /**
- * The command that a drop sends, or null when Sidearc refuses the drop and changes nothing.
+ * The command that a drop sends, or null when Sidesweep refuses the drop and changes nothing.
  * The worker still refuses what depends on its own data, such as a 13th Favorite.
  */
 export function planDrop(

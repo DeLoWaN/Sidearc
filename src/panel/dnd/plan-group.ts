@@ -129,7 +129,7 @@ function planSiteGroupMove(
 }
 
 /**
- * The command that moves a whole group to a drop target, or null when Sidearc refuses the move or it changes nothing.
+ * The command that moves a whole group to a drop target, or null when Sidesweep refuses the move or it changes nothing.
  * A tab row that is a member of a group counts as the edge of its block, so a group never lands inside another group.
  * `index` counts the strip as the move leaves it: the tabs of the group have left their old place.
  */

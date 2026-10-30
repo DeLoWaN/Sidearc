@@ -105,8 +105,8 @@ export function BackupSection() {
             onFile={chooseFile}
           />
           <p className="text-xs text-(--text-muted)">
-            Replaces all your Sidearc data with the content of a backup file. Asks for confirmation
-            first.
+            Replaces all your Sidesweep data with the content of a backup file. Asks for
+            confirmation first.
           </p>
         </div>
       </div>

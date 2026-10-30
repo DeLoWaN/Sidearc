@@ -51,7 +51,7 @@ const importRuns = (ask: ReturnType<typeof renderSection>['ask']) =>
 
 // --- the guide
 
-it('is always on the page, whatever Sidearc holds', () => {
+it('is always on the page, whatever Sidesweep holds', () => {
   renderSection({ itemCount: 12 });
 
   expect(screen.getByRole('heading', { name: 'Import from Arc' })).toBeVisible();
@@ -65,20 +65,20 @@ it('explains the import in four numbered steps', () => {
 
   expect(steps).toHaveLength(4);
   expect(steps[0]).toHaveTextContent(
-    'Sidearc reads the file where Arc keeps your sidebar. Arc can stay open.',
+    'Sidesweep reads the file where Arc keeps your sidebar. Arc can stay open.',
   );
   expect(steps[1]).toHaveTextContent('Click Choose Arc file.');
   expect(steps[1]).toHaveTextContent(
     'In the file window, press ⌘ Shift G, paste the path below, press Enter, then click Open.',
   );
   expect(steps[2]).toHaveTextContent('Pick the Arc space to import.');
-  expect(steps[2]).toHaveTextContent('Sidearc imports one space.');
+  expect(steps[2]).toHaveTextContent('Sidesweep imports one space.');
   expect(steps[2]).toHaveTextContent(
-    "Each Chrome profile has its own Sidearc data, so import 'Perso' in your Perso profile and 'IWD' in your IWD profile.",
+    "Each Chrome profile has its own Sidesweep data, so import 'Perso' in your Perso profile and 'IWD' in your IWD profile.",
   );
   expect(steps[3]).toHaveTextContent('Click Import.');
   expect(steps[3]).toHaveTextContent(
-    'Sidearc shows how many Favorites, Pinned Tabs and Folders it imported.',
+    'Sidesweep shows how many Favorites, Pinned Tabs and Folders it imported.',
   );
 });
 
@@ -127,7 +127,7 @@ it('tells the user to copy the path by hand when the clipboard refuses', async (
   await user.click(screen.getByRole('button', { name: 'Copy path' }));
 
   expect(await screen.findByRole('alert')).toHaveTextContent(
-    'Sidearc could not copy the path. Select it and copy it by hand.',
+    'Sidesweep could not copy the path. Select it and copy it by hand.',
   );
 });
 
@@ -172,7 +172,7 @@ it('counts the Pinned Tabs and Folders of the chosen space', async () => {
   expect(screen.getByText(/in this space/)).toHaveTextContent('1 Pinned Tab and 1 Folder');
 });
 
-it('imports into an empty Sidearc without a question, then shows the counts', async () => {
+it('imports into an empty Sidesweep without a question, then shows the counts', async () => {
   const { ask } = renderSection({ itemCount: 0 });
   await chooseFile(arcFile());
   await chooseSpace(ALPHA);
@@ -198,7 +198,7 @@ it('asks before it replaces the items, with their number and the name of the spa
     name: 'Replace your Favorites, Pinned Tabs and Folders?',
   });
   expect(dialog).toHaveTextContent(
-    'Replace your Favorites, Pinned Tabs and Folders? Sidearc has 7 items now. The import replaces them with the Arc space "Beta". Export a backup first if you want to keep them.',
+    'Replace your Favorites, Pinned Tabs and Folders? Sidesweep has 7 items now. The import replaces them with the Arc space "Beta". Export a backup first if you want to keep them.',
   );
   expect(within(dialog).getByRole('button', { name: 'Replace my data' })).toBeVisible();
   expect(importRuns(ask)).toHaveLength(0);
@@ -248,7 +248,7 @@ it('reads the number of items again at each click, so a pin made meanwhile is no
   itemCount = 1;
   await userEvent.click(screen.getByRole('button', { name: 'Import' }));
 
-  expect(await screen.findByRole('alertdialog')).toHaveTextContent('Sidearc has 1 item now.');
+  expect(await screen.findByRole('alertdialog')).toHaveTextContent('Sidesweep has 1 item now.');
 });
 
 it('mentions the Favorites left out and the items skipped in the report', async () => {
@@ -341,6 +341,6 @@ it('names the Favorite limit with the shared constant', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Import' }));
 
   expect(await screen.findByRole('status')).toHaveTextContent(
-    `Sidearc keeps ${MAX_FAVORITES} Favorites at most`,
+    `Sidesweep keeps ${MAX_FAVORITES} Favorites at most`,
   );
 });

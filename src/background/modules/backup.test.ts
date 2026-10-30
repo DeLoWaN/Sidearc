@@ -36,7 +36,7 @@ it('exports one versioned document with the items, the settings and the archive'
 
   const backup = JSON.parse(await exportBackup());
 
-  expect(backup).toMatchObject({ format: 'sidearc-backup', version: 1 });
+  expect(backup).toMatchObject({ format: 'sidesweep-backup', version: 1 });
   expect(Number.isNaN(Date.parse(backup.exportedAt))).toBe(false);
   expect(backup.items.map((item: { title: string }) => item.title).sort()).toEqual([
     'Work',
@@ -210,18 +210,18 @@ const refusals: [name: string, edit: (doc: Doc) => string][] = [
     'a wrong format name',
     (doc) => {
       doc.format = 'arc-backup';
-      return 'The file is not a Sidearc backup: format must be "sidearc-backup", got "arc-backup"';
+      return 'The file is not a Sidesweep backup: format must be "sidesweep-backup", got "arc-backup"';
     },
   ],
   [
     'an unknown version',
     (doc) => {
       doc.version = 2;
-      return 'Unknown backup version 2: this Sidearc reads version 1';
+      return 'Unknown backup version 2: this Sidesweep reads version 1';
     },
   ],
   [
-    'an item with a kind that Sidearc does not know',
+    'an item with a kind that Sidesweep does not know',
     (doc) => {
       itemOf(doc, 'Work').kind = 'bookmark';
       return `${pathOf(doc, 'Work')}.kind must be pinned, folder or favorite, got "bookmark"`;
@@ -319,7 +319,7 @@ const refusals: [name: string, edit: (doc: Doc) => string][] = [
 
 it.each([
   ['text that is not JSON', 'not json {', 'The file is not valid JSON'],
-  ['a JSON list', '[]', 'The file is not a Sidearc backup: it must hold an object'],
+  ['a JSON list', '[]', 'The file is not a Sidesweep backup: it must hold an object'],
 ])('refuses %s with a precise error', async (_name, text, error) => {
   expect(await inspectBackup(text)).toEqual({ ok: false, error });
   expect(await importBackup(text)).toEqual({ ok: false, error });

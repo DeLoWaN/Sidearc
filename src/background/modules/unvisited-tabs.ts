@@ -31,7 +31,7 @@ const unvisitedTabs: WorkerModule = {
   order: 10,
   start() {
     browser.tabs.onCreated.addListener((tab) => {
-      // A tab without an opener comes from Chrome itself or from Sidearc, not from a link.
+      // A tab without an opener comes from Chrome itself or from Sidesweep, not from a link.
       if (tab.active || tab.id === undefined || tab.openerTabId === undefined) return;
       const tabId = tab.id;
       change((ids) => [...ids.filter((id) => id !== tabId), tabId]);

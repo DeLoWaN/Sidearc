@@ -2,7 +2,7 @@ import { expect, test } from './fixtures';
 
 // Playwright cannot drive the real side panel, so these tests open the panel page in a normal tab.
 
-test('the panel page opens without an error and shows the Sidearc page', async ({
+test('the panel page opens without an error and shows the Sidesweep page', async ({
   context,
   extensionId,
 }) => {
@@ -13,14 +13,14 @@ test('the panel page opens without an error and shows the Sidearc page', async (
     if (message.type() === 'error') problems.push(message.text());
   });
   await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
-  await expect(panel.getByRole('main', { name: 'Sidearc' })).toBeAttached();
+  await expect(panel.getByRole('main', { name: 'Sidesweep' })).toBeAttached();
   expect(problems).toEqual([]);
 });
 
 test('the options page opens and shows its title', async ({ context, extensionId }) => {
   const options = await context.newPage();
   await options.goto(`chrome-extension://${extensionId}/options.html`);
-  await expect(options.getByRole('heading', { name: 'Sidearc options' })).toBeVisible();
+  await expect(options.getByRole('heading', { name: 'Sidesweep options' })).toBeVisible();
 });
 
 test('the worker answers a one-off request from the panel page', async ({

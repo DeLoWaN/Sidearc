@@ -11,7 +11,7 @@ import { readSource } from './use-dnd';
 
 /**
  * Turns every drop of the panel into one command, and scrolls the panel while the pointer is near its edge.
- * The innermost drop target decides. No command goes out when Sidearc refuses the drop.
+ * The innermost drop target decides. No command goes out when Sidesweep refuses the drop.
  * Does nothing while a search shows.
  */
 export function usePanelDnd(scroller: RefObject<HTMLElement | null>) {

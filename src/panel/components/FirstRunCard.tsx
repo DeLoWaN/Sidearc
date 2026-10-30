@@ -3,7 +3,7 @@ import { usePanel } from '../panel-context';
 /** The key that the `pin-current-tab` command of the manifest suggests. */
 const PIN_SHORTCUT = 'Alt+Shift+P';
 
-/** A card for an empty Sidearc. Its button opens the options page, where the Arc import is. */
+/** A card for an empty Sidesweep. Its button opens the options page, where the Arc import is. */
 export function FirstRunCard() {
   const { send } = usePanel();
   return (

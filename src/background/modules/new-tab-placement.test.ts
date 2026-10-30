@@ -195,7 +195,7 @@ it('leaves an extension page that nobody asked for as a New Tab page', async () 
   expect(await firstUrl()).toBe('https://a.test/');
 });
 
-it('leaves a page of Sidearc itself that loads in a New Tab page', async () => {
+it('leaves a page of Sidesweep itself that loads in a New Tab page', async () => {
   const move = refuseMoves(10);
   const id = await reportCreated({ url: '', pendingUrl: 'chrome://newtab/' });
 

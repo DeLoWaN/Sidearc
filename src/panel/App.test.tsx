@@ -12,11 +12,11 @@ beforeEach(() => {
   resetPanelUi();
 });
 
-it('shows the tabs of the state in the Sidearc page', () => {
+it('shows the tabs of the state in the Sidesweep page', () => {
   const state = makeState({ unpinnedTabs: [makeTab({ title: 'Mail' })] });
   renderPanel(<App />, { state });
 
-  const page = screen.getByRole('main', { name: 'Sidearc' });
+  const page = screen.getByRole('main', { name: 'Sidesweep' });
   expect(page).toHaveTextContent('Mail');
 });
 

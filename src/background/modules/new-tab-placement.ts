@@ -4,7 +4,7 @@ import { activeTabsOf, noteActiveTab, noteOpenWindows } from '../active-tabs';
 import { readPlacementLog, recordPlacement } from '../placement-log';
 import { createQueue } from '../queue';
 import { registerRpc } from '../registry';
-import { isCreatingTabBySidearc } from '../sidearc-tabs';
+import { isCreatingTabBySidesweep } from '../sidesweep-tabs';
 import type { WorkerModule } from '../worker-module';
 import { getSettings } from './settings';
 
@@ -165,8 +165,8 @@ const newTabPlacement: WorkerModule = {
     browser.tabs.onCreated.addListener((tab) => {
       if (tab.id === undefined) return;
       for (const [id, watch] of watches) if (Date.now() - watch.openedAt > WATCH_MS) forget(id);
-      // Chrome fires `tabs.onCreated` before `tabs.create` answers, so a tab of Sidearc looks like a tab of the user.
-      if (isCreatingTabBySidearc(tab.windowId)) return;
+      // Chrome fires `tabs.onCreated` before `tabs.create` answers, so a tab of Sidesweep looks like a tab of the user.
+      if (isCreatingTabBySidesweep(tab.windowId)) return;
       watches.set(tab.id, {
         windowId: tab.windowId,
         firstPendingUrl: tab.pendingUrl ?? '',

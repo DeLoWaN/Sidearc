@@ -57,7 +57,7 @@ test('the Arc import stays on the options page, asks before it replaces the data
 
   await importSpace(options, 'Alpha');
   const dialog = options.getByRole('alertdialog');
-  await expect(dialog).toContainText('Sidearc has 14 items now.');
+  await expect(dialog).toContainText('Sidesweep has 14 items now.');
   await expect(dialog).toContainText('the Arc space "Alpha"');
 
   await dialog.getByRole('button', { name: 'Cancel' }).click();

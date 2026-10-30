@@ -41,7 +41,7 @@ test('the panel shows the open tabs, activates one and closes one', async ({
   await expect(formRow).toBeVisible();
   await expect(otherRow).toBeVisible();
   // The panel page is the tab on screen in its window.
-  await expect(panel.getByRole('button', { name: 'Sidearc', exact: true })).toHaveAttribute(
+  await expect(panel.getByRole('button', { name: 'Sidesweep', exact: true })).toHaveAttribute(
     'aria-current',
     'true',
   );

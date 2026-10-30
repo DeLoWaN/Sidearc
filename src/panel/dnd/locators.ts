@@ -105,7 +105,7 @@ export const tabRowTarget =
     return edge && { zone: 'tab-row', tabId, edge: edge === 'top' ? 'above' : 'below' };
   };
 
-/** The top half of a block is "above" it and the bottom half is "below" it. A group that drops on its own block gets a target too, and the planner refuses it. */
+/** The top half of a block is "above" and the bottom half is "below". The group's own block gets a target too, so that the section does not take the drop. */
 const groupEdgeTarget =
   (group: GroupRef): Locate =>
   ({ input, element }) => {

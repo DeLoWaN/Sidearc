@@ -1,7 +1,7 @@
 {
   "name": "sidearc",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "license": "GPL-3.0-or-later",
   "type": "module",
   "devDependencies": {
@@ -41,6 +41,7 @@
     "format:check": "biome format .",
     "typecheck": "wxt prepare && tsc -p tsconfig.json",
     "test": "vitest run",
-    "test:e2e": "wxt build && playwright test"
+    "test:e2e": "wxt build && playwright test",
+    "zip": "wxt zip"
   }
 }

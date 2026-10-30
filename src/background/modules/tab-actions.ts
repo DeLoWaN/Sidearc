@@ -1,5 +1,6 @@
 import { createQueue } from '../queue';
 import { registerCommand } from '../registry';
+import { withSidebarHeld } from '../sidebar-hub';
 import type { WorkerModule } from '../worker-module';
 import { addItem, getItems } from './item-store';
 import { getLiveTabs, linkLiveTab } from './live-tab-registry';
@@ -66,8 +67,11 @@ const tabActions: WorkerModule = {
         if (liveTabId !== undefined) return showTab(liveTabId, windowId);
         const item = (await getItems()).find((candidate) => candidate.id === itemId);
         if (!item) return;
-        const tab = await browser.tabs.create({ windowId, url: item.url, active: true });
-        await linkLiveTab(item.id, tab.id as number);
+        // No panel may see the new tab before the link exists: it would list the tab as an Unpinned Tab.
+        await withSidebarHeld(async () => {
+          const tab = await browser.tabs.create({ windowId, url: item.url, active: true });
+          await linkLiveTab(item.id, tab.id as number);
+        });
       }),
     );
 

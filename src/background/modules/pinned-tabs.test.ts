@@ -100,6 +100,22 @@ it('opens a Pinned Tab at rest in the window of the panel, as its live tab', asy
   expect(unpinned()).toEqual(['https://b.test/', 'https://c.test/']);
 });
 
+it('never shows the tab of an opening Pinned Tab as an Unpinned Tab, not even for one state', async () => {
+  const { panel, items } = await connectedPanel([['https://a.test/', 'https://b.test/']]);
+  await pinnedAtRest('https://a.test/');
+  const itemId = items()[0]?.id as string;
+  const before = panel.states.length;
+
+  panel.send({ type: 'item/open', itemId });
+  await settle();
+
+  const received = panel.states.slice(before);
+  expect(received.length).toBeGreaterThan(0);
+  for (const state of received)
+    expect(state.unpinnedTabs.map((tab) => tab.url)).not.toContain('https://a.test/');
+  expect(received.at(-1)?.items[0]?.live).toBeDefined();
+});
+
 it('never makes a second tab when the panel asks twice at once', async () => {
   const { panel, items } = await connectedPanel([['https://a.test/', 'https://b.test/']]);
   await pinnedAtRest('https://a.test/');

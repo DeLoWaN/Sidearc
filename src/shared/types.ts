@@ -29,7 +29,34 @@ export type TabsState = {
 export type ItemsState = unknown;
 
 // tab groups (#9)
-export type GroupsState = unknown;
+
+/** The colours of a Chrome Tab group. */
+export type TabGroupColor =
+  | 'grey'
+  | 'blue'
+  | 'red'
+  | 'yellow'
+  | 'green'
+  | 'pink'
+  | 'purple'
+  | 'cyan'
+  | 'orange';
+
+/** One Chrome Tab group, as the panel shows it. */
+export interface TabGroupView {
+  id: number;
+  windowId: number;
+  title: string;
+  color: TabGroupColor;
+  collapsed: boolean;
+  /** The tabs of the group in tab strip order. A tab that the panel does not list is ignored. */
+  tabIds: number[];
+}
+
+export type GroupsState = {
+  /** The Tab groups of all windows in tab strip order: windows by id, groups by first tab. */
+  tabGroups: TabGroupView[];
+};
 
 // settings (#14)
 export type SettingsState = unknown;

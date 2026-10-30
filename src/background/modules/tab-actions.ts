@@ -5,7 +5,7 @@ import { addItem, getItems } from './item-store';
 import { getLiveTabs, linkLiveTab } from './live-tab-registry';
 
 // "Is there a live tab?" and "make one" must not overlap, or two clicks would open two tabs.
-const itemActions = createQueue();
+export const itemActions = createQueue();
 
 // Tab Handoff: the tab moves to the window of the panel. It never reloads or duplicates.
 async function showTab(tabId: number, windowId: number) {
@@ -14,14 +14,28 @@ async function showTab(tabId: number, windowId: number) {
   await browser.tabs.update(tabId, { active: true });
 }
 
-/** Saves the tab as a Pinned Tab at the root, and makes the tab its live tab. Does nothing for a tab that already has an item. */
-export function pinTab(tab: chrome.tabs.Tab) {
+/** Where a new item goes. The index counts the items of the parent. */
+export interface Placement {
+  kind: 'pinned' | 'favorite';
+  parentId: string | null;
+  index?: number;
+}
+
+/**
+ * Saves the tab as an item, at the end of the root as a Pinned Tab unless the placement says otherwise.
+ * The tab becomes its live tab. Does nothing for a tab that already has an item.
+ * Throws when the placement is not valid, for example a 13th Favorite.
+ */
+export function pinTab(
+  tab: chrome.tabs.Tab,
+  placement: Placement = { kind: 'pinned', parentId: null },
+) {
   return itemActions.run(async () => {
     const url = tab.url || tab.pendingUrl;
     if (tab.id === undefined || !url) return;
     const linked = await getLiveTabs();
     if ([...linked.values()].includes(tab.id)) return;
-    const item = await addItem({ kind: 'pinned', title: tab.title || url, url });
+    const item = await addItem({ ...placement, title: tab.title || url, url });
     await linkLiveTab(item.id, tab.id);
   });
 }

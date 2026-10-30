@@ -71,7 +71,25 @@ export type ArchiveCommand =
   { type: 'archive/reopen'; entryId: string };
 
 // drag and drop (#11)
-export type DragCommand = never;
+export type DragCommand =
+  /**
+   * Saves an Unpinned Tab as a Pinned Tab or a Favorite with its URL and title, and the tab becomes its live tab.
+   * The item goes to `index` among the items of the parent, or to the end. A Favorite has no parent.
+   * Does nothing when the tab already has an item or the parent is not a Folder.
+   * Sends a notice and changes nothing for a 13th Favorite.
+   */
+  | {
+      type: 'item/from-tab';
+      tabId: number;
+      kind: 'pinned' | 'favorite';
+      parentId: string | null;
+      index?: number;
+    }
+  /**
+   * Deletes a Pinned Tab or a Favorite and keeps it as an Unpinned Tab: its live tab stays open.
+   * An item at rest opens its saved URL in a new tab in the window of the panel. Does nothing for a Folder.
+   */
+  | { type: 'item/unpin'; itemId: string };
 
 // search (#13)
 export type SearchCommand = never;

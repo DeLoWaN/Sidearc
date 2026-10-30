@@ -39,8 +39,8 @@ async function change(update: (items: ItemRecord[]) => ItemRecord[]) {
 }
 
 /**
- * Adds an item at the end of its parent. Returns it with the id that Sidearc made.
- * A Favorite has no parent and goes at the end of the Favorites.
+ * Adds an item at the index among the items of its parent, or at the end. Returns it with the id that Sidearc made.
+ * A Favorite has no parent and goes in the Favorites.
  * Throws, and adds nothing, when the parent is not a Folder, or when 12 Favorites exist.
  */
 export async function addItem(input: {
@@ -48,6 +48,7 @@ export async function addItem(input: {
   title: string;
   url: string;
   parentId?: string | null;
+  index?: number;
 }): Promise<ItemRecord> {
   const favorite = input.kind === 'favorite';
   const parentId = favorite ? null : (input.parentId ?? null);
@@ -64,7 +65,8 @@ export async function addItem(input: {
       position: endPosition(items, parentId, favorite),
       collapsed: false,
     };
-    return [...items, added];
+    const all = [...items, added];
+    return input.index === undefined ? all : place(all, added.id, {}, input.index);
   });
   return added as ItemRecord;
 }

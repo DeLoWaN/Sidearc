@@ -44,7 +44,7 @@ test('Folders: create, collapse, move a Pinned Tab with its live tab, and delete
     serviceWorker.evaluate(async (url) => (await chrome.tabs.query({ url })).length, savedUrl);
 
   // Create a Folder inside "Home".
-  await expect(inWork.getByRole('button', { name: 'Saved' })).toBeVisible();
+  await expect(inWork.getByRole('button', { name: 'Saved', exact: true })).toBeVisible();
   await panel.getByRole('button', { name: 'Home', exact: true }).click({ button: 'right' });
   await panel.getByRole('menuitem', { name: 'New folder' }).click();
   await panel.getByRole('textbox', { name: 'Name of the new folder' }).fill('Archive');
@@ -61,7 +61,7 @@ test('Folders: create, collapse, move a Pinned Tab with its live tab, and delete
   await panel.getByRole('menuitem', { name: 'Home', exact: true }).click();
   const inHome = panel.getByRole('list', { name: 'Home content' });
   await expect(inHome.getByRole('button', { name: 'Saved', exact: true })).toBeVisible();
-  await expect(inWork.getByRole('button', { name: 'Saved' })).toBeHidden();
+  await expect(inWork.getByRole('button', { name: 'Saved', exact: true })).toBeHidden();
   await expect(panel.getByRole('button', { name: 'Close Saved' })).toBeAttached();
   await expect.poll(tabsOnSavedUrl).toBe(1);
 

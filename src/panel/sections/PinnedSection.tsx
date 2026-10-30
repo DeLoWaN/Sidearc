@@ -1,23 +1,34 @@
-import { PinnedRow } from '../components/PinnedRow';
-import { usePanel } from '../panel-context';
+import { buildTree } from '../build-tree';
+import { ItemList } from '../components/ItemTree';
 import { usePanelStore } from '../store';
+import { usePanelUi } from '../ui-store';
 
-/** The Pinned Tabs, in the order of the state. Ticket #5 adds the Folders. */
+/** The Pinned Tabs as a tree of Folders. */
 export function PinnedSection() {
-  const { windowId } = usePanel();
   const items = usePanelStore((store) => store.state.items);
-  if (items.length === 0) return null;
+  const { openMenu, startCreateFolder } = usePanelUi();
   return (
-    <section aria-label="Pinned Tabs">
-      <ul>
-        {items.map((item) => (
-          <PinnedRow
-            key={item.id}
-            item={item}
-            highlighted={Boolean(item.live?.active && item.live.windowId === windowId)}
-          />
-        ))}
-      </ul>
+    <section
+      aria-label="Pinned Tabs"
+      onContextMenu={(event) => {
+        // A row has its own menu and has already handled the click.
+        if (event.defaultPrevented) return;
+        event.preventDefault();
+        openMenu(null, event.clientX, event.clientY);
+      }}
+    >
+      <div className="flex h-7 items-center justify-between px-2.5 text-[11px] font-semibold text-(--text-muted) uppercase">
+        <span aria-hidden="true">Pinned</span>
+        <button
+          type="button"
+          aria-label="New folder"
+          onClick={() => startCreateFolder(null)}
+          className="size-5 rounded-md hover:bg-(--row-hover)"
+        >
+          +
+        </button>
+      </div>
+      <ItemList nodes={buildTree(items)} parentId={null} label="Pinned Tabs list" />
     </section>
   );
 }

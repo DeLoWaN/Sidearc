@@ -120,7 +120,7 @@ function openMenu(title: string) {
   return screen.getByRole('menu');
 }
 
-it('offers rename, Reset, copy URL and delete in a right-click menu', () => {
+it('offers rename, Reset, copy URL, Move to… and delete in a right-click menu', () => {
   renderPinned({ state: makeState({ items: [makeItem({ title: 'Mail', live: { tabId: 7 } })] }) });
 
   const menu = openMenu('Mail');
@@ -129,7 +129,7 @@ it('offers rename, Reset, copy URL and delete in a right-click menu', () => {
     within(menu)
       .getAllByRole('menuitem')
       .map((entry) => entry.textContent),
-  ).toEqual(['Rename', 'Reset', 'Copy URL', 'Delete']);
+  ).toEqual(['Rename', 'Reset', 'Copy URL', 'Move to…', 'Delete']);
 });
 
 it('resets the item from the right-click menu and closes the menu', async () => {

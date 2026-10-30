@@ -1,3 +1,4 @@
+import { endPosition, isFolderOrRoot, subtreeIds } from '../../shared/item-tree';
 import type { ItemKind, ItemRecord } from '../../shared/types';
 import { createQueue } from '../queue';
 import { registerCommand } from '../registry';
@@ -26,7 +27,10 @@ async function change(update: (items: ItemRecord[]) => ItemRecord[]) {
   });
 }
 
-/** Adds an item at the end of its parent. Returns it with the id that Sidearc made. */
+/**
+ * Adds an item at the end of its parent. Returns it with the id that Sidearc made.
+ * Throws, and adds nothing, when the parent is not a Folder.
+ */
 export async function addItem(input: {
   kind: ItemKind;
   title: string;
@@ -36,14 +40,14 @@ export async function addItem(input: {
   const parentId = input.parentId ?? null;
   let added: ItemRecord | undefined;
   await change((items) => {
-    const siblings = items.filter((item) => item.parentId === parentId);
+    if (!isFolderOrRoot(items, parentId)) throw new Error(`Not a Folder: ${parentId}`);
     added = {
       id: crypto.randomUUID(),
       kind: input.kind,
       title: input.title,
       url: input.url,
       parentId,
-      position: Math.max(-1, ...siblings.map((item) => item.position)) + 1,
+      position: endPosition(items, parentId),
       collapsed: false,
     };
     return [...items, added];
@@ -60,8 +64,35 @@ export async function renameItem(id: string, title: string) {
   );
 }
 
+/** Collapses an open Folder or opens a collapsed one. Ignores anything that is not a Folder. */
+export async function toggleFolder(id: string) {
+  await change((items) =>
+    items.map((item) =>
+      item.id === id && item.kind === 'folder' ? { ...item, collapsed: !item.collapsed } : item,
+    ),
+  );
+}
+
+/**
+ * Puts the item at the end of another Folder, or at the root when `parentId` is null.
+ * Does nothing when the target is not a Folder, is the item itself or lies below it.
+ */
+export async function moveItem(id: string, parentId: string | null) {
+  await change((items) => {
+    const moved = items.find((item) => item.id === id);
+    if (!moved || moved.parentId === parentId || !isFolderOrRoot(items, parentId)) return items;
+    if (parentId !== null && subtreeIds(items, id).has(parentId)) return items;
+    const position = endPosition(items, parentId);
+    return items.map((item) => (item.id === id ? { ...item, parentId, position } : item));
+  });
+}
+
+/** Deletes the item and, for a Folder, everything below it. */
 export async function deleteItem(id: string) {
-  await change((items) => items.filter((item) => item.id !== id));
+  await change((items) => {
+    const doomed = subtreeIds(items, id);
+    return items.filter((item) => !doomed.has(item.id));
+  });
 }
 
 const itemStore: WorkerModule = {

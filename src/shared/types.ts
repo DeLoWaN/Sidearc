@@ -27,8 +27,8 @@ export type TabsState = {
 
 // items (#4, #5, #6)
 
-/** What an item is. Tickets #5 and #6 add 'folder' and 'favorite'. */
-export type ItemKind = 'pinned';
+/** What an item is. Ticket #6 adds 'favorite'. */
+export type ItemKind = 'pinned' | 'folder';
 
 /** One item as the worker stores it, in `chrome.storage.local`. */
 export interface ItemRecord {
@@ -37,7 +37,7 @@ export interface ItemRecord {
   kind: ItemKind;
   /** The title that the user sees at rest. The user can rename it. */
   title: string;
-  /** The saved URL. Reset sends the live tab back to it. */
+  /** The saved URL. Reset sends the live tab back to it. Empty for a Folder. */
   url: string;
   /** The Folder that holds the item, or null at the root. */
   parentId: string | null;

@@ -6,14 +6,11 @@ import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
 import { selectOnClick, useRowSelection } from '../selection-actions';
 import { usePanelUi } from '../ui-store';
-import { CloseIcon } from './CloseIcon';
+import { DeleteCross, rowButton } from './DeleteCross';
 import { RenameField } from './RenameField';
 import { SiteIcon } from './SiteIcon';
 import { useItemContextMenu } from './use-item-context-menu';
 import { useMiddleClickClose } from './use-middle-click-close';
-
-const iconButton =
-  'mr-1 grid size-5 shrink-0 place-items-center rounded-md text-(--text-muted) hover:bg-(--row-hover) focus-visible:opacity-100';
 
 /**
  * One Pinned Tab. At rest the row is faded. With an open live tab it shows a close button.
@@ -93,7 +90,7 @@ export function PinnedRow({
           type="button"
           aria-label={`Reset ${item.title}`}
           onClick={() => send({ type: 'item/reset', itemId: item.id })}
-          className={iconButton}
+          className={rowButton}
         >
           <svg
             aria-hidden="true"
@@ -114,7 +111,7 @@ export function PinnedRow({
           type="button"
           aria-label={`Close ${item.title}`}
           onClick={() => send({ type: 'tab/close', tabId: live.tabId })}
-          className={`${iconButton} opacity-0 group-hover:opacity-100`}
+          className={`${rowButton} opacity-0 group-hover:opacity-100`}
         >
           <svg
             aria-hidden="true"
@@ -129,14 +126,10 @@ export function PinnedRow({
           </svg>
         </button>
       )}
-      <button
-        type="button"
-        aria-label={`Delete ${item.title}`}
-        onClick={() => send({ type: 'item/delete', itemId: item.id })}
-        className={`${iconButton} mr-2 opacity-0 group-hover:opacity-100`}
-      >
-        <CloseIcon />
-      </button>
+      <DeleteCross
+        title={item.title}
+        onDelete={() => send({ type: 'item/delete', itemId: item.id })}
+      />
     </li>
   );
 }

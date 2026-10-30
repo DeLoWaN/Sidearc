@@ -7,9 +7,12 @@ import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
 import { selectOnClick, useRowSelection } from '../selection-actions';
 import { usePanelUi } from '../ui-store';
+import { DeleteCross } from './DeleteCross';
 import { ItemList } from './ItemTree';
 import { RenameField } from './RenameField';
+import { useDeleteItem } from './use-delete-item';
 import { useItemContextMenu } from './use-item-context-menu';
+import { useMiddleClickClose } from './use-middle-click-close';
 
 const folderIcon = (
   <svg
@@ -30,27 +33,31 @@ export function FolderRow({ item, nodes }: { item: ItemView; nodes: TreeNode[] }
   const { send } = usePanel();
   const { renamingId } = usePanelUi();
   const onContextMenu = useItemContextMenu(item.id);
+  const deleteItem = useDeleteItem();
+  const renaming = renamingId === item.id;
+  const middleClick = useMiddleClickClose(renaming ? undefined : () => deleteItem(item.id));
   const selectable = { kind: 'item', id: item.id } as const;
   const { selected, marking } = useRowSelection(selectable);
   const header = useRef<HTMLDivElement>(null);
   const { placement, dragging } = useDnd(header, {
     source: { type: 'item', itemId: item.id },
     row: selectable,
-    canDrag: renamingId !== item.id,
+    canDrag: !renaming,
     locate: folderRowTarget(item),
   });
   return (
     <li data-drop={placement ?? undefined}>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: the context menu key on the row button reaches this handler too. */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: the context menu key on the row button reaches this handler too; the middle click is a pointer shortcut. */}
       <div
         ref={header}
         data-dragging={dragging || undefined}
         data-selected={selected || undefined}
         onContextMenu={onContextMenu}
-        className="relative flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover) data-dragging:opacity-40"
+        {...middleClick}
+        className="group relative flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover) data-dragging:opacity-40"
       >
         {placement && <DropIndicator placement={placement} />}
-        {renamingId === item.id ? (
+        {renaming ? (
           <div className="flex h-full min-w-0 flex-1 items-center gap-2.5 px-2.5">
             {folderIcon}
             <RenameField item={item} />
@@ -82,6 +89,7 @@ export function FolderRow({ item, nodes }: { item: ItemView; nodes: TreeNode[] }
             <span className="truncate font-medium">{item.title}</span>
           </button>
         )}
+        {!renaming && <DeleteCross title={item.title} onDelete={() => deleteItem(item.id)} />}
       </div>
       {!item.collapsed && (
         <div className="ml-3.5 border-l border-(--row-hover) pl-1">

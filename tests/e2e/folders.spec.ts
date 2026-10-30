@@ -50,7 +50,9 @@ test('Folders: create, collapse, move a Pinned Tab with its live tab, and delete
   await panel.getByRole('textbox', { name: 'Name of the new folder' }).fill('Archive');
   await panel.keyboard.press('Enter');
   await expect(
-    panel.getByRole('list', { name: 'Home content' }).getByRole('button', { name: 'Archive' }),
+    panel
+      .getByRole('list', { name: 'Home content' })
+      .getByRole('button', { name: 'Archive', exact: true }),
   ).toBeVisible();
 
   // Open the live tab, then move the Pinned Tab into "Home": the live tab stays.

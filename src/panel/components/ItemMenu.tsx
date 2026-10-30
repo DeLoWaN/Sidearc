@@ -1,4 +1,3 @@
-import { countBelow } from '../../shared/item-tree';
 import { copyToClipboard } from '../clipboard';
 import { itemMoveTargets } from '../move-targets';
 import { usePanel } from '../panel-context';
@@ -6,6 +5,7 @@ import { usePanelStore } from '../store';
 import { usePanelUi } from '../ui-store';
 import { MoveToSubMenu } from './MoveToSubMenu';
 import { ContextMenu, MenuItem, MenuSeparator } from './menu';
+import { useDeleteItem } from './use-delete-item';
 
 /**
  * The right-click menu of an item: New folder for a Folder, rename, Reset and copy URL for a link,
@@ -13,7 +13,8 @@ import { ContextMenu, MenuItem, MenuSeparator } from './menu';
  */
 export function ItemMenu() {
   const { send } = usePanel();
-  const { menu, closeMenu, startRename, startCreateFolder, askDeleteConfirmation } = usePanelUi();
+  const { menu, closeMenu, startRename, startCreateFolder } = usePanelUi();
+  const deleteItem = useDeleteItem();
   const items = usePanelStore((store) => store.state.items);
   const item = items.find((i) => i.id === menu?.itemId);
 
@@ -56,15 +57,7 @@ export function ItemMenu() {
           )}
           <MoveToSubMenu targets={itemMoveTargets(items, item)} onChoose={send} />
           <MenuSeparator />
-          <MenuItem
-            danger
-            onSelect={() =>
-              // Deleting a Folder deletes its content too: the user must confirm that.
-              countBelow(items, item.id) > 0
-                ? askDeleteConfirmation(item.id)
-                : send({ type: 'item/delete', itemId: item.id })
-            }
-          >
+          <MenuItem danger onSelect={() => deleteItem(item.id)}>
             Delete
           </MenuItem>
         </>

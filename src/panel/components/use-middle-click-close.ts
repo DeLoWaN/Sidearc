@@ -5,20 +5,22 @@ import { usePanel } from '../panel-context';
 const MIDDLE_BUTTON = 1;
 
 /**
- * Event props for a row whose middle click sends one command: it closes a tab or deletes an item.
- * With no `command` the row has nothing to do: the props do nothing.
+ * Event props for a row whose middle click closes a tab or deletes an item.
+ * The action is a command to send, or a function that decides what to do.
+ * With no action the row has nothing to do: the props do nothing.
  */
-export function useMiddleClickClose(command: CommandBody | undefined) {
+export function useMiddleClickClose(action: CommandBody | (() => void) | undefined) {
   const { send } = usePanel();
   return {
     // Without this the browser starts its autoscroll mode on a middle mousedown.
     onMouseDown(event: MouseEvent) {
-      if (command && event.button === MIDDLE_BUTTON) event.preventDefault();
+      if (action && event.button === MIDDLE_BUTTON) event.preventDefault();
     },
     onAuxClick(event: MouseEvent) {
-      if (!command || event.button !== MIDDLE_BUTTON) return;
+      if (!action || event.button !== MIDDLE_BUTTON) return;
       event.preventDefault();
-      send(command);
+      if (typeof action === 'function') action();
+      else send(action);
     },
   };
 }

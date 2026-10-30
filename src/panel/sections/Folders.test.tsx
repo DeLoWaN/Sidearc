@@ -5,7 +5,7 @@ import { makeItem, makeState } from '../../../tests/support/builders';
 import { renderPanel } from '../../../tests/support/render-panel';
 import type { ItemView } from '../../shared/types';
 import { resetPanelStore, usePanelStore } from '../store';
-import { resetPanelUi } from '../ui-store';
+import { resetPanelUi, usePanelUi } from '../ui-store';
 import { Overlays } from './Overlays';
 import { PinnedSection } from './PinnedSection';
 import { UnpinnedSection } from './UnpinnedSection';
@@ -32,13 +32,158 @@ function renderPinned(items: ItemView[], windowId = 1) {
 const rightClick = (name: string | RegExp) =>
   fireEvent.contextMenu(screen.getByRole('button', { name }));
 
-it('shows a delete cross on a Pinned Tab inside a Folder, and none on the Folder', () => {
+it('shows a delete cross on a Folder and on a Pinned Tab inside it', () => {
   const work = makeFolder({ title: 'Work' });
   const mail = makeItem({ title: 'Mail', parentId: work.id });
   renderPinned([work, mail]);
 
   expect(screen.getByRole('button', { name: 'Delete Mail' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Delete Work' })).toBeInTheDocument();
+});
+
+it('hides the cross of a Folder until the row is hovered or the cross has the focus', () => {
+  renderPinned([makeFolder({ title: 'Work' })]);
+
+  const cross = screen.getByRole('button', { name: 'Delete Work' });
+
+  expect(cross.className).toContain('opacity-0');
+  expect(cross.className).toContain('group-hover:opacity-100');
+  expect(cross.className).toContain('focus-visible:opacity-100');
+});
+
+it('shows the cross of a Folder only on its own row, not on the rows inside it', () => {
+  const work = makeFolder({ title: 'Work' });
+  renderPinned([work, makeItem({ title: 'Mail', parentId: work.id })]);
+
+  const folderRow = screen.getByRole('button', { name: 'Work' }).parentElement as HTMLElement;
+
+  expect(within(folderRow).getAllByRole('button')).toHaveLength(2);
+  expect(within(folderRow).queryByRole('button', { name: 'Delete Mail' })).toBeNull();
+});
+
+it('keeps the Folder cross out of the way of the click that collapses the Folder', async () => {
+  const work = makeFolder({ title: 'Work' });
+  const { send } = renderPinned([work]);
+
+  await userEvent.click(screen.getByRole('button', { name: 'Work' }));
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'folder/toggle', itemId: work.id });
+});
+
+it('deletes an empty Folder at once with its cross', async () => {
+  const work = makeFolder({ title: 'Work' });
+  const { send } = renderPinned([work]);
+
+  await userEvent.click(screen.getByRole('button', { name: 'Delete Work' }));
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'item/delete', itemId: work.id });
+  expect(screen.queryByRole('alertdialog')).toBeNull();
+});
+
+it('deletes a Folder only after the user confirms, when the cross hits a Folder that is not empty', async () => {
+  const work = makeFolder({ title: 'Work' });
+  const projects = makeFolder({ title: 'Projects', parentId: work.id });
+  const mail = makeItem({ title: 'Mail', parentId: projects.id });
+  const { send } = renderPinned([work, projects, mail]);
+
+  await userEvent.click(screen.getByRole('button', { name: 'Delete Work' }));
+
+  expect(send).not.toHaveBeenCalled();
+  const dialog = screen.getByRole('alertdialog', { name: 'Delete Work?' });
+  expect(dialog).toHaveTextContent('2 items');
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'item/delete', itemId: work.id });
+  expect(screen.queryByRole('alertdialog')).toBeNull();
+});
+
+it('keeps a Folder that is not empty when the user cancels what the cross asked', async () => {
+  const work = makeFolder({ title: 'Work' });
+  const { send } = renderPinned([work, makeItem({ title: 'Mail', parentId: work.id })]);
+
+  await userEvent.click(screen.getByRole('button', { name: 'Delete Work' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+  expect(send).not.toHaveBeenCalled();
+  expect(screen.queryByRole('alertdialog')).toBeNull();
+  expect(screen.getByRole('button', { name: 'Work' })).toBeInTheDocument();
+});
+
+it('deletes an empty Folder at once with a middle click', async () => {
+  const work = makeFolder({ title: 'Work' });
+  const { send } = renderPinned([work]);
+  const header = screen.getByRole('button', { name: 'Work' });
+
+  // The mousedown default would start the autoscroll mode of the browser.
+  expect(fireEvent.mouseDown(header, { button: 1 })).toBe(false);
+  await userEvent.pointer({ keys: '[MouseMiddle]', target: header });
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'item/delete', itemId: work.id });
+});
+
+it('asks for confirmation on a middle click on a Folder that is not empty', async () => {
+  const work = makeFolder({ title: 'Work' });
+  const { send } = renderPinned([work, makeItem({ title: 'Mail', parentId: work.id })]);
+
+  await userEvent.pointer({
+    keys: '[MouseMiddle]',
+    target: screen.getByRole('button', { name: 'Work' }),
+  });
+
+  expect(send).not.toHaveBeenCalled();
+  const dialog = screen.getByRole('alertdialog', { name: 'Delete Work?' });
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'item/delete', itemId: work.id });
+});
+
+it('deletes only the Pinned Tab when the middle click lands on a Pinned Tab inside a Folder', async () => {
+  const work = makeFolder({ title: 'Work' });
+  const mail = makeItem({ title: 'Mail', parentId: work.id });
+  const { send } = renderPinned([work, mail]);
+
+  await userEvent.pointer({
+    keys: '[MouseMiddle]',
+    target: screen.getByRole('button', { name: 'Mail' }),
+  });
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'item/delete', itemId: mail.id });
+});
+
+it('shows no cross and ignores a middle click while the user renames the Folder', async () => {
+  const work = makeFolder({ title: 'Work' });
+  const { send } = renderPinned([work]);
+
+  rightClick('Work');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Rename' }));
+  const field = screen.getByRole('textbox', { name: 'Name of Work' });
   expect(screen.queryByRole('button', { name: 'Delete Work' })).toBeNull();
+  await userEvent.pointer({ keys: '[MouseMiddle]', target: field });
+
+  expect(send).not.toHaveBeenCalled();
+  expect(screen.queryByRole('alertdialog')).toBeNull();
+});
+
+it('shows no Folder, so no Folder cross, while a search is active', () => {
+  const work = makeFolder({ title: 'Work' });
+  renderPinned([work, makeItem({ title: 'Mail', parentId: work.id })]);
+
+  act(() => usePanelUi.getState().setSearchQuery('mail'));
+
+  expect(screen.getByRole('button', { name: 'Delete Mail' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Delete Work' })).toBeNull();
+});
+
+it('ends a selection when the user deletes a Folder with its cross', async () => {
+  const work = makeFolder({ title: 'Work' });
+  const mail = makeItem({ title: 'Mail' });
+  renderPinned([work, mail]);
+  fireEvent.click(screen.getByRole('button', { name: 'Mail' }), { ctrlKey: true });
+  fireEvent.click(screen.getByRole('button', { name: 'Work' }), { ctrlKey: true });
+  expect(screen.getByRole('button', { name: 'Work' })).toHaveAttribute('aria-pressed', 'true');
+
+  await userEvent.click(screen.getByRole('button', { name: 'Delete Work' }));
+
+  expect(screen.getByRole('button', { name: 'Mail' })).not.toHaveAttribute('aria-pressed');
 });
 
 it('shows Folders and Pinned Tabs as a tree, ordered by position inside each parent', () => {
@@ -60,17 +205,6 @@ it('shows Folders and Pinned Tabs as a tree, ordered by position inside each par
   const inWork = within(screen.getByRole('list', { name: 'Work content' }));
   expect(labels(inWork)).toEqual(['Mail', 'Projects', 'Deep']);
   expect(labels(within(screen.getByRole('list', { name: 'Projects content' })))).toEqual(['Deep']);
-});
-
-it('ignores a middle click on a Folder', async () => {
-  const { send } = renderPinned([makeFolder({ title: 'Work' })]);
-
-  await userEvent.pointer({
-    keys: '[MouseMiddle]',
-    target: screen.getByRole('button', { name: /Work/ }),
-  });
-
-  expect(send).not.toHaveBeenCalled();
 });
 
 it('hides the content of a collapsed Folder and shows it when the state says expanded', () => {

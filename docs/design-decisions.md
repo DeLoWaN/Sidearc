@@ -121,7 +121,7 @@ The user can act on several rows at once.
 - A Pinned Tab dragged into the Unpinned Tabs becomes a normal tab, and the Pinned Tab is deleted.
 - A right-click menu: rename, Reset, copy URL, delete, and "Move to…". "Move to…" is the keyboard way to move an item, because the drag and drop library has no keyboard support.
 - A keyboard shortcut pins the current tab at the root of the Pinned Tabs.
-- A Pinned Tab has a delete cross, and a middle click on it deletes it. A middle click on a Favorite or an Unpinned Tab closes its tab.
+- A Pinned Tab and a Folder each have a delete cross, and a middle click on the row deletes it. A Folder that holds items asks for a confirmation first, as the "Delete" entry of its menu does. While the user renames a Folder, its cross and its middle click do nothing. A middle click on a Favorite or an Unpinned Tab closes its tab.
 - An Undo button in the bottom bar reverts the last 20 actions, one at a time: every change of the Folders, Pinned Tabs and Favorites, the close of an Unpinned Tab from the panel, "Close group", and the close and the move of a selection of rows. Ctrl+Z or Cmd+Z does the same while the panel has the focus, because the browser keeps Ctrl+Z for itself elsewhere. The list clears when Chrome restarts.
 
 ## Data

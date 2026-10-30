@@ -100,13 +100,14 @@ it('ignores a stored setting that is not valid any more', async () => {
   expect(await getSettings()).toMatchObject({ density: 'normal', autoArchiveHours: 6 });
 });
 
-it('keeps a stored delay of a fraction of an hour, which the options page cannot save', async () => {
-  await browser.storage.local.set({ settings: { autoArchiveHours: 0.5 } });
-  expect(await getSettings()).toMatchObject({ autoArchiveHours: 0.5 });
+it.each([0.5, 0, 721, 1.5])(
+  'gives the default delay back when the stored delay is %s hours',
+  async (hours) => {
+    await browser.storage.local.set({ settings: { autoArchiveHours: hours, density: 'compact' } });
 
-  await browser.storage.local.set({ settings: { autoArchiveHours: 0 } });
-  expect(await getSettings()).toMatchObject({ autoArchiveHours: 12 });
-});
+    expect(await getSettings()).toMatchObject({ autoArchiveHours: 12, density: 'compact' });
+  },
+);
 
 it('sends the settings to a panel that connects', async () => {
   const window = await fakeChrome.openWindow(['https://a.test/']);

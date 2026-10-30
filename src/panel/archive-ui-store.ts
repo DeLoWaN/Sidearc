@@ -13,5 +13,5 @@ export const useArchiveUi = create<ArchiveUi>()((set) => ({
   closeArchive: () => set({ open: false }),
 }));
 
-/** Closes View Archive. Tests need it: a store is one object per module. */
+/** Closes View Archive. The store is one object per module and keeps its state across tests. */
 export const resetArchiveUi = () => useArchiveUi.setState({ open: false });

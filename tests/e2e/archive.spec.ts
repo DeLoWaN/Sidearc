@@ -15,9 +15,12 @@ test('Auto Archive closes a tab that nobody views, and View Archive reopens it',
   const oldRow = panel.getByRole('button', { name: 'other', exact: true });
   await expect(oldRow).toBeVisible();
 
-  // A delay of a few seconds and a one-shot alarm stand in for 12 hours and the 5 minute alarm.
+  // The worker clock runs two hours ahead and a one-shot alarm stands in for the 5 minute alarm.
+  // So the tab, last visited just now, is older than the 1 hour delay.
   await serviceWorker.evaluate(async () => {
-    await chrome.storage.local.set({ settings: { autoArchiveHours: 0.0005 } });
+    const realNow = Date.now;
+    Date.now = () => realNow() + 2 * 3600 * 1000;
+    await chrome.storage.local.set({ settings: { autoArchiveHours: 1 } });
     await chrome.alarms.create('auto-archive', { delayInMinutes: 0.05 });
   });
   await expect(oldRow).toBeHidden({ timeout: 15_000 });

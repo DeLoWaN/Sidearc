@@ -8,9 +8,6 @@ export const PANEL_PORT = 'sidearc-panel';
 
 // --- commands: sent by the panel on its port
 
-/** Does nothing. Tests use it as a command that needs no ticket. */
-export type MiscCommand = { type: 'noop' };
-
 // tabs
 export type TabsCommand =
   /** Shows the tab. A tab of another window moves into the window of the panel (Tab Handoff). */
@@ -100,7 +97,6 @@ export type SettingsCommand =
 
 /** A command sent by the panel on its port. Every command carries the id of the sending window. */
 export type Command = { windowId: number } & (
-  | MiscCommand
   | TabsCommand
   | ItemsCommand
   | FoldersCommand

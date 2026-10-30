@@ -15,20 +15,22 @@ beforeEach(() => {
 
 it('sends a command to the handler registered for its type', async () => {
   const handler = vi.fn();
-  registerCommand('noop', handler);
-  await dispatchCommand({ type: 'noop', windowId: 1 });
-  expect(handler).toHaveBeenCalledWith({ type: 'noop', windowId: 1 });
+  registerCommand('tab/close', handler);
+  await dispatchCommand({ type: 'tab/close', tabId: 1, windowId: 1 });
+  expect(handler).toHaveBeenCalledWith({ type: 'tab/close', tabId: 1, windowId: 1 });
 });
 
 it('refuses a command that has no handler', async () => {
-  await expect(dispatchCommand({ type: 'noop', windowId: 1 })).rejects.toThrow(
-    'Unknown command: noop',
+  await expect(dispatchCommand({ type: 'tab/close', tabId: 1, windowId: 1 })).rejects.toThrow(
+    'Unknown command: tab/close',
   );
 });
 
 it('refuses two handlers for one command', () => {
-  registerCommand('noop', () => {});
-  expect(() => registerCommand('noop', () => {})).toThrow('Command already registered: noop');
+  registerCommand('tab/close', () => {});
+  expect(() => registerCommand('tab/close', () => {})).toThrow(
+    'Command already registered: tab/close',
+  );
 });
 
 it('answers a one-off request through runtime.sendMessage', async () => {

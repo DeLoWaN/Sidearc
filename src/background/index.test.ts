@@ -21,31 +21,30 @@ it('starts the modules in increasing order, ties broken by name', async () => {
 
 it('routes a panel command to its handler and survives an unknown command', async () => {
   const { startWorker } = await import('./index');
-  const { registerCommand } = await import('./registry');
   const { PANEL_PORT } = await import('../shared/protocol');
-  const handler = vi.fn();
-  registerCommand('noop', handler);
   startWorker();
   vi.spyOn(console, 'error').mockImplementation(() => {});
+  const windowId = await fakeChrome.openWindow(['https://a.test/', 'https://b.test/']);
+  const [first] = await browser.tabs.query({ windowId });
 
   const port = fakeChrome.connect(PANEL_PORT);
-  port.postMessage({ type: 'does-not-exist', windowId: 1 });
-  port.postMessage({ type: 'noop', windowId: 1 });
+  port.postMessage({ type: 'does-not-exist', windowId });
+  port.postMessage({ type: 'tab/close', tabId: first?.id, windowId });
   await new Promise((r) => setTimeout(r, 0));
 
-  expect(handler).toHaveBeenCalledOnce();
-  expect(handler).toHaveBeenCalledWith({ type: 'noop', windowId: 1 });
+  expect((await browser.tabs.query({ windowId })).map((tab) => tab.url)).toEqual([
+    'https://b.test/',
+  ]);
 });
 
 it('ignores a port that is not the panel port', async () => {
   const { startWorker } = await import('./index');
-  const { registerCommand } = await import('./registry');
-  const handler = vi.fn();
-  registerCommand('noop', handler);
   startWorker();
+  const windowId = await fakeChrome.openWindow(['https://a.test/']);
+  const [tab] = await browser.tabs.query({ windowId });
 
-  fakeChrome.connect('another-port').postMessage({ type: 'noop', windowId: 1 });
+  fakeChrome.connect('another-port').postMessage({ type: 'tab/close', tabId: tab?.id, windowId });
   await new Promise((r) => setTimeout(r, 0));
 
-  expect(handler).not.toHaveBeenCalled();
+  expect(await browser.tabs.query({ windowId })).toHaveLength(1);
 });

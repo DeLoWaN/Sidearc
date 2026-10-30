@@ -43,9 +43,9 @@ it('sends a command with the id of the window that holds the panel', async () =>
   await fakeChrome.openWindow(['https://a.test/']);
   const second = await fakeChrome.openWindow(['https://b.test/']);
   const connection = await connectToWorker();
-  connection.send({ type: 'noop' });
+  connection.send({ type: 'tab/close', tabId: 1 });
   await settle();
-  expect(worker.received).toEqual([{ type: 'noop', windowId: second }]);
+  expect(worker.received).toEqual([{ type: 'tab/close', tabId: 1, windowId: second }]);
 });
 
 it('connects again when the worker stops, and keeps sending commands', async () => {
@@ -54,9 +54,9 @@ it('connects again when the worker stops, and keeps sending commands', async () 
   const connection = await connectToWorker();
   worker.ports[0]?.disconnect();
   await vi.waitFor(() => expect(worker.ports).toHaveLength(2));
-  connection.send({ type: 'noop' });
+  connection.send({ type: 'tab/close', tabId: 1 });
   await settle();
-  expect(worker.received).toEqual([{ type: 'noop', windowId: window }]);
+  expect(worker.received).toEqual([{ type: 'tab/close', tabId: 1, windowId: window }]);
 });
 
 it('shows the notice that the worker sends', async () => {

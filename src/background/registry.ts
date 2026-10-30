@@ -50,6 +50,7 @@ export function startRpcRouter() {
   });
 }
 
+/** Forgets every handler. Handlers are module state and survive between tests. */
 export function clearRegistries() {
   commandHandlers.clear();
   rpcHandlers.clear();

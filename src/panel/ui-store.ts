@@ -52,7 +52,7 @@ export const usePanelUi = create<PanelUi>()((set) => ({
   cancelDelete: () => set({ confirmingDeleteId: undefined }),
 }));
 
-/** Closes every menu and edit field. Tests need it: a store is one object per module. */
+/** Closes every menu and edit field. The store is one object per module and keeps its state across tests. */
 export const resetPanelUi = () =>
   usePanelUi.setState({
     menu: undefined,

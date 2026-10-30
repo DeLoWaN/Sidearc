@@ -277,6 +277,17 @@ it('reopens an Unpinned Tab that the panel closed, at its place and not active',
   expect(undo()).toBeNull();
 });
 
+it('does not mark a reopened tab as not visited', async () => {
+  const { send, panel } = await connectedPanel([], [['https://a.test/', 'https://b.test/']]);
+  const b = await tabOf('https://b.test/');
+  await send({ type: 'tab/close', tabId: b.id as number });
+
+  await send({ type: 'undo' });
+
+  const reopened = panel.latest()?.unpinnedTabs.find((tab) => tab.url === 'https://b.test/');
+  expect(reopened?.unvisited).toBe(false);
+});
+
 it('puts the reopened tab back in its Tab group when the group still exists', async () => {
   const { send, windows } = await connectedPanel(
     [],

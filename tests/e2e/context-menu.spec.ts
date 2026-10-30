@@ -69,7 +69,9 @@ for (const scheme of ['light', 'dark'] as const) {
 
     await expect(menu).toBeHidden();
     await expect(
-      panel.getByRole('list', { name: 'Work content' }).getByRole('button', { name: 'Mail' }),
+      panel
+        .getByRole('list', { name: 'Work content' })
+        .getByRole('button', { name: 'Mail', exact: true }),
     ).toBeVisible();
   });
 }

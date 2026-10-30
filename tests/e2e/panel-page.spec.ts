@@ -2,7 +2,7 @@ import { expect, test } from './fixtures';
 
 // Playwright cannot drive the real side panel, so these tests open the panel page in a normal tab.
 
-test('the panel page opens without an error and shows the empty Sidearc page', async ({
+test('the panel page opens without an error and shows the Sidearc page', async ({
   context,
   extensionId,
 }) => {

@@ -32,7 +32,7 @@ test('the panel shows the open tabs, activates one and closes one', async ({
     )
     .toBe('other');
 
-  await panel.getByRole('button', { name: 'Close form' }).click({ force: true });
+  await panel.getByRole('button', { name: 'Close form' }).click();
   await expect(formRow).toBeHidden();
   const titles = await serviceWorker.evaluate(async () =>
     (await chrome.tabs.query({})).map((tab) => tab.title),

@@ -6,8 +6,12 @@ import { createQueue } from './queue';
 // A Clear and an Auto Archive run must not close the same tab twice.
 const closings = createQueue();
 
-// Chrome pages and other pages that a new tab cannot open again stay out of View Archive.
-const isReopenable = (url: string) => /^(https?|file|ftp):/i.test(url);
+// View Archive keeps every tab with an address, except a blank New Tab page and a page of Sidearc.
+const isArchivable = (url: string) =>
+  url !== '' &&
+  url !== 'about:blank' &&
+  !/^chrome:\/\/newtab\/?$/i.test(url) &&
+  !url.startsWith(browser.runtime.getURL('/'));
 
 /** The open tabs that belong to no Favorite and no Pinned Tab, in tab strip order. */
 async function getUnpinnedChromeTabs(): Promise<chrome.tabs.Tab[]> {
@@ -28,7 +32,7 @@ export function closeAndArchive(choose: (tabs: chrome.tabs.Tab[]) => chrome.tabs
 
     await addArchiveEntries(
       tabs
-        .filter((tab) => isReopenable(tab.url ?? ''))
+        .filter((tab) => isArchivable(tab.url ?? ''))
         .map((tab) => ({
           url: tab.url as string,
           title: tab.title || (tab.url as string),

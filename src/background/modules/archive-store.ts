@@ -2,6 +2,7 @@ import type { ArchiveEntry } from '../../shared/types';
 import { createQueue } from '../queue';
 import { registerCommand } from '../registry';
 import { notifyOnStorageChange, registerSidebarSection } from '../sidebar-hub';
+import { UserError } from '../user-error';
 import type { WorkerModule } from '../worker-module';
 
 const STORAGE_KEY = 'archive';
@@ -54,7 +55,11 @@ const archiveStore: WorkerModule = {
       reopens.run(async () => {
         const entry = (await getArchive()).find((candidate) => candidate.id === entryId);
         if (!entry) return;
-        await browser.tabs.create({ windowId, url: entry.url, active: true });
+        try {
+          await browser.tabs.create({ windowId, url: entry.url, active: true });
+        } catch {
+          throw new UserError(`Chrome could not reopen ${entry.url}.`);
+        }
         await removeArchiveEntry(entry.id);
       }),
     );

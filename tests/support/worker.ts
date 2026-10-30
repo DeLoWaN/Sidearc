@@ -24,13 +24,17 @@ export function stopWorker() {
 export function connectPanel(windowId: number) {
   const port = fakeChrome.connect(PANEL_PORT);
   const states: SidebarState[] = [];
+  const notices: string[] = [];
   port.onMessage.addListener((message) => {
     const received = message as PortMessage;
     if (received.type === 'state') states.push(received.state);
+    else notices.push(received.message);
   });
   return {
     /** Every state received, oldest first. */
     states,
+    /** Every notice received, oldest first. */
+    notices,
     latest: () => states.at(-1),
     send(command: CommandBody) {
       port.postMessage({ ...command, windowId });

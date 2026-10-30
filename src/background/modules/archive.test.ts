@@ -80,14 +80,75 @@ it('Clear closes a tab inside a Tab group', async () => {
   expect(await browser.tabs.query({ url: 'https://a.test/' })).toEqual([]);
 });
 
-it('Clear closes a chrome:// tab but does not archive it', async () => {
+it('Clear closes a chrome:// tab and archives it', async () => {
   const { panel, archive } = await connectedPanel([['chrome://settings/', 'https://a.test/']]);
 
   panel.send({ type: 'tab/clear' });
   await settle();
 
   expect(await browser.tabs.query({ url: 'chrome://settings/' })).toEqual([]);
+  expect(archive().map((entry) => entry.url)).toEqual(['chrome://settings/', 'https://a.test/']);
+});
+
+it('Clear archives a page of another extension', async () => {
+  const { panel, archive } = await connectedPanel([
+    ['chrome-extension://other-extension/page.html', 'https://a.test/'],
+  ]);
+
+  panel.send({ type: 'tab/clear' });
+  await settle();
+
+  expect(archive().map((entry) => entry.url)).toContain(
+    'chrome-extension://other-extension/page.html',
+  );
+});
+
+it.each(['chrome://newtab/', 'about:blank', ''])(
+  'Clear closes the tab %j without archiving it',
+  async (url) => {
+    const { panel, archive } = await connectedPanel([[url, 'https://a.test/']]);
+
+    panel.send({ type: 'tab/clear' });
+    await settle();
+
+    expect(archive().map((entry) => entry.url)).toEqual(['https://a.test/']);
+  },
+);
+
+it('Clear closes a page of Sidearc itself without archiving it', async () => {
+  const own = browser.runtime.getURL('/options.html' as never);
+  const { panel, archive } = await connectedPanel([[own, 'https://a.test/']]);
+
+  panel.send({ type: 'tab/clear' });
+  await settle();
+
+  expect(await browser.tabs.query({ url: own })).toEqual([]);
   expect(archive().map((entry) => entry.url)).toEqual(['https://a.test/']);
+});
+
+it('reopens an archived chrome:// tab', async () => {
+  const { windows, panel, archive } = await connectedPanel([['chrome://settings/']]);
+  panel.send({ type: 'tab/clear' });
+  await settle();
+
+  panel.send({ type: 'archive/reopen', entryId: archive()[0]?.id as string });
+  await settle();
+
+  expect(await urlsOf(windows[0] as number)).toContain('chrome://settings/');
+  expect(archive()).toEqual([]);
+});
+
+it('tells the user and keeps the entry when Chrome refuses to reopen a tab', async () => {
+  const { panel, archive } = await connectedPanel([['chrome://settings/']]);
+  panel.send({ type: 'tab/clear' });
+  await settle();
+  vi.spyOn(browser.tabs, 'create').mockRejectedValueOnce(new Error('Refused'));
+
+  panel.send({ type: 'archive/reopen', entryId: archive()[0]?.id as string });
+  await settle();
+
+  expect(panel.notices).toEqual(['Chrome could not reopen chrome://settings/.']);
+  expect(archive().map((entry) => entry.url)).toEqual(['chrome://settings/']);
 });
 
 it('Clear keeps a window open with one blank tab when it held only Unpinned Tabs', async () => {

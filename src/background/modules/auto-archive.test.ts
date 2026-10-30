@@ -167,14 +167,14 @@ it('closes a tab inside a Tab group like any other tab', async () => {
   expect(await archivedUrls()).toEqual(['https://grouped.test/']);
 });
 
-it('closes a chrome:// tab that nobody viewed but does not archive it', async () => {
+it('closes a chrome:// tab that nobody viewed and archives it', async () => {
   await windowOf('chrome://settings/');
   await idleFor('chrome://settings/', 13 * HOUR);
 
   await tick();
 
   expect(await openUrls()).toEqual(['https://on-screen.test/']);
-  expect(await archivedUrls()).toEqual([]);
+  expect(await archivedUrls()).toEqual(['chrome://settings/']);
 });
 
 it('keeps a tab that the user viewed after it went old', async () => {

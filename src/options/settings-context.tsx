@@ -7,6 +7,8 @@ interface SettingsApi {
   settings: Settings;
   /** Saves the patch in the worker. The page shows the new values at once and goes back if the worker refuses. */
   save(patch: Partial<Settings>): Promise<SaveSettingsResult>;
+  /** Loads the settings from the worker again, after another part of the page changed them. */
+  refresh(): Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsApi | undefined>(undefined);
@@ -30,8 +32,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     [ask],
   );
 
+  const refresh = useCallback(async () => setSettings(await ask('settings/get', null)), [ask]);
+
   if (!settings) return null;
-  return <SettingsContext value={{ settings, save }}>{children}</SettingsContext>;
+  return <SettingsContext value={{ settings, save, refresh }}>{children}</SettingsContext>;
 }
 
 export function useSettings(): SettingsApi {

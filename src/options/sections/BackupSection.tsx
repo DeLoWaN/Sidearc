@@ -1,4 +1,139 @@
-/** The JSON export and import. Renders nothing until ticket #15. */
+import { useState } from 'react';
+import { backupFileName } from '../../shared/backup-format';
+import type { BackupSummary } from '../../shared/protocol';
+import { useAsk } from '../options-context';
+import { Section } from '../Section';
+import { useSettings } from '../settings-context';
+
+const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+
+function describeSummary(summary: BackupSummary) {
+  return [
+    plural(summary.favorites, 'Favorite', 'Favorites'),
+    plural(summary.pinnedTabs, 'Pinned Tab', 'Pinned Tabs'),
+    plural(summary.folders, 'Folder', 'Folders'),
+  ]
+    .join(', ')
+    .concat(` and ${plural(summary.archivedTabs, 'archived tab', 'archived tabs')}`);
+}
+
+/** The page saves the text that the worker gives. The page never reads the stored data itself. */
+function download(text: string, name: string) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = name;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+type Pending = { text: string; summary: BackupSummary };
+
+/** The JSON backup: export to a file, and import of a file after a confirmation. */
 export function BackupSection() {
-  return null;
+  const ask = useAsk();
+  const { refresh } = useSettings();
+  const [pending, setPending] = useState<Pending>();
+  const [error, setError] = useState<string>();
+  const [done, setDone] = useState<string>();
+
+  const clear = () => {
+    setPending(undefined);
+    setError(undefined);
+    setDone(undefined);
+  };
+
+  const exportBackup = async () => {
+    clear();
+    try {
+      download(await ask('backup/export', null), backupFileName(new Date()));
+    } catch (failure) {
+      setError(`The export failed: ${String(failure)}`);
+    }
+  };
+
+  const chooseFile = async (file: File | undefined) => {
+    clear();
+    if (!file) return;
+    const text = await file.text();
+    const result = await ask('backup/inspect', text);
+    if (result.ok) setPending({ text, summary: result.summary });
+    else setError(result.error);
+  };
+
+  const replaceData = async () => {
+    if (!pending) return;
+    const result = await ask('backup/import', pending.text);
+    setPending(undefined);
+    if (!result.ok) return setError(result.error);
+    setDone(`Backup imported: ${describeSummary(result.summary)}.`);
+    await refresh();
+  };
+
+  const button = 'rounded-md px-3 py-1.5 hover:bg-(--row-hover)';
+
+  return (
+    <Section title="Backup">
+      <div className="flex flex-wrap items-center gap-4">
+        <button type="button" className={`${button} bg-(--menu-bg)`} onClick={exportBackup}>
+          Export backup
+        </button>
+        <label className="flex items-center gap-2">
+          Import backup
+          <input
+            type="file"
+            aria-label="Backup file"
+            accept=".json,application/json"
+            onChange={(event) => {
+              const input = event.currentTarget;
+              chooseFile(input.files?.[0]).finally(() => {
+                input.value = '';
+              });
+            }}
+          />
+        </label>
+      </div>
+      {pending && (
+        <div
+          role="alertdialog"
+          aria-label="Replace your data?"
+          aria-describedby="backup-confirm-text"
+          className="mt-3 rounded-xl bg-(--menu-bg) p-4"
+        >
+          <p id="backup-confirm-text" className="mb-3">
+            This file holds {describeSummary(pending.summary)}. Importing it replaces all your
+            Favorites, Pinned Tabs, Folders, settings and View Archive.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              // biome-ignore lint/a11y/noAutofocus: the safe answer takes the focus, so Enter never replaces the data by accident.
+              autoFocus
+              className={button}
+              onClick={clear}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={`${button} font-semibold text-red-600`}
+              onClick={replaceData}
+            >
+              Replace my data
+            </button>
+          </div>
+        </div>
+      )}
+      {error && (
+        <p role="alert" className="mt-2 text-(--g-red)">
+          {error}
+        </p>
+      )}
+      {done && (
+        <p role="status" className="mt-2">
+          {done}
+        </p>
+      )}
+    </Section>
+  );
 }

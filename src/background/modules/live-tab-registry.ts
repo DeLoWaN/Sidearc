@@ -46,6 +46,11 @@ export function linkLiveTab(itemId: string, tabId: number) {
   });
 }
 
+/** Puts every item at rest. */
+export function clearLiveTabs() {
+  return change(() => ({}));
+}
+
 const forgetDeadLinks = () => change(withoutDeadLinks);
 
 const liveTabRegistry: WorkerModule = {

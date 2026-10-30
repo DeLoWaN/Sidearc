@@ -99,3 +99,22 @@ test('a link opened in the background from a tab of a site group of three lands 
   await expect(block.getByRole('listitem')).toHaveText(['links', 'links a', 'links b', 'other']);
   await expect.poll(stripTitles).toEqual(['links', 'links a', 'links b', 'other']);
 });
+
+test('the Troubleshooting block of the options page shows what Chrome sent for a new tab', async ({
+  context,
+  extensionId,
+  serviceWorker,
+  site,
+}) => {
+  const form = await context.newPage();
+  await form.goto(`${site.origin}/form`);
+  await serviceWorker.evaluate(() => chrome.tabs.create({}));
+  const options = await context.newPage();
+  await options.goto(`chrome-extension://${extensionId}/options.html`);
+
+  await options.getByText('Troubleshooting').click();
+
+  await expect(options.getByRole('log', { name: 'Log of new tabs' })).toContainText(
+    /created .*pending="chrome:\/\/newtab\/".* -> move: .*\(moved\)/,
+  );
+});

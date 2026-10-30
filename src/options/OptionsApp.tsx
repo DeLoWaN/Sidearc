@@ -7,6 +7,7 @@ import { ArcImportSection } from './sections/ArcImportSection';
 import { BackupSection } from './sections/BackupSection';
 import { NewTabsSection } from './sections/NewTabsSection';
 import { SiteGroupsSection } from './sections/SiteGroupsSection';
+import { TroubleshootingSection } from './sections/TroubleshootingSection';
 import { SettingsProvider, useSettings } from './settings-context';
 
 /**
@@ -40,6 +41,7 @@ function OptionsPage() {
         <AppearanceSection />
         <BackupSection />
         {startedEmpty === false && <ArcImportSection />}
+        <TroubleshootingSection />
       </main>
     </div>
   );

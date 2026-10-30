@@ -53,8 +53,8 @@ it('puts a tab that opens from a tab of a Tab group at the end of the group, ins
 it('puts the tab in the group when the move took it out of the group', async () => {
   const original = browser.tabs.move.bind(browser.tabs);
   vi.spyOn(browser.tabs, 'move').mockImplementation(async (ids, properties) => {
-    const moved = await original(ids as number, properties);
-    await browser.tabs.ungroup(ids as number);
+    const moved = await original(ids as never, properties);
+    await browser.tabs.ungroup(ids as never);
     return moved;
   });
 

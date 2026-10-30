@@ -102,6 +102,24 @@ export type GroupsState = {
   tabGroups: TabGroupView[];
 };
 
+// site groups
+
+/** A site group: Unpinned Tabs opened from one another on the same site. Only the panel shows it. */
+export interface SiteGroupView {
+  /** Made by Sidearc. It never is a Chrome id. */
+  id: string;
+  /** The site of the tab that started the group, in lower case and without a leading `www.`. */
+  host: string;
+  /** The member tabs in tab strip order: windows by id, tabs by index. A tab that the panel does not list is ignored. */
+  tabIds: number[];
+  collapsed: boolean;
+}
+
+export type SiteGroupsState = {
+  /** The site groups with at least 2 member tabs. */
+  siteGroups: SiteGroupView[];
+};
+
 // archive
 
 /** One closed tab in View Archive. */
@@ -141,6 +159,8 @@ export interface Settings {
   /** Second colour of the panel gradient, as `#rrggbb`. */
   gradientTo: string;
   density: Density;
+  /** True when a tab opened from a tab of the same site joins a site group. */
+  groupBySite: boolean;
 }
 
 export type SettingsState = { settings: Settings };
@@ -149,6 +169,7 @@ export type SettingsState = { settings: Settings };
 export type SidebarState = TabsState &
   ItemsState &
   GroupsState &
+  SiteGroupsState &
   ArchiveState &
   UndoState &
   SettingsState;

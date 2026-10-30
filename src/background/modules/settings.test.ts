@@ -24,6 +24,7 @@ it('gives the default settings when nothing is saved', async () => {
     gradientFrom: '#b9a7f0',
     gradientTo: '#a7c4f0',
     density: 'normal',
+    groupBySite: true,
   });
 });
 
@@ -37,6 +38,7 @@ it('saves the settings of a patch and keeps the others', async () => {
       gradientFrom: '#b9a7f0',
       gradientTo: '#a7c4f0',
       density: 'compact',
+      groupBySite: true,
     },
   });
   expect(await getSettings()).toEqual((result as { settings: unknown }).settings);
@@ -73,6 +75,7 @@ it.each([
   [{ gradientFrom: 'red' }, 'gradientFrom must be a colour like #rrggbb, got "red"'],
   [{ gradientTo: '#12345' }, 'gradientTo must be a colour like #rrggbb, got "#12345"'],
   [{ density: 'huge' }, 'density must be compact, normal or spacious, got "huge"'],
+  [{ groupBySite: 'yes' }, 'groupBySite must be true or false, got "yes"'],
   [{ volume: 11 }, 'Unknown setting: volume'],
   [null, 'The settings must be an object'],
 ])('refuses %j with a precise error and saves nothing', async (patch, error) => {

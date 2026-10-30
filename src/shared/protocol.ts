@@ -71,6 +71,15 @@ export type GroupsCommand =
   | { type: 'group/add-tab'; tabId: number; groupId: number }
   | { type: 'group/remove-tab'; tabId: number };
 
+// site groups
+export type SiteGroupsCommand =
+  /** Collapses an expanded site group, or expands a collapsed one. The state is kept until Chrome restarts. */
+  | { type: 'site-group/toggle'; groupId: string }
+  /** Dissolves the site group. Its tabs stay open. */
+  | { type: 'site-group/ungroup'; groupId: string }
+  /** Takes the tab out of its site group. The group disappears when fewer than 2 tabs are left. */
+  | { type: 'site-group/remove-tab'; tabId: number };
+
 // archive
 export type ArchiveCommand =
   /** Opens the archived tab in the window of the panel, and removes its entry. */
@@ -114,6 +123,7 @@ export type Command = { windowId: number } & (
   | FoldersCommand
   | FavoritesCommand
   | GroupsCommand
+  | SiteGroupsCommand
   | ArchiveCommand
   | DragCommand
   | UndoCommand

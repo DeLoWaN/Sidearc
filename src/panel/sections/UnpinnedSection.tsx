@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { ClearDivider } from '../components/ClearDivider';
+import { SiteGroupBlock } from '../components/SiteGroupBlock';
 import { TabGroupBlock } from '../components/TabGroupBlock';
 import { TabRow } from '../components/TabRow';
 import { DropIndicator } from '../dnd/DropIndicator';
@@ -17,6 +18,7 @@ export function UnpinnedSection() {
   const results = useSearchResults();
   const tabs = results?.tabs ?? allTabs;
   const groups = usePanelStore((store) => store.state.tabGroups);
+  const siteGroups = usePanelStore((store) => store.state.siteGroups);
   const section = useRef<HTMLElement>(null);
   const { placement } = useDnd(section, { locate: unpinnedSectionTarget });
   // Clear closes every Unpinned Tab, also the ones that a search hides.
@@ -31,17 +33,33 @@ export function UnpinnedSection() {
       {placement && <DropIndicator placement={placement} />}
       {!results && <ClearDivider disabled={tabs.length === 0} />}
       <ul>
-        {arrangeUnpinned(tabs, groups).map((entry) =>
-          entry.kind === 'group' ? (
-            <TabGroupBlock key={`group-${entry.group.id}`} group={entry.group} tabs={entry.tabs} />
-          ) : (
+        {arrangeUnpinned(tabs, groups, siteGroups).map((entry) => {
+          if (entry.kind === 'group') {
+            return (
+              <TabGroupBlock
+                key={`group-${entry.group.id}`}
+                group={entry.group}
+                tabs={entry.tabs}
+              />
+            );
+          }
+          if (entry.kind === 'site-group') {
+            return (
+              <SiteGroupBlock
+                key={`site-group-${entry.group.id}`}
+                group={entry.group}
+                tabs={entry.tabs}
+              />
+            );
+          }
+          return (
             <TabRow
               key={entry.tab.id}
               tab={entry.tab}
               highlighted={entry.tab.active && entry.tab.windowId === windowId}
             />
-          ),
-        )}
+          );
+        })}
       </ul>
     </section>
   );

@@ -37,6 +37,9 @@ export function makeState(overrides: Partial<SidebarState> = {}): SidebarState {
     // tab groups
     tabGroups: [],
 
+    // site groups
+    siteGroups: [],
+
     // archive
     archive: [],
 

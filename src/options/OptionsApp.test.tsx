@@ -79,6 +79,27 @@ it('shows the gradient colours of the settings and saves another one', async () 
   expect(ask).toHaveBeenCalledWith('settings/save', { gradientFrom: '#112233' });
 });
 
+// --- site groups
+
+it('shows the site groups checkbox as checked by default and saves when the user clears it', async () => {
+  const { ask } = renderOptions(<OptionsApp />);
+  const box = await screen.findByRole('checkbox', { name: 'Group tabs opened from the same site' });
+  expect(box).toBeChecked();
+
+  await userEvent.click(box);
+
+  expect(ask).toHaveBeenCalledWith('settings/save', { groupBySite: false });
+  expect(box).not.toBeChecked();
+});
+
+it('shows the site groups checkbox as cleared when the setting is off', async () => {
+  renderOptions(<OptionsApp />, { settings: { ...DEFAULT_SETTINGS, groupBySite: false } });
+
+  expect(
+    await screen.findByRole('checkbox', { name: 'Group tabs opened from the same site' }),
+  ).not.toBeChecked();
+});
+
 // --- gradient presets
 
 it('saves both gradient colours when the user clicks a preset', async () => {

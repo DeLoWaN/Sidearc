@@ -11,6 +11,7 @@ export const DEFAULT_SETTINGS: Settings = {
   gradientFrom: '#b9a7f0',
   gradientTo: '#a7c4f0',
   density: 'normal',
+  groupBySite: true,
 };
 
 const COLOUR = /^#[0-9a-f]{6}$/i;
@@ -38,6 +39,9 @@ function checkSetting(
     case 'density':
       if (DENSITIES.includes(value as Density)) return { value };
       return { error: `${name} must be compact, normal or spacious, got ${show(value)}` };
+    case 'groupBySite':
+      if (typeof value === 'boolean') return { value };
+      return { error: `${name} must be true or false, got ${show(value)}` };
   }
 }
 

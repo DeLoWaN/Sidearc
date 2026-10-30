@@ -8,3 +8,14 @@ export function sameUrl(a: string, b: string): boolean {
   if (!URL.canParse(a) || !URL.canParse(b)) return false;
   return new URL(a).href === new URL(b).href;
 }
+
+/**
+ * The site of a web address: its host in lower case, without a leading `www.`. Returns null for an address that is not http or https.
+ * The port counts, as in `URL.host`. Another subdomain is another site.
+ */
+export function siteOf(address: string): string | null {
+  if (!URL.canParse(address)) return null;
+  const { protocol, host } = new URL(address);
+  if (protocol !== 'http:' && protocol !== 'https:') return null;
+  return host.replace(/^www\./, '');
+}

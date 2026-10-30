@@ -76,9 +76,7 @@ export function PinnedRow({ item, highlighted }: { item: ItemView; highlighted: 
           <span className={`truncate ${live ? '' : 'opacity-55'}`}>{item.title}</span>
           {live?.away && (
             <>
-              <span aria-hidden="true" className="text-(--text-muted)">
-                /
-              </span>
+              <span className="text-(--text-muted)">/</span>
               <span className="truncate text-(--text-muted)">{live.title}</span>
             </>
           )}

@@ -1,12 +1,13 @@
 import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it, vi } from 'vitest';
-import { makeItem, makeState } from '../../../tests/support/builders';
+import { makeItem, makeState, makeTab } from '../../../tests/support/builders';
 import { renderPanel } from '../../../tests/support/render-panel';
 import { resetPanelStore } from '../store';
 import { resetPanelUi } from '../ui-store';
 import { Overlays } from './Overlays';
 import { PinnedSection } from './PinnedSection';
+import { UnpinnedSection } from './UnpinnedSection';
 
 beforeEach(() => {
   resetPanelStore();
@@ -194,6 +195,31 @@ it('sends nothing when the user cancels a rename or leaves the name blank', asyn
   await userEvent.type(screen.getByRole('textbox'), '   {Enter}');
 
   expect(send).not.toHaveBeenCalled();
+});
+
+it('keeps the menu of a Pinned Tab and the menu of a Tab group apart', () => {
+  const tab = makeTab({ title: 'Docs' });
+  const state = makeState({
+    items: [makeItem({ title: 'Mail' })],
+    unpinnedTabs: [tab],
+    tabGroups: [{ id: 5, windowId: 1, title: 'Work', color: 'blue', collapsed: false, tabIds: [] }],
+  });
+  renderPanel(
+    <>
+      <PinnedSection />
+      <UnpinnedSection />
+      <Overlays />
+    </>,
+    { state },
+  );
+
+  openMenu('Mail');
+  expect(screen.getByRole('menuitem', { name: 'Rename' })).toBeVisible();
+
+  fireEvent.pointerDown(screen.getByRole('button', { name: 'Docs' }));
+  fireEvent.contextMenu(screen.getByRole('button', { name: 'Docs' }));
+  expect(screen.getByRole('menu', { name: 'Move to…' })).toBeVisible();
+  expect(screen.queryByRole('menu', { name: /Actions for/ })).toBeNull();
 });
 
 it('closes the right-click menu on Escape', async () => {

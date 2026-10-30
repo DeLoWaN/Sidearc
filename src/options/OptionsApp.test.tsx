@@ -79,6 +79,45 @@ it('shows the gradient colours of the settings and saves another one', async () 
   expect(ask).toHaveBeenCalledWith('settings/save', { gradientFrom: '#112233' });
 });
 
+// --- gradient presets
+
+it('saves both gradient colours when the user clicks a preset', async () => {
+  const { ask } = renderOptions(<OptionsApp />);
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Sunset' }));
+
+  expect(ask).toHaveBeenCalledWith('settings/save', {
+    gradientFrom: '#f7b28c',
+    gradientTo: '#f08fb0',
+  });
+  expect(screen.getByLabelText('Gradient start')).toHaveValue('#f7b28c');
+  expect(screen.getByLabelText('Gradient end')).toHaveValue('#f08fb0');
+});
+
+it('marks the preset that matches the current colours as pressed', async () => {
+  renderOptions(<OptionsApp />);
+
+  expect(await screen.findByRole('button', { name: 'Lavender' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  expect(screen.getByRole('button', { name: 'Sunset' })).toHaveAttribute('aria-pressed', 'false');
+
+  await userEvent.click(screen.getByRole('button', { name: 'Sunset' }));
+
+  expect(screen.getByRole('button', { name: 'Sunset' })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByRole('button', { name: 'Lavender' })).toHaveAttribute('aria-pressed', 'false');
+});
+
+it('marks no preset when the colours were picked by hand', async () => {
+  renderOptions(<OptionsApp />);
+  fireEvent.change(await screen.findByLabelText('Gradient start'), {
+    target: { value: '#112233' },
+  });
+
+  expect(screen.queryAllByRole('button', { pressed: true })).toHaveLength(0);
+});
+
 // --- backup
 
 it('shows the imported settings after a backup replaced them', async () => {

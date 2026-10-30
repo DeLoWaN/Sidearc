@@ -1,3 +1,4 @@
+import { GRADIENT_PRESETS } from '../../shared/gradient-presets';
 import { DENSITIES } from '../../shared/settings';
 import type { Density } from '../../shared/types';
 import { Section } from '../Section';
@@ -14,6 +15,24 @@ export function AppearanceSection() {
   const { settings, save } = useSettings();
   return (
     <Section title="Appearance">
+      <div className="mb-3 flex flex-wrap gap-2">
+        {GRADIENT_PRESETS.map((preset) => {
+          const selected =
+            settings.gradientFrom === preset.from && settings.gradientTo === preset.to;
+          return (
+            <button
+              key={preset.name}
+              type="button"
+              aria-label={preset.name}
+              title={preset.name}
+              aria-pressed={selected}
+              onClick={() => save({ gradientFrom: preset.from, gradientTo: preset.to })}
+              style={{ backgroundImage: `linear-gradient(135deg, ${preset.from}, ${preset.to})` }}
+              className="size-8 rounded-full ring-offset-2 ring-offset-(--row-active) aria-pressed:ring-2 aria-pressed:ring-(--text)"
+            />
+          );
+        })}
+      </div>
       <div className="flex flex-wrap gap-6">
         <label className="flex items-center gap-2">
           Gradient start

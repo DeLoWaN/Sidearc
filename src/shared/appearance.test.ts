@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 import { appearanceVariables } from './appearance';
+import { GRADIENT_PRESETS } from './gradient-presets';
+import { DEFAULT_SETTINGS } from './settings';
 import type { Density } from './types';
 
 const look = (density: Density, gradientFrom = '#b9a7f0', gradientTo = '#a7c4f0') =>
@@ -72,8 +74,9 @@ const EXTREMES = [
   '#808080',
 ];
 
-it.each(EXTREMES)('keeps the text readable on a gradient that holds %s', (colour) => {
-  const vars = look('normal', colour, colour);
+/** Checks the text and muted text contrast on both ends of the gradient, in both colour schemes. */
+function expectReadable(from: string, to: string) {
+  const vars = look('normal', from, to);
   for (const [scheme, tokens] of [
     ['light', lightTokens],
     ['dark', darkTokens],
@@ -84,4 +87,25 @@ it.each(EXTREMES)('keeps the text readable on a gradient that holds %s', (colour
       expect(contrast(background, token(tokens, 'text-muted'))).toBeGreaterThanOrEqual(3);
     }
   }
+}
+
+it.each(EXTREMES)('keeps the text readable on a gradient that holds %s', (colour) => {
+  expectReadable(colour, colour);
+});
+
+it.each(GRADIENT_PRESETS)('keeps the text readable on the $name preset', ({ from, to }) => {
+  expectReadable(from, to);
+});
+
+it('offers 8 presets with distinct names and distinct colours', () => {
+  expect(GRADIENT_PRESETS).toHaveLength(8);
+  expect(new Set(GRADIENT_PRESETS.map((preset) => preset.name)).size).toBe(8);
+  expect(new Set(GRADIENT_PRESETS.map((preset) => `${preset.from}${preset.to}`)).size).toBe(8);
+});
+
+it('makes the first preset the default gradient', () => {
+  expect(GRADIENT_PRESETS[0]).toMatchObject({
+    from: DEFAULT_SETTINGS.gradientFrom,
+    to: DEFAULT_SETTINGS.gradientTo,
+  });
 });

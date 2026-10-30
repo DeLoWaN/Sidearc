@@ -1,6 +1,11 @@
 import type { MouseEvent } from 'react';
 import { usePanelUi } from '../ui-store';
 
+/** The button or link under the pointer: the menu gives it the focus back. */
+export function focusableUnder(target: EventTarget): HTMLElement | null {
+  return target instanceof Element ? target.closest<HTMLElement>('button, a, [tabindex]') : null;
+}
+
 /**
  * Returns the right-click handler that opens the item menu at the pointer.
  * `itemId` is null for the root of the Pinned Tabs.
@@ -11,6 +16,6 @@ export function useItemContextMenu(itemId: string | null) {
   return (event: MouseEvent) => {
     if (event.defaultPrevented) return;
     event.preventDefault();
-    openMenu(itemId, event.clientX, event.clientY);
+    openMenu(itemId, event.clientX, event.clientY, focusableUnder(event.target));
   };
 }

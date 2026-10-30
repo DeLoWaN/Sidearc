@@ -146,7 +146,7 @@ it('disables Reset in the menu of a Favorite at rest', () => {
 
   rightClick('Docs');
 
-  expect(screen.getByRole('menuitem', { name: 'Reset' })).toBeDisabled();
+  expect(screen.getByRole('menuitem', { name: 'Reset' })).toHaveAttribute('aria-disabled', 'true');
 });
 
 it('resets the Favorite from the right-click menu', async () => {
@@ -250,7 +250,10 @@ it('does not offer the Favorites to a Folder', () => {
 
   fireEvent.contextMenu(screen.getByRole('button', { name: 'Work' }));
 
-  expect(screen.getByRole('menuitem', { name: 'Move to…' })).toBeDisabled();
+  expect(screen.getByRole('menuitem', { name: 'Move to…' })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  );
 });
 
 it('shows the notice that the worker sends, and hides it with the close button', async () => {

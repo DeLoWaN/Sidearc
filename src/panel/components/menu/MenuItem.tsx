@@ -13,11 +13,14 @@ export function MenuItem({
   onSelect,
   disabled = false,
   danger = false,
+  depth = 0,
 }: {
   children: ReactNode;
   onSelect: () => void;
   disabled?: boolean;
   danger?: boolean;
+  /** How far the label is indented, in steps. */
+  depth?: number;
 }) {
   const root = useMenuRoot();
   const level = useMenuLevel();
@@ -27,6 +30,7 @@ export function MenuItem({
       role="menuitem"
       tabIndex={-1}
       aria-disabled={disabled || undefined}
+      style={depth > 0 ? { paddingLeft: `${0.625 + depth * 0.75}rem` } : undefined}
       className={`${ENTRY_CLASS} ${danger ? 'text-(--danger)' : ''}`}
       onPointerMove={(event) => {
         level.setOpenSubmenu(null);

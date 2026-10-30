@@ -51,9 +51,11 @@ export function MenuPanel({
     setPlace(placeMenu({ left, top, right, bottom }, { width, height }, viewport));
   }, [left, top, right, bottom]);
 
+  // A hidden box cannot take the focus: the box has to be placed first.
+  const placed = place !== undefined;
   useEffect(() => {
-    if (focusFirst && panel.current) entriesOf(panel.current)[0]?.focus();
-  }, [focusFirst]);
+    if (focusFirst && placed && panel.current) entriesOf(panel.current)[0]?.focus();
+  }, [focusFirst, placed]);
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     // The key of an entry in a submenu bubbles up through here: the submenu handles it.
@@ -96,6 +98,11 @@ export function MenuPanel({
         aria-label={label}
         tabIndex={-1}
         onKeyDown={onKeyDown}
+        // A right click on the menu must not open the menu of the row below it.
+        onContextMenu={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
         // Before the first measure the box waits at the corner, hidden.
         style={place ?? { left: 0, top: 0, visibility: 'hidden' }}
         className="fixed z-10 min-w-40 overflow-y-auto rounded-xl bg-(--menu-bg) p-1 shadow-lg ring-1 ring-black/5 outline-none"

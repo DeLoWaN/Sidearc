@@ -281,7 +281,8 @@ it('lists the Favorites, the root, every Folder and the Unpinned Tabs as targets
   rightClick('Mail');
   await userEvent.click(screen.getByRole('menuitem', { name: 'Move to…' }));
 
-  expect(screen.queryByRole('menu', { name: /Actions for/ })).toBeNull();
+  // The submenu opens next to its entry: the menu of the item stays on screen.
+  expect(screen.getByRole('menu', { name: /Actions for/ })).toBeVisible();
   expect(moveTargets()).toEqual(['Favorites', 'Pinned Tabs', 'Work', 'Home', 'Unpinned Tabs']);
 });
 
@@ -358,7 +359,10 @@ it('disables Move to… when an item has nowhere to go', () => {
 
   rightClick('Work');
 
-  expect(screen.getByRole('menuitem', { name: 'Move to…' })).toBeDisabled();
+  expect(screen.getByRole('menuitem', { name: 'Move to…' })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  );
 });
 
 it('moves an item with the keyboard only', async () => {

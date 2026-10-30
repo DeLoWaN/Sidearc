@@ -232,7 +232,7 @@ export function importArcSpace(
     for (const id of childrenOf(objects.get(favoritesContainer.containerId) as Json)) {
       const object = objects.get(id);
       const walked = object && readItem(object);
-      if (!walked || walked.kind !== 'tab') {
+      if (walked?.kind !== 'tab') {
         report.skipped += 1;
       } else if (report.favorites >= MAX_FAVORITES) {
         report.favoritesIgnored += 1;

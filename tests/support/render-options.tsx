@@ -28,7 +28,7 @@ export function renderOptions(
   let current = settings;
   const ask = vi.fn(async (rpc: string, request: unknown) => {
     if (rpc in answers) return (answers[rpc] as (request: unknown) => unknown)(request);
-    if (rpc === 'arc-import/available') return false;
+    if (rpc === 'arc-import/status') return { itemCount: 0 };
     if (rpc === 'settings/get') return current;
     if (rpc === 'settings/save') {
       if (refuse) return { ok: false, error: refuse } satisfies SaveSettingsResult;

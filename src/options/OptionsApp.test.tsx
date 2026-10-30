@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, it } from 'vitest';
@@ -10,6 +11,74 @@ const cssVariable = (name: string) => document.documentElement.style.getProperty
 it('shows the options page title', async () => {
   renderOptions(<OptionsApp />);
   expect(await screen.findByRole('heading', { level: 1, name: 'Sidearc options' })).toBeVisible();
+});
+
+// --- Arc import
+
+const sectionTitles = () => screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+
+it('puts the Arc import first while Sidearc is empty', async () => {
+  renderOptions(<OptionsApp />, {
+    answers: { 'arc-import/status': () => ({ itemCount: 0 }) },
+  });
+
+  await screen.findByRole('heading', { name: 'Import from Arc' });
+
+  expect(sectionTitles()[0]).toBe('Import from Arc');
+});
+
+it('keeps the Arc import in its place, after the backup, once Sidearc holds items', async () => {
+  renderOptions(<OptionsApp />, {
+    answers: { 'arc-import/status': () => ({ itemCount: 4 }) },
+  });
+
+  await screen.findByRole('heading', { name: 'Import from Arc' });
+
+  const titles = sectionTitles();
+  expect(titles[0]).toBe('Auto Archive');
+  expect(titles.slice(-2)).toEqual(['Backup', 'Import from Arc']);
+});
+
+it('keeps the Arc import in its place when the worker cannot count the items', async () => {
+  renderOptions(<OptionsApp />, {
+    answers: {
+      'arc-import/status': () => {
+        throw new Error('Worker is asleep');
+      },
+    },
+  });
+
+  await screen.findByRole('heading', { name: 'Import from Arc' });
+
+  expect(sectionTitles().at(-1)).toBe('Import from Arc');
+});
+
+it('does not move the Arc import after an import filled Sidearc', async () => {
+  let itemCount = 0;
+  const report = { favorites: 0, pinnedTabs: 1, folders: 0, favoritesIgnored: 0, skipped: 0 };
+  renderOptions(<OptionsApp />, {
+    answers: {
+      'arc-import/status': () => ({ itemCount }),
+      'arc-import/run': () => {
+        itemCount = 1;
+        return { ok: true, report };
+      },
+    },
+  });
+  const fixture = readFileSync('tests/fixtures/arc/StorableSidebar.trimmed.json', 'utf8');
+  await userEvent.upload(
+    await screen.findByLabelText('Arc sidebar file'),
+    new File([fixture], 'StorableSidebar.json'),
+  );
+  await userEvent.selectOptions(
+    await screen.findByRole('combobox', { name: 'Arc space' }),
+    'thebrowser.company.defaultPersonalSpaceID',
+  );
+
+  await userEvent.click(screen.getByRole('button', { name: 'Import' }));
+
+  expect(await screen.findByRole('status')).toHaveTextContent('1 Pinned Tab');
+  expect(sectionTitles()[0]).toBe('Import from Arc');
 });
 
 // --- Auto Archive delay

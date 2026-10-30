@@ -1,0 +1,179 @@
+/**
+ * Data types shared by the service worker and its views. Pure TypeScript: no browser API here.
+ */
+
+// tabs
+
+/** One open Chrome tab, as the panel shows it. */
+export interface TabView {
+  id: number;
+  windowId: number;
+  /** Position in the tab strip of its window, from 0. */
+  index: number;
+  title: string;
+  url: string;
+  /** Address of an image the panel can show: the page icon, or the Chrome cache of site icons. */
+  iconUrl: string;
+  /** True for the tab on screen in its window. */
+  active: boolean;
+  /** True when the tab opened in the background from another tab and the user has not shown it yet. */
+  unvisited: boolean;
+}
+
+export type TabsState = {
+  /** The Unpinned Tabs of all windows: windows by id, tabs in tab strip order. */
+  unpinnedTabs: TabView[];
+};
+
+// items
+
+/** What an item is. A Favorite is flat: it has no parent. */
+export type ItemKind = 'pinned' | 'folder' | 'favorite';
+
+/** One item as the worker stores it, in `chrome.storage.local`. */
+export interface ItemRecord {
+  /** Made by Sidearc. It never is a Chrome id. */
+  id: string;
+  kind: ItemKind;
+  /** The title that the user sees at rest. The user can rename it. */
+  title: string;
+  /** The saved URL. Reset sends the live tab back to it. Empty for a Folder. */
+  url: string;
+  /** The Folder that holds the item, or null at the root. */
+  parentId: string | null;
+  /** Place among the items of the same parent, from 0. */
+  position: number;
+  collapsed: boolean;
+}
+
+/** The live tab of an item, as the panel shows it. */
+export interface LiveTabView {
+  tabId: number;
+  windowId: number;
+  /** The title of the page now, not the saved title. */
+  title: string;
+  /** The address of the page now, not the saved URL. Empty while the tab has not loaded. */
+  url: string;
+  /** True when the tab is on screen in its window. */
+  active: boolean;
+  /** True when the tab is not on the saved URL any more. */
+  away: boolean;
+}
+
+/** One item, with the status of its live tab. */
+export interface ItemView extends ItemRecord {
+  iconUrl: string;
+  /** Missing when the item is at rest. */
+  live?: LiveTabView;
+}
+
+export type ItemsState = {
+  /** Every item, in the order of its parent and its position. */
+  items: ItemView[];
+};
+
+// tab groups
+
+/** The colours of a Chrome Tab group. */
+export type TabGroupColor =
+  | 'grey'
+  | 'blue'
+  | 'red'
+  | 'yellow'
+  | 'green'
+  | 'pink'
+  | 'purple'
+  | 'cyan'
+  | 'orange';
+
+/** One Chrome Tab group, as the panel shows it. */
+export interface TabGroupView {
+  id: number;
+  windowId: number;
+  title: string;
+  color: TabGroupColor;
+  collapsed: boolean;
+  /** The tabs of the group in tab strip order. A tab that the panel does not list is ignored. */
+  tabIds: number[];
+}
+
+export type GroupsState = {
+  /** The Tab groups of all windows in tab strip order: windows by id, groups by first tab. */
+  tabGroups: TabGroupView[];
+};
+
+// site groups
+
+/** A site group: Unpinned Tabs opened from one another on the same site. Only the panel shows it. */
+export interface SiteGroupView {
+  /** Made by Sidearc. It never is a Chrome id. */
+  id: string;
+  /** The site of the tab that started the group, in lower case and without a leading `www.`. */
+  host: string;
+  /** The name that the user gave the group, or null. The panel shows the host when there is none. */
+  name: string | null;
+  /** The member tabs in tab strip order: windows by id, tabs by index. A tab that the panel does not list is ignored. */
+  tabIds: number[];
+  collapsed: boolean;
+}
+
+export type SiteGroupsState = {
+  /** The site groups with at least 2 member tabs. */
+  siteGroups: SiteGroupView[];
+};
+
+// archive
+
+/** One closed tab in View Archive. */
+export interface ArchiveEntry {
+  /** Made by Sidearc. It never is a Chrome id. */
+  id: string;
+  url: string;
+  title: string;
+  iconUrl: string;
+  /** When the tab closed, in milliseconds since 1970. */
+  closedAt: number;
+}
+
+export type ArchiveState = {
+  /** The closed tabs of the last 30 days, the latest first. */
+  archive: ArchiveEntry[];
+};
+
+// undo
+
+export type UndoState = {
+  /** What the next Undo reverts, as a short text such as `Delete "Mail"`. Null when nothing can be undone. */
+  undo: { label: string } | null;
+};
+
+// settings
+
+/** How much room a row takes. */
+export type Density = 'compact' | 'normal' | 'spacious';
+
+/** The settings of the user, saved in `chrome.storage.local`. */
+export interface Settings {
+  /** Whole hours without a visit before Auto Archive closes an Unpinned Tab. */
+  autoArchiveHours: number;
+  /** First colour of the panel gradient, as `#rrggbb`. */
+  gradientFrom: string;
+  /** Second colour of the panel gradient, as `#rrggbb`. */
+  gradientTo: string;
+  density: Density;
+  /** True when a tab opened from a tab of the same site joins a site group. */
+  groupBySite: boolean;
+  /** True when a tab that the user opens directly goes to the start of the Unpinned Tabs. */
+  newTabsOnTop: boolean;
+}
+
+export type SettingsState = { settings: Settings };
+
+/** The full state the worker sends to the panel after every change. */
+export type SidebarState = TabsState &
+  ItemsState &
+  GroupsState &
+  SiteGroupsState &
+  ArchiveState &
+  UndoState &
+  SettingsState;

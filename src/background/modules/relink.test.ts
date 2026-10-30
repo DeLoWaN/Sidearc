@@ -59,6 +59,27 @@ it('leaves an Item at rest when no restored tab has its URL', async () => {
   expect(panel.latest()?.unpinnedTabs.map((tab) => tab.url)).toEqual(['https://other.test/']);
 });
 
+it('links a restored tab to an imported item whose URL has no slash after the host', async () => {
+  await browser.storage.local.set({
+    items: [
+      {
+        id: 'imported',
+        kind: 'pinned',
+        title: 'A',
+        url: 'https://a.test',
+        parentId: null,
+        position: 0,
+        collapsed: false,
+      },
+    ],
+  });
+
+  const { panel } = await restartBrowser(['https://a.test/']);
+
+  const restored = await tabOf('https://a.test/');
+  expect(links(panel)).toEqual([['https://a.test', restored.id]]);
+});
+
 it('matches the whole URL, not a prefix of it', async () => {
   await fakeChrome.openWindow(['https://a.test/']);
   await pin('https://a.test/');

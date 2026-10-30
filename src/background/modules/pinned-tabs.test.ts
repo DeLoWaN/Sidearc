@@ -211,6 +211,42 @@ it('shows the saved title and the current title after the live tab navigated awa
   });
 });
 
+it('does not call a live tab away when Chrome only adds a slash to the saved URL', async () => {
+  await browser.storage.local.set({
+    items: [
+      {
+        id: 'imported',
+        kind: 'pinned',
+        title: 'A',
+        url: 'https://a.test',
+        parentId: null,
+        position: 0,
+        collapsed: false,
+      },
+    ],
+  });
+  const { panel, items } = await connectedPanel([['https://c.test/']]);
+  panel.send({ type: 'item/open', itemId: 'imported' });
+  await settle();
+  const tab = (await browser.tabs.query({ url: 'https://a.test' }))[0] as chrome.tabs.Tab;
+
+  await fakeChrome.patchTab(tab.id as number, { url: 'https://a.test/' });
+  await settle();
+
+  expect(items()[0]?.live).toMatchObject({ tabId: tab.id, url: 'https://a.test/', away: false });
+});
+
+it('calls a live tab away when only the fragment differs', async () => {
+  const { items } = await connectedPanel([['https://a.test/']]);
+  const tab = await tabOf('https://a.test/');
+  await pin(tab);
+
+  await fakeChrome.patchTab(tab.id as number, { url: 'https://a.test/#top' });
+  await settle();
+
+  expect(items()[0]?.live?.away).toBe(true);
+});
+
 it('sends the live tab back to the saved URL on Reset', async () => {
   const { panel, items } = await connectedPanel([['https://a.test/']]);
   const tab = await tabOf('https://a.test/');

@@ -1,3 +1,4 @@
+import { sameUrl } from '../../shared/url';
 import { createQueue } from '../queue';
 import type { WorkerModule } from '../worker-module';
 import { getItems } from './item-store';
@@ -29,7 +30,8 @@ async function linkByUrl(tabs: chrome.tabs.Tab[]) {
     .sort((a, b) => favoriteRank(a) - favoriteRank(b));
   for (const tab of tabs) {
     if (linkedTabs.has(tab.id as number)) continue;
-    const item = atRest.find((candidate) => candidate.url === urlOf(tab));
+    const url = urlOf(tab) as string;
+    const item = atRest.find((candidate) => sameUrl(candidate.url, url));
     if (!item) continue;
     atRest.splice(atRest.indexOf(item), 1);
     await linkLiveTab(item.id, tab.id as number);

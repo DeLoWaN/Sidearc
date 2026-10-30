@@ -1,4 +1,5 @@
 import type { ItemRecord, ItemView } from '../../shared/types';
+import { sameUrl } from '../../shared/url';
 import { iconUrl } from '../icons';
 import { registerSidebarSection } from '../sidebar-hub';
 import type { WorkerModule } from '../worker-module';
@@ -17,7 +18,7 @@ function toItemView(item: ItemRecord, tab: chrome.tabs.Tab | undefined): ItemVie
       url: tab.url ?? '',
       active: tab.active,
       // A tab that has not loaded yet has no URL: it is not away.
-      away: Boolean(tab.url) && tab.url !== item.url,
+      away: Boolean(tab.url) && !sameUrl(tab.url as string, item.url),
     },
   };
 }

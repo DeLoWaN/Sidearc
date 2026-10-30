@@ -9,7 +9,7 @@ type Fixtures = {
   context: BrowserContext;
   serviceWorker: Worker;
   extensionId: string;
-  /** Local HTTP server. Routes: GET /form (text field page), GET /other, GET /blank. */
+  /** Local HTTP server. Routes: GET /form (text field page), GET /other, GET /blank, GET /links (three links; the title shows the query). */
   site: { origin: string };
 };
 
@@ -39,7 +39,11 @@ export const test = base.extend<Fixtures>({
       '/blank': '<!doctype html><title>blank</title>',
     };
     const server: Server = createServer((req, res) => {
-      const body = pages[req.url ?? ''];
+      const { pathname, search } = new URL(req.url ?? '/', 'http://localhost');
+      const body =
+        pathname === '/links'
+          ? `<!doctype html><title>links ${search.slice(1)}</title><a href="/links?a">first</a> <a href="/links?b">second</a> <a href="/other">third</a>`
+          : pages[req.url ?? ''];
       res.writeHead(body ? 200 : 404, { 'content-type': 'text/html' });
       res.end(body ?? 'not found');
     });

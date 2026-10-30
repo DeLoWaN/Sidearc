@@ -19,3 +19,10 @@ export function siteOf(address: string): string | null {
   if (protocol !== 'http:' && protocol !== 'https:') return null;
   return host.replace(/^www\./, '');
 }
+
+/** The forms of the address of a New Tab page that Chrome reports, with Google or another search engine as the default. */
+const NEW_TAB_PAGE =
+  /^(?:(?:chrome|edge):\/\/(?:newtab|new-tab-page(?:-third-party)?)|chrome-untrusted:\/\/new-tab-page|chrome-search:\/\/local-ntp)(?:[/?#]|$)/i;
+
+/** True for the address of a Chrome New Tab page. A page that an extension puts in its place is not one. */
+export const isNewTabPageUrl = (address: string) => NEW_TAB_PAGE.test(address);

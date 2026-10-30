@@ -268,8 +268,43 @@ export interface ArcImportRpc {
   'arc-import/run': { request: { text: string; spaceId: string }; response: ArcImportResult };
 }
 
+// diagnostics
+/** One look of the worker at a new tab, with what Chrome sent and what the worker decided. */
+export interface PlacementLogEntry {
+  /** When the worker looked, as an ISO 8601 text. */
+  time: string;
+  /** The Chrome event that made the worker look at the tab. `retry` is a new try after a refused move. */
+  event: 'created' | 'updated' | 'activated' | 'retry';
+  tabId: number;
+  windowId: number;
+  /** Position in the tab strip, as Chrome reported it. */
+  index: number;
+  openerTabId: number | null;
+  /** Empty when Chrome sent no address. */
+  url: string;
+  /** The address that the tab loads, as Chrome reported it. Empty when Chrome sent none. */
+  pendingUrl: string;
+  status: string;
+  active: boolean;
+  /** `move` asks Chrome for index 0, `wait` looks again at the next event of the tab, `skip` leaves the tab. */
+  decision: 'move' | 'skip' | 'wait';
+  reason: string;
+  /** `moved`, or `error: ` and the message of Chrome. Missing when no move ran. */
+  moveResult?: string;
+}
+
+export interface DiagnosticsRpc {
+  /** Answers with the last 40 looks at a new tab, the oldest first. */
+  'diagnostics/get': { request: null; response: PlacementLogEntry[] };
+}
+
 /** Maps the name of a request to its request type and its response type. */
-export type RpcMap = MiscRpc & LinkGuardRpc & SettingsRpc & BackupRpc & ArcImportRpc;
+export type RpcMap = MiscRpc &
+  LinkGuardRpc &
+  SettingsRpc &
+  BackupRpc &
+  ArcImportRpc &
+  DiagnosticsRpc;
 
 export type RpcName = keyof RpcMap;
 export type RpcMessage<K extends RpcName = RpcName> = { rpc: K; request: RpcMap[K]['request'] };

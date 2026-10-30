@@ -321,8 +321,24 @@ class FakeChrome {
         if (!this.wins.some((w) => w.id === windowId))
           throw new Error(`No window with id: ${windowId}.`);
         const siblings = this.inWindow(windowId);
+        // Chrome puts a tab that a link opens right after its opener, and after the tabs that the opener opened before.
+        const afterOpener = () => {
+          let at =
+            (siblings.find((t) => t.id === props.openerTabId)?.index ?? siblings.length - 1) + 1;
+          while (siblings[at]?.openerTabId === props.openerTabId) at += 1;
+          return at;
+        };
         const index =
-          props.index === undefined ? siblings.length : Math.min(props.index, siblings.length);
+          props.index !== undefined
+            ? Math.min(props.index, siblings.length)
+            : props.openerTabId === undefined
+              ? siblings.length
+              : afterOpener();
+        // Chrome puts a tab that a link opens in the Tab group of its opener.
+        const groupId =
+          props.index === undefined
+            ? (siblings.find((t) => t.id === props.openerTabId)?.groupId ?? NONE)
+            : NONE;
         const url = props.url ?? 'chrome://newtab/';
         const tab: Tab = {
           id: this.nextTabId++,
@@ -338,7 +354,7 @@ class FakeChrome {
           autoDiscardable: true,
           frozen: false,
           selected: false,
-          groupId: NONE,
+          groupId,
           audible: false,
           status: 'complete',
           lastAccessed: Date.now(),

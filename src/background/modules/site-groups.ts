@@ -1,5 +1,6 @@
 import type { SiteGroupView } from '../../shared/types';
 import { siteOf } from '../../shared/url';
+import { moveAfterLastMember } from '../group-end';
 import { createQueue } from '../queue';
 import { registerCommand } from '../registry';
 import { notifyOnStorageChange, registerSidebarSection } from '../sidebar-hub';
@@ -70,12 +71,26 @@ function pruned(stored: Stored, eligible: Map<number, chrome.tabs.Tab>): Stored 
   return { groups, pending: stored.pending.filter((id) => eligible.has(id)) };
 }
 
+/**
+ * Judges a tab that opened from another tab. A tab that joins a group goes after the last member in the tab strip,
+ * because Chrome puts it right after its opener, which can be before other members.
+ */
+async function settleOpened(tabId: number, update: (stored: Stored) => Stored | Promise<Stored>) {
+  await change(update);
+  if (!joined.delete(tabId)) return;
+  const group = (await read()).groups.find((candidate) => candidate.tabIds.includes(tabId));
+  await moveAfterLastMember(tabId, group?.tabIds ?? []).catch(console.error);
+}
+
 const forgetGone = () => change(async (stored) => pruned(stored, await eligibleTabs()));
 
 const withoutTab = (groups: StoredGroup[], tabId: number) =>
   groups
     .map((group) => ({ ...group, tabIds: group.tabIds.filter((id) => id !== tabId) }))
     .filter((group) => group.tabIds.length >= 2);
+
+/** Tabs that joined a group in the last change and wait to move to the end of it. */
+const joined = new Set<number>();
 
 /** Puts a tab that opened from another tab in a group, once its site is known and equals the site of its opener. */
 async function join(stored: Stored, tabId: number): Promise<Stored> {
@@ -93,6 +108,7 @@ async function join(stored: Stored, tabId: number): Promise<Stored> {
   if (siteOf(opener.url || opener.pendingUrl || '') !== site) return settled;
 
   const openerId = opener.id as number;
+  joined.add(tabId);
   const existing = settled.groups.find((group) => group.tabIds.includes(openerId));
   if (existing) {
     return {
@@ -224,11 +240,13 @@ const siteGroups: WorkerModule = {
     browser.tabs.onCreated.addListener((tab) => {
       if (tab.id === undefined || tab.openerTabId === undefined) return;
       const tabId = tab.id;
-      change((stored) => join({ ...stored, pending: [...stored.pending, tabId] }, tabId));
+      settleOpened(tabId, (stored) =>
+        join({ ...stored, pending: [...stored.pending, tabId] }, tabId),
+      );
     });
 
     browser.tabs.onUpdated.addListener((tabId, changes) => {
-      if (changes.url) change((stored) => join(stored, tabId));
+      if (changes.url) settleOpened(tabId, (stored) => join(stored, tabId));
       // The tab left the Unpinned Tabs: it joined a Tab group or became a Pinned Tab in Chrome.
       if (changes.groupId !== undefined || changes.pinned !== undefined) forgetGone();
     });

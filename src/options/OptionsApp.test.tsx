@@ -81,6 +81,17 @@ it('does not move the Arc import after an import filled Sidearc', async () => {
   expect(sectionTitles()[0]).toBe('Import from Arc');
 });
 
+it('puts a closed Troubleshooting block at the bottom of the page', async () => {
+  renderOptions(<OptionsApp />);
+  await screen.findByRole('heading', { name: 'Import from Arc' });
+
+  const blocks = [...document.querySelectorAll('main > *')];
+  const last = blocks.at(-1);
+  expect(last).toHaveTextContent('Troubleshooting');
+  expect(last?.tagName).toBe('DETAILS');
+  expect(last).not.toHaveAttribute('open');
+});
+
 // --- Auto Archive delay
 
 it('shows the Auto Archive delay of the settings', async () => {

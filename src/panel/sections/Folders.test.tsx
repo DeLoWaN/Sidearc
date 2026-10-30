@@ -263,7 +263,7 @@ const moveTargets = () =>
     .getAllByRole('menuitem')
     .map((entry) => entry.textContent);
 
-it('lists the Favorites, the root and every Folder as targets of a Pinned Tab, but not its own Folder', async () => {
+it('lists the Favorites, the root, every Folder and the Unpinned Tabs as targets of a Pinned Tab, but not its own Folder', async () => {
   const { items } = moveFixture();
   renderPinned(items);
 
@@ -271,7 +271,18 @@ it('lists the Favorites, the root and every Folder as targets of a Pinned Tab, b
   await userEvent.click(screen.getByRole('menuitem', { name: 'Move to…' }));
 
   expect(screen.queryByRole('menu', { name: /Actions for/ })).toBeNull();
-  expect(moveTargets()).toEqual(['Favorites', 'Pinned Tabs', 'Work', 'Home']);
+  expect(moveTargets()).toEqual(['Favorites', 'Pinned Tabs', 'Work', 'Home', 'Unpinned Tabs']);
+});
+
+it('makes a Pinned Tab an Unpinned Tab from "Move to…"', async () => {
+  const { items, mail } = moveFixture();
+  const { send } = renderPinned(items);
+
+  rightClick('Mail');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Move to…' }));
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Unpinned Tabs' }));
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'item/unpin', itemId: mail.id });
 });
 
 it('moves a Pinned Tab to the Folder that the user picks', async () => {

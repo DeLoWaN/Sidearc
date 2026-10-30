@@ -1,6 +1,13 @@
 import { subtreeIds } from '../shared/item-tree';
 import type { ItemView, TabGroupView, TabView } from '../shared/types';
 import { buildTree, type TreeNode } from './build-tree';
+import {
+  addTabToGroupCommand,
+  favoriteCommand,
+  moveItemCommand,
+  removeTabFromGroupCommand,
+  unpinCommand,
+} from './commands';
 import type { MoveTarget } from './components/MoveToMenu';
 
 /** Every Folder of the tree in display order, with its depth (1 at the root). */
@@ -12,7 +19,8 @@ function listFolders(nodes: TreeNode[], depth = 1): { folder: ItemView; depth: n
 
 /**
  * Where an item can go. A Favorite can only become a Pinned Tab at the root.
- * A Pinned Tab can go to the Favorites, then the root, then the Folders in tree order.
+ * A Pinned Tab can go to the Favorites, then the root, then the Folders in tree order, then the Unpinned Tabs.
+ * A Favorite can also go to the Unpinned Tabs.
  * A Folder can go to the root and the Folders. Leaves out the place where the item already is,
  * and, for a Folder, itself and its content.
  */
@@ -20,9 +28,14 @@ export function itemMoveTargets(items: ItemView[], item: ItemView): MoveTarget[]
   const root = {
     key: 'root',
     label: 'Pinned Tabs',
-    command: { type: 'item/move' as const, itemId: item.id, parentId: null },
+    command: moveItemCommand(item.id, null),
   };
-  if (item.kind === 'favorite') return [root];
+  const unpinned: MoveTarget = {
+    key: 'unpinned',
+    label: 'Unpinned Tabs',
+    command: unpinCommand(item.id),
+  };
+  if (item.kind === 'favorite') return [root, unpinned];
   const unavailable = item.kind === 'folder' ? subtreeIds(items, item.id) : new Set<string>();
   const folderTargets = listFolders(buildTree(items))
     .filter(({ folder }) => !unavailable.has(folder.id) && folder.id !== item.parentId)
@@ -30,7 +43,7 @@ export function itemMoveTargets(items: ItemView[], item: ItemView): MoveTarget[]
       key: folder.id,
       label: folder.title,
       depth,
-      command: { type: 'item/move' as const, itemId: item.id, parentId: folder.id },
+      command: moveItemCommand(item.id, folder.id),
     }));
   const favorites: MoveTarget[] =
     item.kind === 'pinned'
@@ -38,11 +51,17 @@ export function itemMoveTargets(items: ItemView[], item: ItemView): MoveTarget[]
           {
             key: 'favorites',
             label: 'Favorites',
-            command: { type: 'item/favorite', itemId: item.id },
+            command: favoriteCommand(item.id),
           },
         ]
       : [];
-  return [...favorites, ...(item.parentId === null ? [] : [root]), ...folderTargets];
+  const unpin = item.kind === 'pinned' ? [unpinned] : [];
+  return [
+    ...favorites,
+    ...(item.parentId === null ? [] : [root]),
+    ...folderTargets,
+    ...unpin,
+  ];
 }
 
 /** Where an Unpinned Tab can go: every Tab group but its own, then "Out of group" when it is in one. */
@@ -53,13 +72,13 @@ export function tabMoveTargets(groups: TabGroupView[], tab: TabView): MoveTarget
     .map((group) => ({
       key: `group-${group.id}`,
       label: group.title || 'Untitled group',
-      command: { type: 'group/add-tab', tabId: tab.id, groupId: group.id },
+      command: addTabToGroupCommand(tab.id, group.id),
     }));
   if (current) {
     targets.push({
       key: 'out-of-group',
       label: 'Out of group',
-      command: { type: 'group/remove-tab', tabId: tab.id },
+      command: removeTabFromGroupCommand(tab.id),
     });
   }
   return targets;

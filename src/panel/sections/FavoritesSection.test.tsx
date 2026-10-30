@@ -184,14 +184,14 @@ it('renames a Favorite in a field that replaces its icon', async () => {
   expect(screen.queryByRole('textbox')).toBeNull();
 });
 
-it('moves a Favorite to the Pinned Tabs from "Move to…", and offers nothing else', async () => {
+it('moves a Favorite to the Pinned Tabs from "Move to…", and offers the Unpinned Tabs', async () => {
   const item = makeFavorite({ title: 'Docs' });
   const { send } = renderFavorites([item, makeItem({ kind: 'folder', url: '', title: 'Work' })]);
 
   rightClick('Docs');
   await userEvent.click(screen.getByRole('menuitem', { name: 'Move to…' }));
   const targets = within(screen.getByRole('menu', { name: 'Move to…' })).getAllByRole('menuitem');
-  expect(targets.map((entry) => entry.textContent)).toEqual(['Pinned Tabs']);
+  expect(targets.map((entry) => entry.textContent)).toEqual(['Pinned Tabs', 'Unpinned Tabs']);
   await userEvent.click(targets[0] as HTMLElement);
 
   expect(send).toHaveBeenCalledExactlyOnceWith({
@@ -212,7 +212,7 @@ it('moves a Pinned Tab to the Favorites from "Move to…"', async () => {
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'item/favorite', itemId: item.id });
 });
 
-it('offers the Favorites to a Pinned Tab inside a Folder, before the root and the Folders', async () => {
+it('offers the Favorites to a Pinned Tab inside a Folder, before the root and the Folders, and the Unpinned Tabs last', async () => {
   const work = makeItem({ kind: 'folder', url: '', title: 'Work' });
   renderFavorites([work, makeItem({ title: 'Mail', parentId: work.id })]);
 
@@ -223,7 +223,7 @@ it('offers the Favorites to a Pinned Tab inside a Folder, before the root and th
     within(screen.getByRole('menu', { name: 'Move to…' }))
       .getAllByRole('menuitem')
       .map((entry) => entry.textContent),
-  ).toEqual(['Favorites', 'Pinned Tabs']);
+  ).toEqual(['Favorites', 'Pinned Tabs', 'Unpinned Tabs']);
 });
 
 it('does not offer the Favorites to a Folder', () => {

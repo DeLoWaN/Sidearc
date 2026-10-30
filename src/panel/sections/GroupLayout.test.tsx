@@ -44,12 +44,14 @@ function renderGroup(
 describe.each(kinds)('$kind', ({ kind, name }) => {
   const block = () => screen.getByRole('group', { name });
   const header = () => screen.getByRole('button', { name });
+  /** The row of the header: the header button and the close button. */
+  const headerRow = () => header().parentElement as HTMLElement;
 
   it('puts the header first in the block, with the members in an indented list after it', () => {
     renderGroup(kind);
 
-    expect(block().firstElementChild).toBe(header());
-    const members = header().nextElementSibling as HTMLElement;
+    expect(block().firstElementChild).toBe(headerRow());
+    const members = headerRow().nextElementSibling as HTMLElement;
     expect(members.tagName).toBe('UL');
     expect(
       within(members)
@@ -65,8 +67,21 @@ describe.each(kinds)('$kind', ({ kind, name }) => {
   it('gives the header the height and the shape of a tab row', () => {
     renderGroup(kind);
 
-    expect(header()).toHaveClass('h-(--row-height)', 'rounded-[10px]', 'px-2.5', 'font-semibold');
+    expect(headerRow()).toHaveClass('h-(--row-height)', 'rounded-[10px]');
+    expect(header()).toHaveClass('px-2.5', 'font-semibold');
     expect(within(header()).getByText(name)).toBeVisible();
+  });
+
+  it('puts the close button at the right end of the header row, hidden until a hover or a focus', () => {
+    renderGroup(kind);
+
+    const close = screen.getByRole('button', { name: `Close group ${name}` });
+    expect(headerRow().lastElementChild).toBe(close);
+    expect(close).toHaveClass('opacity-0', 'group-hover/block:opacity-100');
+    expect(close).toHaveClass(
+      'focus-visible:opacity-100',
+      'group-has-[:focus-visible]/block:opacity-100',
+    );
   });
 
   it('shows the chevron after the name, pointing down when open and right when collapsed', () => {

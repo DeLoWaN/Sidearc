@@ -69,7 +69,13 @@ export type GroupsCommand =
   | { type: 'group/toggle'; groupId: number }
   /** Puts the tab at the end of the Tab group. The tab changes window when the group is in another one. */
   | { type: 'group/add-tab'; tabId: number; groupId: number }
-  | { type: 'group/remove-tab'; tabId: number };
+  | { type: 'group/remove-tab'; tabId: number }
+  /**
+   * Closes every Unpinned Tab of the Tab group. A live tab of a Pinned Tab or a Favorite stays open.
+   * Chrome closes the window when no tab is left in it. Does nothing when the group does not exist.
+   * The Undo button of the panel reopens the tabs and the group.
+   */
+  | { type: 'group/close'; groupId: number };
 
 // site groups
 export type SiteGroupsCommand =
@@ -78,7 +84,12 @@ export type SiteGroupsCommand =
   /** Dissolves the site group. Its tabs stay open. */
   | { type: 'site-group/ungroup'; groupId: string }
   /** Takes the tab out of its site group. The group disappears when fewer than 2 tabs are left. */
-  | { type: 'site-group/remove-tab'; tabId: number };
+  | { type: 'site-group/remove-tab'; tabId: number }
+  /**
+   * Closes every member tab of the site group. Chrome closes the window when no tab is left in it.
+   * Does nothing when the group does not exist. The Undo button of the panel reopens the tabs and the group.
+   */
+  | { type: 'site-group/close'; groupId: string };
 
 // site group names
 export type SiteGroupNameCommand =

@@ -17,7 +17,7 @@ export interface Connection {
 
 /** The text of the Undo toast for a command that the worker can undo, or undefined for any other command. */
 function undoToastFor(command: CommandBody): string | undefined {
-  const { items, unpinnedTabs } = usePanelStore.getState().state;
+  const { items, unpinnedTabs, tabGroups, siteGroups } = usePanelStore.getState().state;
   if (command.type === 'item/delete') {
     const item = items.find((candidate) => candidate.id === command.itemId);
     return item && `Deleted "${item.title}"`;
@@ -26,6 +26,14 @@ function undoToastFor(command: CommandBody): string | undefined {
   if (command.type === 'tab/close') {
     const tab = unpinnedTabs.find((candidate) => candidate.id === command.tabId);
     return tab && `Closed "${tab.title}"`;
+  }
+  if (command.type === 'site-group/close') {
+    const group = siteGroups.find((candidate) => candidate.id === command.groupId);
+    return group && `Closed group "${group.name ?? group.host}"`;
+  }
+  if (command.type === 'group/close') {
+    const group = tabGroups.find((candidate) => candidate.id === command.groupId);
+    return group && `Closed group "${group.title || group.color}"`;
   }
 }
 

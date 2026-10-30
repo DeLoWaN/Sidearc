@@ -129,6 +129,31 @@ async function composeSiteGroups(): Promise<SiteGroupView[]> {
     .sort((a, b) => position(a.tabIds[0] as number) - position(b.tabIds[0] as number));
 }
 
+/** The site group and its member tabs in tab strip order. Undefined when the group does not exist. */
+export async function shownSiteGroup(groupId: string) {
+  const group = (await composeSiteGroups()).find((candidate) => candidate.id === groupId);
+  if (!group) return undefined;
+  const tabs = await Promise.all(group.tabIds.map((id) => browser.tabs.get(id)));
+  return { group, tabs };
+}
+
+/** Makes a site group of the tabs, with the host, the custom name and the collapsed state of `original`. */
+export function restoreSiteGroup(original: Omit<SiteGroupView, 'id' | 'tabIds'>, tabIds: number[]) {
+  return change((stored) => ({
+    ...stored,
+    groups: [
+      ...stored.groups,
+      {
+        id: crypto.randomUUID(),
+        host: original.host,
+        ...(original.name === null ? {} : { name: original.name }),
+        tabIds,
+        collapsed: original.collapsed,
+      },
+    ],
+  }));
+}
+
 const siteGroups: WorkerModule = {
   name: 'site-groups',
   order: 22,
@@ -162,6 +187,11 @@ const siteGroups: WorkerModule = {
         groups: stored.groups.filter((group) => group.id !== groupId),
       })),
     );
+
+    registerCommand('site-group/close', async ({ groupId }) => {
+      const shown = await shownSiteGroup(groupId);
+      if (shown) await browser.tabs.remove(shown.group.tabIds);
+    });
 
     registerCommand('site-group/remove-tab', ({ tabId }) =>
       change((stored) => ({ ...stored, groups: withoutTab(stored.groups, tabId) })),

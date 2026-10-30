@@ -2,6 +2,7 @@ import type { TabGroupView } from '../../shared/types';
 import { registerCommand } from '../registry';
 import { notifySidebarChanged, registerSidebarSection } from '../sidebar-hub';
 import type { WorkerModule } from '../worker-module';
+import { getLiveTabs } from './live-tab-registry';
 
 async function composeTabGroups(): Promise<TabGroupView[]> {
   const [groups, tabs] = await Promise.all([browser.tabGroups.query({}), browser.tabs.query({})]);
@@ -22,6 +23,44 @@ async function composeTabGroups(): Promise<TabGroupView[]> {
 export const addTabToGroup = (tabId: number, groupId: number) =>
   browser.tabs.group({ tabIds: [tabId], groupId });
 
+/**
+ * The Tab group and its tabs in tab strip order, without the live tabs of Pinned Tabs and Favorites.
+ * These are the tabs that the panel shows in the block. Undefined when the group does not exist or shows no tab.
+ */
+export async function shownTabGroup(groupId: number) {
+  const group = await browser.tabGroups.get(groupId).catch(() => undefined);
+  if (!group) return undefined;
+  const [tabs, live] = await Promise.all([browser.tabs.query({ groupId }), getLiveTabs()]);
+  const liveIds = new Set(live.values());
+  const shown = tabs
+    .filter((tab) => !liveIds.has(tab.id as number))
+    .sort((a, b) => a.windowId - b.windowId || a.index - b.index);
+  return shown.length > 0 ? { group, tabs: shown } : undefined;
+}
+
+/**
+ * Puts the new tabs, which sit in the window, back in a Tab group.
+ * The tabs join the group `original` when it still exists in that window, for example for a live tab that stayed in it.
+ * Otherwise a new group gets the title, the colour and the collapsed state of `original`.
+ */
+export async function restoreTabGroup(
+  tabIds: [number, ...number[]],
+  windowId: number,
+  original: Pick<chrome.tabGroups.TabGroup, 'id' | 'title' | 'color' | 'collapsed'>,
+) {
+  const existing = await browser.tabGroups.get(original.id).catch(() => undefined);
+  if (existing?.windowId === windowId) {
+    await browser.tabs.group({ tabIds, groupId: existing.id });
+    return;
+  }
+  const groupId = await browser.tabs.group({ tabIds, createProperties: { windowId } });
+  await browser.tabGroups.update(groupId, {
+    title: original.title,
+    color: original.color,
+    collapsed: original.collapsed,
+  });
+}
+
 export const removeTabFromGroup = (tabId: number) => browser.tabs.ungroup(tabId);
 
 const tabGroups: WorkerModule = {
@@ -33,6 +72,11 @@ const tabGroups: WorkerModule = {
     registerCommand('group/toggle', async ({ groupId }) => {
       const group = await browser.tabGroups.get(groupId);
       await browser.tabGroups.update(groupId, { collapsed: !group.collapsed });
+    });
+
+    registerCommand('group/close', async ({ groupId }) => {
+      const shown = await shownTabGroup(groupId);
+      if (shown) await browser.tabs.remove(shown.tabs.map((tab) => tab.id as number));
     });
 
     registerCommand('group/add-tab', ({ tabId, groupId }) => addTabToGroup(tabId, groupId));

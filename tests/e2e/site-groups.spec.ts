@@ -30,12 +30,12 @@ test('tabs opened from a tab of the same site form a site group that the user ca
   await expect(blocks).toHaveCount(1);
   const host = new URL(site.origin).host;
   // The count shows only while the group is collapsed.
-  await blocks.getByRole('button', { name: host }).click();
-  await expect(blocks.getByRole('button', { name: host })).toContainText('2');
-  await blocks.getByRole('button', { name: host }).click();
+  await blocks.getByRole('button', { name: host, exact: true }).click();
+  await expect(blocks.getByRole('button', { name: host, exact: true })).toContainText('2');
+  await blocks.getByRole('button', { name: host, exact: true }).click();
   await expect(blocks.getByRole('listitem')).toHaveText(['links', 'other']);
 
-  await blocks.getByRole('button', { name: host }).click({ button: 'right' });
+  await blocks.getByRole('button', { name: host, exact: true }).click({ button: 'right' });
   await panel.getByRole('menuitem', { name: 'Ungroup' }).click();
 
   await expect(blocks).toHaveCount(0);
@@ -55,4 +55,48 @@ test('tabs opened from a tab of the same site form a site group that the user ca
     )
     .toEqual([]);
   await expect(blocks).toHaveCount(0);
+});
+
+test('"Close group" closes every tab of a site group in Chrome, and Undo brings the tabs and the group back', async ({
+  context,
+  extensionId,
+  serviceWorker,
+  site,
+}) => {
+  const links = await context.newPage();
+  await links.route('**/links', (route) =>
+    route.fulfill({
+      contentType: 'text/html',
+      body: '<!doctype html><title>links</title><a href="/other">same site</a>',
+    }),
+  );
+  await links.goto(`${site.origin}/links`);
+  const panel = await context.newPage();
+  await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
+  const blocks = panel.locator('[data-site-group]');
+  const host = new URL(site.origin).host;
+  const siteTabCount = () =>
+    serviceWorker.evaluate(
+      async (origin) => (await chrome.tabs.query({ url: `${origin}/*` })).length,
+      site.origin,
+    );
+  await links.bringToFront();
+  await links.getByRole('link', { name: 'same site' }).click({ button: 'middle' });
+  await expect(blocks.getByRole('listitem')).toHaveText(['links', 'other']);
+  expect(await siteTabCount()).toBe(2);
+
+  await blocks.hover();
+  await blocks.getByRole('button', { name: `Close group ${host}` }).click();
+
+  await expect.poll(siteTabCount).toBe(0);
+  await expect(blocks).toHaveCount(0);
+  await expect(panel.getByRole('status')).toContainText(`Closed group "${host}"`);
+
+  await panel.getByRole('status').getByRole('button', { name: 'Undo' }).click();
+
+  await expect.poll(siteTabCount).toBe(2);
+  await expect(blocks).toHaveCount(1);
+  await expect(blocks.getByRole('button', { name: host, exact: true })).toBeVisible();
+  // The reopened tabs load from the server, which has no `/links` page.
+  await expect(blocks.getByRole('listitem')).toHaveCount(2);
 });

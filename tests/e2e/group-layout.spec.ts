@@ -47,7 +47,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await panel.emulateMedia({ colorScheme: scheme });
     const group = panel.locator('[data-site-group]');
     const host = new URL(site.origin).host;
-    const header = group.getByRole('button', { name: host });
+    const header = group.getByRole('button', { name: host, exact: true });
     // A member opened in the background is unvisited, so its button name has an extra part: use the rows.
     const member = group.getByRole('listitem').filter({ hasText: 'other' });
     const outside = panel.getByRole('listitem').filter({ hasText: /^blank$/ });
@@ -100,22 +100,22 @@ test('the user renames a site group from the right-click menu of its header, and
       return (stored.siteGroups as { groups: { name?: string }[] }).groups[0]?.name ?? null;
     });
 
-  await group.getByRole('button', { name: host }).click({ button: 'right' });
+  await group.getByRole('button', { name: host, exact: true }).click({ button: 'right' });
   await panel.getByRole('menuitem', { name: 'Rename group' }).click();
   const field = panel.getByRole('textbox', { name: `Name of ${host}` });
   await expect(field).toHaveValue(host);
   await field.fill('Reading list');
   await field.press('Enter');
 
-  await expect(group.getByRole('button', { name: 'Reading list' })).toBeVisible();
+  await expect(group.getByRole('button', { name: 'Reading list', exact: true })).toBeVisible();
   await expect(panel.getByRole('group', { name: 'Reading list' })).toBeVisible();
   await expect.poll(storedName).toBe('Reading list');
 
-  await group.getByRole('button', { name: 'Reading list' }).click({ button: 'right' });
+  await group.getByRole('button', { name: 'Reading list', exact: true }).click({ button: 'right' });
   await panel.getByRole('menuitem', { name: 'Rename group' }).click();
   await panel.getByRole('textbox', { name: 'Name of Reading list' }).fill('   ');
   await panel.keyboard.press('Enter');
 
-  await expect(group.getByRole('button', { name: host })).toBeVisible();
+  await expect(group.getByRole('button', { name: host, exact: true })).toBeVisible();
   await expect.poll(storedName).toBeNull();
 });

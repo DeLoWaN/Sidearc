@@ -104,11 +104,59 @@ it('offers "Ungroup" in the right-click menu of the header and sends the command
     within(menu)
       .getAllByRole('menuitem')
       .map((entry) => entry.textContent),
-  ).toEqual(['Rename group', 'Ungroup']);
+  ).toEqual(['Rename group', 'Ungroup', 'Close group']);
   await userEvent.click(within(menu).getByRole('menuitem', { name: 'Ungroup' }));
 
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'site-group/ungroup', groupId: 'site-7' });
   expect(screen.queryByRole('menu')).toBeNull();
+});
+
+it('closes the site group from the "Close group" entry of the header menu, set apart by a separator', async () => {
+  const [home, guide] = [makeTab(), makeTab()] as [TabView, TabView];
+  const state = makeState({
+    unpinnedTabs: [home, guide],
+    siteGroups: [makeSiteGroup([home, guide], { id: 'site-7' })],
+  });
+  const { send } = renderPanel(<UnpinnedSection />, { state });
+
+  await userEvent.pointer({
+    keys: '[MouseRight]',
+    target: screen.getByRole('button', { name: 'docs.test' }),
+  });
+  const menu = screen.getByRole('menu', { name: 'Actions for docs.test' });
+  expect(within(menu).getAllByRole('separator')).toHaveLength(1);
+  await userEvent.click(within(menu).getByRole('menuitem', { name: 'Close group' }));
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'site-group/close', groupId: 'site-7' });
+});
+
+it('closes the site group with the cross at the right end of its header, named after the group', async () => {
+  const [home, guide] = [makeTab(), makeTab()] as [TabView, TabView];
+  const state = makeState({
+    unpinnedTabs: [home, guide],
+    siteGroups: [makeSiteGroup([home, guide], { id: 'site-7', name: 'Reading list' })],
+  });
+  const { send } = renderPanel(<UnpinnedSection />, { state });
+
+  await userEvent.click(screen.getByRole('button', { name: 'Close group Reading list' }));
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'site-group/close', groupId: 'site-7' });
+});
+
+it('closes the site group when the user clicks its header with the middle button', async () => {
+  const [home, guide] = [makeTab(), makeTab()] as [TabView, TabView];
+  const state = makeState({
+    unpinnedTabs: [home, guide],
+    siteGroups: [makeSiteGroup([home, guide], { id: 'site-7' })],
+  });
+  const { send } = renderPanel(<UnpinnedSection />, { state });
+
+  await userEvent.pointer({
+    keys: '[MouseMiddle]',
+    target: screen.getByRole('button', { name: 'docs.test' }),
+  });
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'site-group/close', groupId: 'site-7' });
 });
 
 it('offers "Remove from group" to a member tab and sends the command', async () => {
@@ -170,22 +218,6 @@ it('keeps the middle click closing a member tab', async () => {
   });
 
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'tab/close', tabId: guide.id });
-});
-
-it('ignores a middle click on the header of a site group', async () => {
-  const [home, guide] = [makeTab(), makeTab()] as [TabView, TabView];
-  const state = makeState({
-    unpinnedTabs: [home, guide],
-    siteGroups: [makeSiteGroup([home, guide])],
-  });
-  const { send } = renderPanel(<UnpinnedSection />, { state });
-
-  await userEvent.pointer({
-    keys: '[MouseMiddle]',
-    target: screen.getByRole('button', { name: 'docs.test' }),
-  });
-
-  expect(send).not.toHaveBeenCalled();
 });
 
 // --- rename

@@ -1,5 +1,5 @@
 import type { Command, CommandType } from '../../shared/protocol';
-import type { ItemRecord } from '../../shared/types';
+import type { ItemRecord, SiteGroupView } from '../../shared/types';
 import { createQueue } from '../queue';
 import { registerCommand, wrapCommands } from '../registry';
 import { notifyOnStorageChange, registerSidebarSection } from '../sidebar-hub';
@@ -7,7 +7,8 @@ import type { WorkerModule } from '../worker-module';
 import { getItems, replaceItems } from './item-store';
 import { getLiveTabs, readLiveLinks, restoreLiveTabs } from './live-tab-registry';
 import { relinkOpenTabs } from './relink';
-import { addTabToGroup } from './tab-groups';
+import { restoreSiteGroup, shownSiteGroup } from './site-groups';
+import { addTabToGroup, restoreTabGroup, shownTabGroup } from './tab-groups';
 
 export const UNDO_STORAGE_KEY = 'undoStack';
 
@@ -33,7 +34,20 @@ interface TabEntry {
   groupId: number | null;
 }
 
-type Entry = ItemsEntry | TabEntry;
+/** The Tab group or the site group that held the tabs of a closed group. */
+type Regrouping =
+  | { kind: 'tab-group'; original: chrome.tabGroups.TabGroup }
+  | { kind: 'site-group'; original: Omit<SiteGroupView, 'id' | 'tabIds'> };
+
+/** The close of a group: the tabs it closed, in tab strip order, and how to group them again. */
+interface GroupEntry {
+  kind: 'group';
+  label: string;
+  tabs: { url: string; windowId: number; index: number }[];
+  regrouping: Regrouping;
+}
+
+type Entry = ItemsEntry | TabEntry | GroupEntry;
 
 // Session storage keeps the list when the worker stops, and drops it when Chrome quits.
 async function readStack(): Promise<Entry[]> {
@@ -103,6 +117,50 @@ async function recordTabClose(tabId: number, run: () => Promise<void>): Promise<
   };
 }
 
+type GroupCloseCommand = Extract<Command, { type: 'group/close' | 'site-group/close' }>;
+
+/** The label, the tabs and the grouping of the group that the command closes. Undefined when the group does not exist. */
+async function groupBefore(command: GroupCloseCommand) {
+  if (command.type === 'group/close') {
+    const shown = await shownTabGroup(command.groupId);
+    if (!shown) return undefined;
+    const { group, tabs } = shown;
+    const regrouping: Regrouping = { kind: 'tab-group', original: group };
+    return { name: group.title || group.color, tabs, regrouping };
+  }
+  const shown = await shownSiteGroup(command.groupId);
+  if (!shown) return undefined;
+  const { id: _id, tabIds: _tabIds, ...original } = shown.group;
+  const regrouping: Regrouping = { kind: 'site-group', original };
+  return { name: shown.group.name ?? shown.group.host, tabs: shown.tabs, regrouping };
+}
+
+/** Takes the snapshot of a group, runs the close, and returns the entry for the member tabs that are gone. */
+async function recordGroupClose(
+  command: GroupCloseCommand,
+  run: () => Promise<void>,
+): Promise<Entry | undefined> {
+  const before = await groupBefore(command);
+  await run();
+  if (!before) return undefined;
+  const gone: GroupEntry['tabs'] = [];
+  for (const tab of before.tabs) {
+    if (await exists(browser.tabs.get(tab.id as number))) continue;
+    gone.push({
+      url: tab.url || tab.pendingUrl || 'chrome://newtab/',
+      windowId: tab.windowId,
+      index: tab.index,
+    });
+  }
+  if (gone.length === 0) return undefined;
+  return {
+    kind: 'group',
+    label: `Close group ${quote(before.name)}`,
+    tabs: gone,
+    regrouping: before.regrouping,
+  };
+}
+
 const exists = (lookup: Promise<unknown>) =>
   lookup.then(
     () => true,
@@ -117,6 +175,8 @@ async function undoable(command: Command, run: () => Promise<void>) {
   const verb = ITEM_VERBS[command.type];
   let entry: Entry | undefined;
   if (command.type === 'tab/close') entry = await recordTabClose(command.tabId, run);
+  else if (command.type === 'group/close' || command.type === 'site-group/close')
+    entry = await recordGroupClose(command, run);
   else if (verb) entry = await recordItemCommand(command, verb, run);
   else return run();
   if (entry) await pushEntry(entry);
@@ -152,6 +212,37 @@ async function reopenTab(entry: TabEntry, panelWindowId: number) {
   await browser.tabs.move(tab.id as number, { index: entry.index });
 }
 
+async function reopenGroup(entry: GroupEntry, panelWindowId: number) {
+  const windows = new Map<number, boolean>();
+  const created: chrome.tabs.Tab[] = [];
+  // Tabs come in tab strip order, so each one lands at its own index when the earlier ones are back.
+  for (const closed of entry.tabs) {
+    if (!windows.has(closed.windowId))
+      windows.set(closed.windowId, await exists(browser.windows.get(closed.windowId)));
+    const sameWindow = windows.get(closed.windowId);
+    created.push(
+      await browser.tabs.create({
+        windowId: sameWindow ? closed.windowId : panelWindowId,
+        url: closed.url,
+        // The index of a window that is gone means nothing in the window of the panel: the tab goes last.
+        ...(sameWindow ? { index: closed.index } : {}),
+        active: false,
+      }),
+    );
+  }
+  const tabIds = created.map((tab) => tab.id as number);
+  const { regrouping } = entry;
+  if (regrouping.kind === 'site-group') {
+    await restoreSiteGroup(regrouping.original, tabIds);
+  } else {
+    await restoreTabGroup(
+      tabIds as [number, ...number[]],
+      (created[0] as chrome.tabs.Tab).windowId,
+      regrouping.original,
+    );
+  }
+}
+
 async function restoreItems(entry: ItemsEntry) {
   await replaceItems(entry.items);
   await restoreLiveTabs(entry.links);
@@ -175,6 +266,7 @@ const undoModule: WorkerModule = {
         // The entry leaves the list first, so an entry that fails never blocks the ones below it.
         await writeStack(stack);
         if (entry.kind === 'items') await restoreItems(entry);
+        else if (entry.kind === 'group') await reopenGroup(entry, windowId);
         else await reopenTab(entry, windowId);
       }),
     );

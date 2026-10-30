@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeItem, makeState, makeTab } from '../../tests/support/builders';
 import { fakeChrome } from '../../tests/support/fake-chrome';
 import { PANEL_PORT } from '../shared/protocol';
-import type { SidebarState } from '../shared/types';
+import type { SidebarState, TabView } from '../shared/types';
 import { connectToWorker } from './connection';
 import { resetPanelStore, usePanelStore } from './store';
 import { resetPanelUi, usePanelUi } from './ui-store';
@@ -91,6 +91,60 @@ describe('the Undo toast', () => {
     const connection = await connectedWith(makeState({ items: [item] }));
 
     connection.send({ type: 'tab/close', tabId: 40 });
+
+    expect(usePanelUi.getState().undoToast).toBeUndefined();
+  });
+
+  it('offers an Undo for a site group that the panel closes, named after its host or its custom name', async () => {
+    const [a, b] = [makeTab(), makeTab()] as [TabView, TabView];
+    const group = {
+      id: 's1',
+      host: 'docs.test',
+      name: null,
+      tabIds: [a.id, b.id],
+      collapsed: false,
+    };
+    const connection = await connectedWith(
+      makeState({ unpinnedTabs: [a, b], siteGroups: [group] }),
+    );
+
+    connection.send({ type: 'site-group/close', groupId: 's1' });
+    expect(usePanelUi.getState().undoToast).toBe('Closed group "docs.test"');
+
+    usePanelStore
+      .getState()
+      .receive(makeState({ unpinnedTabs: [a, b], siteGroups: [{ ...group, name: 'Manual' }] }));
+    connection.send({ type: 'site-group/close', groupId: 's1' });
+    expect(usePanelUi.getState().undoToast).toBe('Closed group "Manual"');
+  });
+
+  it('offers an Undo for a Tab group that the panel closes, named after its title or its colour', async () => {
+    const tab = makeTab();
+    const group = {
+      id: 7,
+      windowId: 1,
+      title: 'Work',
+      color: 'cyan' as const,
+      collapsed: false,
+      tabIds: [tab.id],
+    };
+    const connection = await connectedWith(makeState({ unpinnedTabs: [tab], tabGroups: [group] }));
+
+    connection.send({ type: 'group/close', groupId: 7 });
+    expect(usePanelUi.getState().undoToast).toBe('Closed group "Work"');
+
+    usePanelStore
+      .getState()
+      .receive(makeState({ unpinnedTabs: [tab], tabGroups: [{ ...group, title: '' }] }));
+    connection.send({ type: 'group/close', groupId: 7 });
+    expect(usePanelUi.getState().undoToast).toBe('Closed group "cyan"');
+  });
+
+  it('offers no Undo for a group that the panel does not know', async () => {
+    const connection = await connectedWith(makeState());
+
+    connection.send({ type: 'group/close', groupId: 7 });
+    connection.send({ type: 'site-group/close', groupId: 'nope' });
 
     expect(usePanelUi.getState().undoToast).toBeUndefined();
   });

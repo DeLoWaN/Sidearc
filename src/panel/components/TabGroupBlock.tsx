@@ -24,6 +24,7 @@ export function TabGroupBlock({ group, tabs }: { group: TabGroupView; tabs: TabV
       tabs={tabs}
       collapsed={group.collapsed}
       onToggle={() => send({ type: 'group/toggle', groupId: group.id })}
+      closeCommand={{ type: 'group/close', groupId: group.id }}
       color={group.color}
       dropPlacement={placement}
     />

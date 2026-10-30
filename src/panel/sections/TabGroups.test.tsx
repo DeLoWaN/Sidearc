@@ -1,13 +1,17 @@
-import { fireEvent, screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { makeItem, makeState, makeTab } from '../../../tests/support/builders';
 import { renderPanel } from '../../../tests/support/render-panel';
 import type { TabGroupView, TabView } from '../../shared/types';
 import { resetPanelStore } from '../store';
+import { resetPanelUi, usePanelUi } from '../ui-store';
 import { UnpinnedSection } from './UnpinnedSection';
 
-beforeEach(resetPanelStore);
+beforeEach(() => {
+  resetPanelStore();
+  resetPanelUi();
+});
 
 function makeGroup(tabs: TabView[], overrides: Partial<TabGroupView> = {}): TabGroupView {
   return {
@@ -70,7 +74,7 @@ it('asks the worker to toggle a Tab group when the user clicks its header', asyn
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'group/toggle', groupId: 7 });
 });
 
-it('ignores a middle click on a Tab group header', async () => {
+it('closes the Tab group when the user clicks its header with the middle button', async () => {
   const tab = makeTab({ title: 'Docs' });
   const state = makeState({ unpinnedTabs: [tab], tabGroups: [makeGroup([tab], { id: 7 })] });
   const { send } = renderPanel(<UnpinnedSection />, { state });
@@ -80,6 +84,54 @@ it('ignores a middle click on a Tab group header', async () => {
     target: screen.getByRole('button', { name: 'Work' }),
   });
 
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'group/close', groupId: 7 });
+});
+
+it('closes the Tab group with the cross at the right end of its header', async () => {
+  const tab = makeTab({ title: 'Docs' });
+  const state = makeState({ unpinnedTabs: [tab], tabGroups: [makeGroup([tab], { id: 7 })] });
+  const { send } = renderPanel(<UnpinnedSection />, { state });
+
+  await userEvent.click(screen.getByRole('button', { name: 'Close group Work' }));
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'group/close', groupId: 7 });
+});
+
+it('offers only "Close group" in the right-click menu of a Tab group header', async () => {
+  const tab = makeTab({ title: 'Docs' });
+  const state = makeState({ unpinnedTabs: [tab], tabGroups: [makeGroup([tab], { id: 7 })] });
+  const { send } = renderPanel(<UnpinnedSection />, { state });
+
+  await userEvent.pointer({
+    keys: '[MouseRight]',
+    target: screen.getByRole('button', { name: 'Work' }),
+  });
+  const menu = screen.getByRole('menu', { name: 'Actions for Work' });
+  expect(
+    within(menu)
+      .getAllByRole('menuitem')
+      .map((entry) => entry.textContent),
+  ).toEqual(['Close group']);
+  await userEvent.click(within(menu).getByRole('menuitem', { name: 'Close group' }));
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'group/close', groupId: 7 });
+  expect(screen.queryByRole('menu')).toBeNull();
+});
+
+it('offers no way to close a Tab group while a search shows only some of its tabs', async () => {
+  const tab = makeTab({ title: 'Docs' });
+  const state = makeState({ unpinnedTabs: [tab], tabGroups: [makeGroup([tab], { id: 7 })] });
+  const { send } = renderPanel(<UnpinnedSection />, { state });
+  act(() => usePanelUi.getState().setSearchQuery('docs'));
+
+  await userEvent.pointer({ keys: '[MouseMiddle]', target: screen.getByRole('group') });
+  await userEvent.pointer({
+    keys: '[MouseRight]',
+    target: screen.getByRole('button', { name: 'Work' }),
+  });
+
+  expect(screen.queryByRole('button', { name: 'Close group Work' })).toBeNull();
+  expect(screen.queryByRole('menu')).toBeNull();
   expect(send).not.toHaveBeenCalled();
 });
 
@@ -171,16 +223,6 @@ it('closes the tab from its right-click menu', async () => {
   await userEvent.click(screen.getByRole('menuitem', { name: 'Close tab' }));
 
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'tab/close', tabId: tab.id });
-  expect(screen.queryByRole('menu')).toBeNull();
-});
-
-it('gives no menu to the header of a Tab group', () => {
-  const tab = makeTab({ title: 'Docs' });
-  const state = makeState({ unpinnedTabs: [tab], tabGroups: [makeGroup([tab])] });
-  renderPanel(<UnpinnedSection />, { state });
-
-  fireEvent.contextMenu(screen.getByRole('button', { name: 'Work' }));
-
   expect(screen.queryByRole('menu')).toBeNull();
 });
 

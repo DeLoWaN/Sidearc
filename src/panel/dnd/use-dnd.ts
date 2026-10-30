@@ -65,7 +65,7 @@ interface DndOptions {
 /**
  * Makes an element draggable and a drop target, and says where its drop indicator shows.
  * Does nothing while a search shows: the result view has no place to drop on.
- * The indicator shows only on the innermost target under the pointer, and only for a drop that Sidearc accepts.
+ * The indicator shows only on the innermost target under the pointer, and only for a drop that Sidesweep accepts.
  */
 export function useDnd(ref: RefObject<HTMLElement | null>, options: DndOptions) {
   const searching = usePanelUi((ui) => ui.searching);

@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS, parseSettingsPatch } from './settings';
 import type { ArchiveEntry, ItemKind, ItemRecord, Settings } from './types';
 import { type Fail, fail, isObject, show } from './validation';
 
-export const BACKUP_FORMAT = 'sidearc-backup';
+export const BACKUP_FORMAT = 'sidesweep-backup';
 export const BACKUP_VERSION = 1;
 
 /** The content of a backup file. */
@@ -18,7 +18,7 @@ export interface BackupDocument {
   archive: ArchiveEntry[];
 }
 
-/** The name of the file that a backup is saved to: `sidearc-backup-YYYY-MM-DD.json`, in local time. */
+/** The name of the file that a backup is saved to: `sidesweep-backup-YYYY-MM-DD.json`, in local time. */
 export function backupFileName(date: Date): string {
   const two = (n: number) => String(n).padStart(2, '0');
   return `${BACKUP_FORMAT}-${date.getFullYear()}-${two(date.getMonth() + 1)}-${two(date.getDate())}.json`;
@@ -153,14 +153,15 @@ export function parseBackup(text: string): { ok: true; backup: ParsedBackup } | 
   } catch {
     return fail('The file is not valid JSON');
   }
-  if (!isObject(document)) return fail('The file is not a Sidearc backup: it must hold an object');
+  if (!isObject(document))
+    return fail('The file is not a Sidesweep backup: it must hold an object');
   if (document.format !== BACKUP_FORMAT)
     return fail(
-      `The file is not a Sidearc backup: format must be ${show(BACKUP_FORMAT)}, got ${show(document.format)}`,
+      `The file is not a Sidesweep backup: format must be ${show(BACKUP_FORMAT)}, got ${show(document.format)}`,
     );
   if (document.version !== BACKUP_VERSION)
     return fail(
-      `Unknown backup version ${show(document.version)}: this Sidearc reads version ${BACKUP_VERSION}`,
+      `Unknown backup version ${show(document.version)}: this Sidesweep reads version ${BACKUP_VERSION}`,
     );
 
   const items = parseItems(document.items);

@@ -1,6 +1,6 @@
-# Sidearc
+# Sidesweep
 
-Sidearc is a Chrome extension that shows the Arc sidebar in the Chrome side panel. This glossary holds the terms of the tab groups and the tab marks. The other terms (Favorite, Pinned Tab, Folder, Live tab, Unpinned Tab, Reset, Auto Archive, View Archive, Tab Handoff) are defined in [docs/design-decisions.md](docs/design-decisions.md).
+Sidesweep is a Chrome extension that shows the Arc sidebar in the Chrome side panel. This glossary holds the terms of the tab groups and the tab marks. The other terms (Favorite, Pinned Tab, Folder, Live tab, Unpinned Tab, Reset, Auto Archive, View Archive, Tab Handoff) are defined in [docs/design-decisions.md](docs/design-decisions.md).
 
 ## Language
 
@@ -9,7 +9,7 @@ A Chrome tab group, with a title and a colour. Chrome shows it in the tab strip 
 _Avoid_: Group (alone), site group
 
 **Site group**:
-A set of two or more Unpinned Tabs of the same site, opened from each other. Only the Sidearc panel shows it. Chrome does not know it.
+A set of two or more Unpinned Tabs of the same site, opened from each other. Only the Sidesweep panel shows it. Chrome does not know it.
 _Avoid_: Group (alone), Tab group, topic group
 
 **Unvisited tab**:

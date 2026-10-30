@@ -16,7 +16,7 @@ export interface ArcImportReport {
   favorites: number;
   pinnedTabs: number;
   folders: number;
-  /** Favorites of the profile beyond the 12 that Sidearc keeps. */
+  /** Favorites of the profile beyond the 12 that Sidesweep keeps. */
   favoritesIgnored: number;
   /** Arc-only items (Live Folders, easels, notes...) and tabs that Chrome cannot open. */
   skipped: number;
@@ -123,7 +123,7 @@ function tabTitle(object: Json, saved: Json, url: string): string {
 
 type Walked = { kind: 'tab'; title: string; url: string } | { kind: 'folder'; title: string };
 
-/** Reads an Arc item as a Sidearc tab or folder. Returns undefined for an Arc-only item. */
+/** Reads an Arc item as a Sidesweep tab or folder. Returns undefined for an Arc-only item. */
 function readItem(object: Json): Walked | undefined {
   const data = isObject(object.data) ? object.data : {};
   if (isObject(data.list)) {

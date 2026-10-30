@@ -33,7 +33,7 @@ function formatEntry(entry: PlacementLogEntry) {
 
 /**
  * A closed block at the bottom of the page. Opened, it shows what Chrome sent for the last new tabs
- * and what Sidearc did, as text that the user can copy and send.
+ * and what Sidesweep did, as text that the user can copy and send.
  */
 export function TroubleshootingSection() {
   const ask = useAsk();
@@ -67,7 +67,7 @@ export function TroubleshootingSection() {
       setError(undefined);
       setCopied(true);
     } catch {
-      setError('Sidearc could not copy the text. Select it and copy it by hand.');
+      setError('Sidesweep could not copy the text. Select it and copy it by hand.');
     }
   };
 

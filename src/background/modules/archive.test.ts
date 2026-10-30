@@ -115,7 +115,7 @@ it.each(['chrome://newtab/', 'about:blank', ''])(
   },
 );
 
-it('Clear closes a page of Sidearc itself without archiving it', async () => {
+it('Clear closes a page of Sidesweep itself without archiving it', async () => {
   const own = browser.runtime.getURL('/options.html' as never);
   const { panel, archive } = await connectedPanel([[own, 'https://a.test/']]);
 

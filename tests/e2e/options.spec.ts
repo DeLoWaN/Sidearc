@@ -95,7 +95,7 @@ test('a backup exported from the options page restores the panel after the data 
   const downloading = options.waitForEvent('download');
   await options.getByRole('button', { name: 'Export backup' }).click();
   const download = await downloading;
-  expect(download.suggestedFilename()).toMatch(/^sidearc-backup-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(download.suggestedFilename()).toMatch(/^sidesweep-backup-\d{4}-\d{2}-\d{2}\.json$/);
   const file = testInfo.outputPath('backup.json');
   await download.saveAs(file);
 
@@ -129,11 +129,11 @@ test('a backup with an unknown version is refused with its error and changes not
   await options.getByLabel('Backup file').setInputFiles({
     name: 'future.json',
     mimeType: 'application/json',
-    buffer: Buffer.from(JSON.stringify({ format: 'sidearc-backup', version: 2 })),
+    buffer: Buffer.from(JSON.stringify({ format: 'sidesweep-backup', version: 2 })),
   });
 
   await expect(options.getByRole('alert')).toContainText(
-    'Unknown backup version 2: this Sidearc reads version 1',
+    'Unknown backup version 2: this Sidesweep reads version 1',
   );
   await expect(options.getByRole('alertdialog')).toHaveCount(0);
   await expect(options.getByRole('radio', { name: 'Compact' })).toBeChecked();

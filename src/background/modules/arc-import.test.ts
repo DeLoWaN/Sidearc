@@ -40,7 +40,7 @@ const shape = (items: { kind: string; title: string; url: string; position: numb
     .map(({ kind, title, url, position }) => ({ kind, title, url, position }))
     .sort((a, b) => `${a.kind}${a.title}`.localeCompare(`${b.kind}${b.title}`));
 
-it('counts the items of Sidearc', async () => {
+it('counts the items of Sidesweep', async () => {
   expect(await status()).toEqual({ itemCount: 0 });
 
   await browser.storage.local.set({ items: [savedItem] });
@@ -76,7 +76,7 @@ it('shows the imported items in the panels', async () => {
   expect(panel.latest()?.items.filter((item) => item.kind === 'favorite')).toHaveLength(3);
 });
 
-it('replaces the items of Sidearc with the space, as an import into an empty Sidearc gives them', async () => {
+it('replaces the items of Sidesweep with the space, as an import into an empty Sidesweep gives them', async () => {
   await importSpace(fixture, ALPHA);
   const expected = shape(await getItems());
   await browser.storage.local.set({ items: [savedItem] });

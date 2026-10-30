@@ -100,8 +100,8 @@ test('an Unpinned Tab is reordered, joins a Tab group between two of its tabs, a
   expect(await strip(serviceWorker, titles)).toEqual(['form', 'other@group', 'blank@group']);
 
   // Outside any group: form goes after the panel tab.
-  await dragTo(panel, handle('form'), row('Sidearc'), 0.5, 0.85);
-  await expect(row('Sidearc')).toHaveAttribute('data-drop', 'below');
+  await dragTo(panel, handle('form'), row('Sidesweep'), 0.5, 0.85);
+  await expect(row('Sidesweep')).toHaveAttribute('data-drop', 'below');
   await drop(panel);
   await expect
     .poll(() => strip(serviceWorker, titles))
@@ -116,7 +116,7 @@ test('an Unpinned Tab is reordered, joins a Tab group between two of its tabs, a
     .toEqual(['other@group', 'form@group', 'blank@group']);
 
   // Onto a row outside the group: form leaves it.
-  await dragTo(panel, handle('form'), row('Sidearc'), 0.5, 0.85);
+  await dragTo(panel, handle('form'), row('Sidesweep'), 0.5, 0.85);
   await drop(panel);
   await expect
     .poll(() => strip(serviceWorker, titles))

@@ -12,7 +12,7 @@ beforeEach(() => {
   resetPanelUi();
 });
 
-it('invites the user to import from Arc or to pin a tab while Sidearc is empty', () => {
+it('invites the user to import from Arc or to pin a tab while Sidesweep is empty', () => {
   renderPanel(<PinnedSection />);
 
   const card = screen.getByRole('region', { name: 'Getting started' });
@@ -33,7 +33,7 @@ it.each([
   ['Pinned Tab', makeItem({ title: 'Mail' })],
   ['Favorite', makeItem({ title: 'Mail', kind: 'favorite' })],
   ['Folder', makeItem({ title: 'Work', kind: 'folder', url: '' })],
-])('does not show the card when Sidearc holds a %s', (_kind, item) => {
+])('does not show the card when Sidesweep holds a %s', (_kind, item) => {
   renderPanel(<PinnedSection />, { state: makeState({ items: [item] }) });
 
   expect(screen.queryByRole('region', { name: 'Getting started' })).not.toBeInTheDocument();

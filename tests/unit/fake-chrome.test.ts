@@ -100,13 +100,13 @@ describe('fake chrome', () => {
       port.onMessage.addListener((m) => fromPanel.push(m));
       port.postMessage({ hello: port.name });
     });
-    const port = fakeChrome.connect('sidearc-panel');
+    const port = fakeChrome.connect('sidesweep-panel');
     const fromWorker: unknown[] = [];
     port.onMessage.addListener((m) => fromWorker.push(m));
     port.postMessage({ ping: 1 });
     await new Promise((r) => setTimeout(r, 0));
     expect(fromPanel).toEqual([{ ping: 1 }]);
-    expect(fromWorker).toEqual([{ hello: 'sidearc-panel' }]);
+    expect(fromWorker).toEqual([{ hello: 'sidesweep-panel' }]);
   });
 
   it('keeps one active tab per window', async () => {

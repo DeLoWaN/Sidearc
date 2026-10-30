@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues and specs live in GitHub Issues of DeLoWaN/Sidearc, through the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues and specs live in GitHub Issues of DeLoWaN/Sidesweep, through the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

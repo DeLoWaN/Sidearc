@@ -11,9 +11,9 @@ import { TroubleshootingSection } from './sections/TroubleshootingSection';
 import { SettingsProvider, useSettings } from './settings-context';
 
 /**
- * True when Sidearc had no item as the page opened: the Arc import then goes first.
+ * True when Sidesweep had no item as the page opened: the Arc import then goes first.
  * Undefined until the worker answers. The answer stays the same for the whole visit,
- * so the import section never moves, and never loses its report, when an import fills Sidearc.
+ * so the import section never moves, and never loses its report, when an import fills Sidesweep.
  */
 function useStartedEmpty(): boolean | undefined {
   const ask = useAsk();
@@ -33,7 +33,7 @@ function OptionsPage() {
   return (
     <div className="panel-background min-h-screen">
       <main className="mx-auto max-w-2xl p-6">
-        <h1 className="text-xl font-semibold">Sidearc options</h1>
+        <h1 className="text-xl font-semibold">Sidesweep options</h1>
         {startedEmpty === true && <ArcImportSection />}
         <ArchiveDelaySection />
         <SiteGroupsSection />

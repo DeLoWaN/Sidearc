@@ -15,7 +15,7 @@ import { clearLiveTabs } from './live-tab-registry';
 import { relinkOpenTabs } from './relink';
 import { getSettings } from './settings';
 
-/** The text of a backup file with all the data of Sidearc. The live tabs are not part of it. */
+/** The text of a backup file with all the data of Sidesweep. The live tabs are not part of it. */
 export async function exportBackup(): Promise<string> {
   const [items, settings, archive] = await Promise.all([getItems(), getSettings(), getArchive()]);
   const backup: BackupDocument = {

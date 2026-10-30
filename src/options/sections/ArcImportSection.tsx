@@ -31,7 +31,7 @@ function Report({ report }: { report: ArcImportReport }) {
       </p>
       {report.favoritesIgnored > 0 && (
         <p>
-          {plural(report.favoritesIgnored, 'Favorite')} left out: Sidearc keeps {MAX_FAVORITES}{' '}
+          {plural(report.favoritesIgnored, 'Favorite')} left out: Sidesweep keeps {MAX_FAVORITES}{' '}
           Favorites at most.
         </p>
       )}
@@ -56,7 +56,7 @@ function ArcPath({ onError }: { onError: (message: string | undefined) => void }
       onError(undefined);
       setCopied(true);
     } catch {
-      onError('Sidearc could not copy the path. Select it and copy it by hand.');
+      onError('Sidesweep could not copy the path. Select it and copy it by hand.');
     }
   };
 
@@ -72,7 +72,7 @@ function ArcPath({ onError }: { onError: (message: string | undefined) => void }
   );
 }
 
-/** The question before the import replaces the items that Sidearc holds. */
+/** The question before the import replaces the items that Sidesweep holds. */
 function ReplaceQuestion({
   itemCount,
   spaceTitle,
@@ -91,16 +91,16 @@ function ReplaceQuestion({
       onCancel={onCancel}
       onConfirm={onConfirm}
     >
-      Replace your Favorites, Pinned Tabs and Folders? Sidearc has {plural(itemCount, 'item')} now.
-      The import replaces them with the Arc space "{spaceTitle}". Export a backup first if you want
-      to keep them.
+      Replace your Favorites, Pinned Tabs and Folders? Sidesweep has {plural(itemCount, 'item')}{' '}
+      now. The import replaces them with the Arc space "{spaceTitle}". Export a backup first if you
+      want to keep them.
     </ConfirmDialog>
   );
 }
 
 /**
  * The Arc import: a guide in four steps, then the file, the space and the import.
- * It runs at any time. When Sidearc holds items, the import replaces them after a question.
+ * It runs at any time. When Sidesweep holds items, the import replaces them after a question.
  */
 export function ArcImportSection() {
   const ask = useAsk();
@@ -129,7 +129,7 @@ export function ArcImportSection() {
       setText(content);
       setSpaces(listed.spaces);
     } catch (failure) {
-      setError(`Sidearc could not read the file: ${describeFailure(failure)}`);
+      setError(`Sidesweep could not read the file: ${describeFailure(failure)}`);
     }
   };
 
@@ -166,7 +166,7 @@ export function ArcImportSection() {
   return (
     <Section title="Import from Arc">
       <ol className="flex list-decimal flex-col gap-4 pl-5">
-        <li>Sidearc reads the file where Arc keeps your sidebar. Arc can stay open.</li>
+        <li>Sidesweep reads the file where Arc keeps your sidebar. Arc can stay open.</li>
         <li>
           Click <strong>Choose Arc file</strong>. In the file window, press ⌘ Shift G, paste the
           path below, press Enter, then click Open.
@@ -182,8 +182,8 @@ export function ArcImportSection() {
           </div>
         </li>
         <li>
-          Pick the Arc space to import. Sidearc imports one space. Each Chrome profile has its own
-          Sidearc data, so import 'Perso' in your Perso profile and 'IWD' in your IWD profile.
+          Pick the Arc space to import. Sidesweep imports one space. Each Chrome profile has its own
+          Sidesweep data, so import each Arc space into its own Chrome profile.
           {spaces.length > 0 && (
             <div className="mt-2 flex flex-col gap-1">
               <label className="flex flex-col gap-1">
@@ -211,7 +211,7 @@ export function ArcImportSection() {
           )}
         </li>
         <li>
-          Click <strong>Import</strong>. Sidearc shows how many Favorites, Pinned Tabs and Folders
+          Click <strong>Import</strong>. Sidesweep shows how many Favorites, Pinned Tabs and Folders
           it imported.
           <div className="mt-2">
             <button

@@ -7,7 +7,7 @@ import { SettingsProvider } from '../settings-context';
 import { BackupSection } from './BackupSection';
 
 const SUMMARY = { favorites: 3, pinnedTabs: 12, folders: 4, archivedTabs: 7 };
-const FILE_TEXT = '{"format":"sidearc-backup"}';
+const FILE_TEXT = '{"format":"sidesweep-backup"}';
 
 let created: Blob[];
 let downloads: string[];
@@ -57,7 +57,7 @@ it('downloads the text of the worker as a backup file named after the date', asy
 
   await userEvent.click(await screen.findByRole('button', { name: 'Export backup' }));
 
-  await waitFor(() => expect(downloads).toEqual(['sidearc-backup-2026-03-05.json']));
+  await waitFor(() => expect(downloads).toEqual(['sidesweep-backup-2026-03-05.json']));
   expect(ask).toHaveBeenCalledWith('backup/export', null);
   expect(await created[0]?.text()).toBe('{"exported":true}');
   expect(created[0]?.type).toBe('application/json');
@@ -87,7 +87,7 @@ it('says what Export and Import do', async () => {
   ).toBeVisible();
   expect(
     screen.getByText(
-      'Replaces all your Sidearc data with the content of a backup file. Asks for confirmation first.',
+      'Replaces all your Sidesweep data with the content of a backup file. Asks for confirmation first.',
     ),
   ).toBeVisible();
 });
@@ -150,7 +150,7 @@ it('keeps the data when the user presses Escape', async () => {
 });
 
 it('shows the precise error of the worker and asks nothing for a refused file', async () => {
-  const error = 'Unknown backup version 2: this Sidearc reads version 1';
+  const error = 'Unknown backup version 2: this Sidesweep reads version 1';
   const { ask } = renderBackup(() => ({ ok: false, error }));
 
   await userEvent.upload(await screen.findByLabelText('Backup file'), backupFile());

@@ -57,7 +57,7 @@ test('Pinned Tabs are reordered, and moved into a Folder, with an indicator abov
   ).toBeVisible();
 });
 
-test('a Folder moves into another Folder, and Sidearc refuses a Folder inside its own content', async ({
+test('a Folder moves into another Folder, and Sidesweep refuses a Folder inside its own content', async ({
   context,
   extensionId,
   serviceWorker,
@@ -137,7 +137,7 @@ test('a Pinned Tab goes to the Favorites, and a Favorite goes to the Pinned Tabs
   await expect.poll(() => order(serviceWorker, null, true)).toEqual(['mail']);
 });
 
-test('Sidearc refuses a 13th Favorite with a notice', async ({
+test('Sidesweep refuses a 13th Favorite with a notice', async ({
   context,
   extensionId,
   serviceWorker,

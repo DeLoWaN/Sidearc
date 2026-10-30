@@ -4,7 +4,7 @@
 import type { ArcImportResult } from './arc-import';
 import type { Settings, SidebarState } from './types';
 
-export const PANEL_PORT = 'sidearc-panel';
+export const PANEL_PORT = 'sidesweep-panel';
 
 // --- commands: sent by the panel on its port
 
@@ -247,7 +247,7 @@ export interface BackupSummary {
 export type BackupCheckResult = { ok: true; summary: BackupSummary } | { ok: false; error: string };
 
 export interface BackupRpc {
-  /** Answers with the text of a backup file that holds all the data of Sidearc. */
+  /** Answers with the text of a backup file that holds all the data of Sidesweep. */
   'backup/export': { request: null; response: string };
   /** Checks the text of a backup file and counts its content. Changes nothing. */
   'backup/inspect': { request: string; response: BackupCheckResult };
@@ -257,7 +257,7 @@ export interface BackupRpc {
 
 // Arc import
 export interface ArcImportRpc {
-  /** Counts the items of Sidearc, so that the page asks before the import replaces them. */
+  /** Counts the items of Sidesweep, so that the page asks before the import replaces them. */
   'arc-import/status': { request: null; response: { itemCount: number } };
   /**
    * Replaces the Favorites, Pinned Tabs and Folders with one space of the Arc file, all items at once.

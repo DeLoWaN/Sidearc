@@ -2,12 +2,12 @@ import { iconUrl } from './icons';
 import { addArchiveEntries } from './modules/archive-store';
 import { getLiveTabs } from './modules/live-tab-registry';
 import { createQueue } from './queue';
-import { createTabBySidearc } from './sidearc-tabs';
+import { createTabBySidesweep } from './sidesweep-tabs';
 
 // A Clear and an Auto Archive run must not close the same tab twice.
 const closings = createQueue();
 
-// View Archive keeps every tab with an address, except a blank New Tab page and a page of Sidearc.
+// View Archive keeps every tab with an address, except a blank New Tab page and a page of Sidesweep.
 const isArchivable = (url: string) =>
   url !== '' &&
   url !== 'about:blank' &&
@@ -46,7 +46,7 @@ export function closeAndArchive(choose: (tabs: chrome.tabs.Tab[]) => chrome.tabs
     const emptied = [...new Set(tabs.map((tab) => tab.windowId))].filter((windowId) =>
       open.every((tab) => tab.windowId !== windowId || closing.has(tab.id as number)),
     );
-    for (const windowId of emptied) await createTabBySidearc({ windowId, active: true });
+    for (const windowId of emptied) await createTabBySidesweep({ windowId, active: true });
 
     await browser.tabs.remove([...closing]);
   });

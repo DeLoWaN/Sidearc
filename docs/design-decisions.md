@@ -1,10 +1,10 @@
-# Sidearc: design decisions
+# Sidesweep: design decisions
 
-Sidearc is a Chrome extension. It shows a vertical panel that mixes saved links and open tabs, like the sidebar of the Arc browser. This file records the decisions taken on 2026-10-30, at the start of the project.
+Sidesweep is a Chrome extension. It shows a vertical panel that mixes saved links and open tabs, like the sidebar of the Arc browser. This file records the decisions taken on 2026-10-30, at the start of the project.
 
 ## Terms
 
-Sidearc uses the vocabulary of Arc. Each term below has one meaning in this file.
+Sidesweep uses the vocabulary of Arc. Each term below has one meaning in this file.
 
 - **Side panel**: the Chrome area where an extension shows its own page, on the left or right of the window. The user picks the side and the width in Chrome.
 - **Favorite**: a saved link shown as an icon at the top of the panel. A profile has 12 Favorites at most.
@@ -13,7 +13,7 @@ Sidearc uses the vocabulary of Arc. Each term below has one meaning in this file
 - **Live tab**: the real Chrome tab that belongs to a Favorite or a Pinned Tab. Each Favorite or Pinned Tab has one live tab at most, across all windows.
 - **Unpinned Tab**: an open Chrome tab that belongs to no Favorite and no Pinned Tab. The Unpinned Tabs section is also called **Today**.
 - **Tab group**: a Chrome tab group, with a title and a colour.
-- **Site group**: Unpinned Tabs that opened from one another on the same site. Only the Sidearc panel shows it. It is not a Tab group.
+- **Site group**: Unpinned Tabs that opened from one another on the same site. Only the Sidesweep panel shows it. It is not a Tab group.
 - **Reset**: the action that sends a live tab back to the saved URL of its Pinned Tab or Favorite.
 - **Auto Archive**: the automatic closing of an Unpinned Tab after a delay without a visit.
 - **View Archive**: the list of tabs that Auto Archive closed. The user can reopen a tab from this list.
@@ -21,10 +21,10 @@ Sidearc uses the vocabulary of Arc. Each term below has one meaning in this file
 
 ## Scope
 
-- Sidearc is for one user first. Other people can install it later.
-- Sidearc is written from scratch. Arcify was tested and rejected, because its panel has no Folders.
+- Sidesweep is for one user first. Other people can install it later.
+- Sidesweep is written from scratch. Arcify was tested and rejected, because its panel has no Folders.
 - Version 1 targets Chrome only. The build tool also supports Firefox later.
-- Spaces are out of scope. Each Chrome profile has its own Sidearc data. The Arc space "IWD" goes to the Chrome profile "pro", and the Arc space "Perso" goes to the Chrome profile "perso".
+- Spaces are out of scope. Each Chrome profile has its own Sidesweep data. To keep two Arc spaces apart, the user imports each one into its own Chrome profile.
 - Arc Live Folders and Peek are out of scope.
 
 ## Chrome limits accepted
@@ -55,7 +55,7 @@ The search filters the Favorites, the Pinned Tabs and the Unpinned Tabs. It does
 - Closing the live tab returns the Pinned Tab to its saved state. The Pinned Tab stays in the tree.
 - After a navigation inside the live tab, the panel shows the saved title, a "/", the current page title and a Reset button.
 - A link to the same host stays in the live tab.
-- A link to another host opens in a new Unpinned Tab. A different subdomain counts as another host: a link from `jira.iwd.io` to `wiki.iwd.io` opens a new tab.
+- A link to another host opens in a new Unpinned Tab. A different subdomain counts as another host: a link from `jira.example.com` to `wiki.example.com` opens a new tab.
 - Only link clicks are checked. Redirects, such as a single sign-on login, stay in the live tab.
 - Favorites behave exactly like Pinned Tabs.
 - Auto Archive never closes the live tab of a Favorite or a Pinned Tab.
@@ -65,7 +65,7 @@ The search filters the Favorites, the Pinned Tabs and the Unpinned Tabs. It does
 - A click on an Unpinned Tab of another window moves the tab into the current window (Tab Handoff).
 - A move in the panel also moves the tab in the Chrome tab strip.
 - Collapsing a Tab group in the panel collapses it in the Chrome tab strip, and the reverse.
-- A tab that the user opens directly (Ctrl+T or Cmd+T, the "+" button, the "New tab" entry of the Chrome menu) goes to the start of the Unpinned Tabs, as in Arc. The panel lists the Unpinned Tabs in tab strip order, so Sidearc moves the tab to the start of the Chrome tab strip. Chrome keeps its own pinned tabs first. The first tab of a new window stays where it is. A New Tab page counts as opened by the user when it has no opener, or when its opener is the tab that was active before. It counts too when an extension replaces the page. When Chrome refuses the move, Sidearc tries again after 100 ms and after 400 ms more, and then stops. A tab that a link opens keeps the place that Chrome gives it, next to its opener, unless a rule of a group below moves it. The setting "Open new tabs at the top of the list" turns this off. It is on by default.
+- A tab that the user opens directly (Ctrl+T or Cmd+T, the "+" button, the "New tab" entry of the Chrome menu) goes to the start of the Unpinned Tabs, as in Arc. The panel lists the Unpinned Tabs in tab strip order, so Sidesweep moves the tab to the start of the Chrome tab strip. Chrome keeps its own pinned tabs first. The first tab of a new window stays where it is. A New Tab page counts as opened by the user when it has no opener, or when its opener is the tab that was active before. It counts too when an extension replaces the page. When Chrome refuses the move, Sidesweep tries again after 100 ms and after 400 ms more, and then stops. A tab that a link opens keeps the place that Chrome gives it, next to its opener, unless a rule of a group below moves it. The setting "Open new tabs at the top of the list" turns this off. It is on by default.
 - A tab that a link opens from a tab of a Tab group goes to the end of that group, inside the group. A tab that joins a Site group goes right after the last member of the group in the tab strip, in the window of the tab. Chrome would put it right after its opener, which can be before the last member. A tab that the user moves later stays where the user puts it.
 - When a tab joins the Unpinned Tabs and its row is not fully visible, the panel scrolls to it. The panel waits 300 ms first, and it skips a tab that left the list or is the active tab of its window by then: a Pinned Tab that the user clicks opens an active tab, and the panel never lists it as an Unpinned Tab. The scroll is smooth, and instant for a user who prefers reduced motion. A row that is already fully visible does not scroll. A new tab inside a collapsed group scrolls to the header of the group. The first state that the panel receives, and a drag in progress, never scroll the panel. The panel keeps the new row in view for one second, because a site group of the tab can arrive just after the tab.
 
@@ -78,7 +78,7 @@ A site group is not a Chrome tab group. The Chrome tab strip does not change, no
 - When the opener is already in a site group, the new tab joins that group. Otherwise the two tabs form a new group. A tab is in one site group at most.
 - A tab leaves its group when it closes, when it becomes the live tab of a Pinned Tab or a Favorite, when it joins a Tab group, and when the user chooses "Remove from group" in its right-click menu. A group with fewer than 2 tabs disappears. A member that navigates to another site stays in the group.
 - The panel shows the group as one block at the place of its first member in the tab strip. The block lists all members in tab strip order, even when another tab sits between them. The header is a row of the same height as a tab row. It shows the site icon, the name of the group in bold, a chevron, and the member count while the block is collapsed. The name is the host, unless the user renamed the group. The members sit one indent step (24px) below the header. A click on the header collapses or expands the block. A collapsed header shows the "not visited yet" dot when a hidden member has not been visited. The right-click menu of the header has "Rename group", "Ungroup", "Move group up", "Move group down" and "Close group". A rename is trimmed and limited to 60 characters, and an empty name brings the host back. The name lasts as long as the group.
-- A Tab group block has the same layout. Its header shows a dot in the colour of the group in place of the site icon, and the title that Chrome gives the group. Sidearc cannot rename it. Its right-click menu has "Move group up", "Move group down" and "Close group".
+- A Tab group block has the same layout. Its header shows a dot in the colour of the group in place of the site icon, and the title that Chrome gives the group. Sidesweep cannot rename it. Its right-click menu has "Move group up", "Move group down" and "Close group".
 - The user moves a whole group, for a Site group and for a Tab group. The header is the drag handle, and the drag image shows the whole block. A click, the cross and a middle click on the header keep their action. A search, the name field of a rename and a selection of several rows turn the drag off.
 - A group drops above or below an Unpinned Tab that is in no group, above or below another group block, and at the end of the Unpinned Tabs. The block of another group is one unit: a drop on one of its members counts as a drop above or below the block, never inside it. The panel refuses a drop on the Pinned Tabs, a Folder, a Favorite or the block of the group itself, and shows no drop line there.
 - A move of a Tab group moves the group in the Chrome tab strip with its title, colour and collapsed state. A move of a site group moves its member tabs next to each other, in the order that they had. A member in another window moves to the window of the drop. A move does not change who is in a group.
@@ -94,7 +94,7 @@ A site group is not a Chrome tab group. The Chrome tab strip does not change, no
 
 The Chromium source shows that `chrome.tabs.move` moves the same tab object to the other window, with no reload. So a form that is half filled keeps its content.
 
-A manual test confirms this at the start of development. If the test fails, Tab Handoff is removed completely. In that case, a click on a tab in another window focuses that window. Sidearc never decides this at runtime.
+A manual test confirms this at the start of development. If the test fails, Tab Handoff is removed completely. In that case, a click on a tab in another window focuses that window. Sidesweep never decides this at runtime.
 
 ### Auto Archive
 
@@ -105,7 +105,7 @@ A manual test confirms this at the start of development. If the test fails, Tab 
 
 ### Restart
 
-Tab IDs change when Chrome restarts. When Chrome restores the tabs, Sidearc links each restored tab back to its Pinned Tab by URL. A Pinned Tab with no matching tab starts closed.
+Tab IDs change when Chrome restarts. When Chrome restores the tabs, Sidesweep links each restored tab back to its Pinned Tab by URL. A Pinned Tab with no matching tab starts closed.
 
 ### Selection of rows
 
@@ -133,18 +133,18 @@ The user can act on several rows at once.
 
 ## Data
 
-- Sidearc keeps its data in `chrome.storage.local`, not in the Chrome bookmarks. Each item keeps its title, URL, Folder, Favorite status and collapsed state in one record.
+- Sidesweep keeps its data in `chrome.storage.local`, not in the Chrome bookmarks. Each item keeps its title, URL, Folder, Favorite status and collapsed state in one record.
 - The data does not sync between computers. The options page exports and imports a JSON file as a backup.
-- Sidearc imports one Arc space from Arc's `StorableSidebar.json` file. The user selects the file in a file picker, because an extension cannot read `~/Library`. The folder is hidden, so the options page gives the path to paste in the file window (⌘ Shift G) and a button that copies it. A numbered guide in the "Import from Arc" section explains each step.
-- The Arc import can run at any time. The "Import from Arc" section is always on the options page, and it comes first while Sidearc is empty.
-- The import replaces the Favorites, Pinned Tabs and Folders. It keeps the settings and View Archive. When Sidearc already has items, the page asks for a confirmation first and advises a backup. The import is all-or-nothing: a refused file changes nothing. The Undo button reverts it.
-- While Sidearc has no Favorite, no Pinned Tab and no Folder, the panel shows a card with an "Import from Arc" button, which opens the options page, and the shortcut that pins the current tab.
+- Sidesweep imports one Arc space from Arc's `StorableSidebar.json` file. The user selects the file in a file picker, because an extension cannot read `~/Library`. The folder is hidden, so the options page gives the path to paste in the file window (⌘ Shift G) and a button that copies it. A numbered guide in the "Import from Arc" section explains each step.
+- The Arc import can run at any time. The "Import from Arc" section is always on the options page, and it comes first while Sidesweep is empty.
+- The import replaces the Favorites, Pinned Tabs and Folders. It keeps the settings and View Archive. When Sidesweep already has items, the page asks for a confirmation first and advises a backup. The import is all-or-nothing: a refused file changes nothing. The Undo button reverts it.
+- While Sidesweep has no Favorite, no Pinned Tab and no Folder, the panel shows a card with an "Import from Arc" button, which opens the options page, and the shortcut that pins the current tab.
 
 ## Appearance
 
-- The look follows Arc: a coloured background, rounded rows, large Favorite icons. This is variant A of the prototype.
+- The look follows Arc: a coloured background, rounded rows, large Favorite icons.
 - The options page sets the background as a free gradient of two colours.
-- The options page sets the density: compact, normal or spacious. Normal is the default, between variants A and C of the prototype.
+- The options page sets the density: compact, normal or spacious. Normal is the default.
 - The panel follows the light or dark mode of the system.
 - Any gradient stays readable. In light mode the panel keeps 30% of each chosen colour and adds white. In dark mode it keeps 35% and adds black. A test checks the text contrast on extreme colours.
 - Density sets the row height and the Favorite tile size: compact 28 and 36 pixels, normal 32 and 44, spacious 40 and 56.
@@ -159,7 +159,7 @@ The options page holds:
 - the background gradient,
 - the density,
 - the JSON export and import,
-- a closed "Troubleshooting" block at the bottom. It shows the last 40 looks of Sidearc at a new tab, with what Chrome sent and what Sidearc did, and a button that copies them.
+- a closed "Troubleshooting" block at the bottom. It shows the last 40 looks of Sidesweep at a new tab, with what Chrome sent and what Sidesweep did, and a button that copies them.
 
 ## Technical stack
 
@@ -177,10 +177,9 @@ The service worker owns Auto Archive (through `chrome.alarms`), Tab Handoff, the
 
 ## Permissions
 
-`sidePanel`, `tabs`, `tabGroups`, `storage`, `alarms`, `favicon`, and a content script on all sites to check link clicks in live tabs. The Chrome Web Store reviews the all-sites permission more closely if Sidearc is published.
+`sidePanel`, `tabs`, `tabGroups`, `storage`, `alarms`, `favicon`, and a content script on all sites to check link clicks in live tabs. The Chrome Web Store reviews the all-sites permission more closely if Sidesweep is published.
 
 ## Project
 
-- Name: Sidearc.
-- Location: `~/git_perso/Sidearc`.
+- Name: Sidesweep. The name does not contain "Arc", a trademark of The Browser Company. The description names Arc, so a user still finds the extension as an Arc replacement.
 - Hosting: a public GitHub repository.

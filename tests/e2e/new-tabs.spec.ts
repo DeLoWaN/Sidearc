@@ -28,7 +28,7 @@ test('the panel scrolls to a tab that opens in the background below the visible 
   await expect(panel.getByRole('listitem').filter({ hasText: /^blank$/ })).toHaveCount(15);
   // The panel follows the row of a new tab for a second: scroll back until the list rests at the top.
   await expect(async () => {
-    await panel.getByRole('main', { name: 'Sidearc' }).evaluate((main) => main.scrollTo(0, 0));
+    await panel.getByRole('main', { name: 'Sidesweep' }).evaluate((main) => main.scrollTo(0, 0));
     await expect(linksRow).not.toBeInViewport({ timeout: 1500 });
   }).toPass();
 
@@ -64,7 +64,7 @@ test('a New Tab page that the user opens becomes the first Unpinned Tab', async 
   const after = await tabIds();
   expect(after.slice(1)).toEqual(before);
   const titles = await panel
-    .getByRole('main', { name: 'Sidearc' })
+    .getByRole('main', { name: 'Sidesweep' })
     .getByRole('listitem')
     .allTextContents();
   expect(titles[0]).toMatch(/new tab/i);

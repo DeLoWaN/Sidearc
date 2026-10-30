@@ -1,6 +1,6 @@
 /**
  * In-memory fake of the Chrome APIs that @webext-core/fake-browser lacks or fakes poorly:
- * windows, tabs (incl. move, group), tabGroups and sidePanel.
+ * windows, tabs (incl. move, group), tabGroups, sidePanel, permissions and scripting.
  * Storage, alarms and runtime messaging stay on the stock fake browser.
  *
  *   beforeEach(() => fakeChrome.reset());   // call once per test
@@ -79,6 +79,10 @@ class FakeChrome {
       onOpened: new FakeEvent<(info: { windowId: number }) => void>(),
       onClosed: new FakeEvent<(info: { windowId: number }) => void>(),
     },
+    permissions: {
+      onAdded: new FakeEvent<(permissions: chrome.permissions.Permissions) => void>(),
+      onRemoved: new FakeEvent<(permissions: chrome.permissions.Permissions) => void>(),
+    },
   };
 
   /** Every windowId that received sidePanel.open(), in call order. */
@@ -86,6 +90,13 @@ class FakeChrome {
   panelBehavior = { openPanelOnActionClick: false };
   /** Every message that the worker sent to a tab with tabs.sendMessage, in call order. */
   tabMessages: { tabId: number; message: unknown; frameId?: number }[] = [];
+  /** The host origins that the user granted. */
+  grantedOrigins: string[] = [];
+  /** The answer of the user to the next permissions.request prompt. */
+  grantsRequests = true;
+  registeredScripts: chrome.scripting.RegisteredContentScript[] = [];
+  /** Every scripting.executeScript call, in call order. */
+  injections: { tabId: number; files: string[] }[] = [];
 
   reset() {
     this.wins = [];
@@ -98,6 +109,10 @@ class FakeChrome {
     this.sidePanelOpened = [];
     this.panelBehavior = { openPanelOnActionClick: false };
     this.tabMessages = [];
+    this.grantedOrigins = [];
+    this.grantsRequests = true;
+    this.registeredScripts = [];
+    this.injections = [];
     for (const area of Object.values(this.events)) for (const ev of Object.values(area)) ev.clear();
     fakeBrowser.reset(); // storage, alarms, runtime
   }
@@ -111,9 +126,25 @@ class FakeChrome {
   async restartBrowser() {
     const local = await fakeBrowser.storage.local.get(null);
     const counters = [this.nextTabId, this.nextWindowId, this.nextGroupId];
+    const { grantedOrigins, registeredScripts } = this;
     this.reset();
     [this.nextTabId, this.nextWindowId, this.nextGroupId] = counters as [number, number, number];
+    // Grants stay, and so do the scripts registered with persistAcrossSessions.
+    this.grantedOrigins = grantedOrigins;
+    this.registeredScripts = registeredScripts.filter((script) => script.persistAcrossSessions);
     await fakeBrowser.storage.local.set(local);
+  }
+
+  /** Simulates the user granting host access, on a prompt or in the Chrome settings. Fires permissions.onAdded. */
+  async grantOrigins(origins: string[]) {
+    this.grantedOrigins = [...new Set([...this.grantedOrigins, ...origins])];
+    await this.events.permissions.onAdded.trigger({ origins });
+  }
+
+  /** Simulates the user removing host access in the Chrome settings. Fires permissions.onRemoved. */
+  async removeOrigins(origins: string[]) {
+    this.grantedOrigins = this.grantedOrigins.filter((origin) => !origins.includes(origin));
+    await this.events.permissions.onRemoved.trigger({ origins });
   }
 
   /** Opens a window holding one tab per URL (the last one active). Returns the window id. */
@@ -544,6 +575,47 @@ class FakeChrome {
       },
       setOptions: async () => {},
     },
+    permissions: {
+      ...this.events.permissions,
+      contains: async ({ origins = [] }: chrome.permissions.Permissions) =>
+        origins.every((origin) => this.grantedOrigins.includes(origin)),
+      request: async ({ origins = [] }: chrome.permissions.Permissions) => {
+        if (!this.grantsRequests) return false;
+        await this.grantOrigins(origins);
+        return true;
+      },
+      remove: async ({ origins = [] }: chrome.permissions.Permissions) => {
+        await this.removeOrigins(origins);
+        return true;
+      },
+    },
+    scripting: {
+      registerContentScripts: async (scripts: chrome.scripting.RegisteredContentScript[]) => {
+        for (const script of scripts) {
+          if (this.registeredScripts.some((known) => known.id === script.id))
+            throw new Error(`Duplicate script ID '${script.id}'`);
+          this.registeredScripts.push({ ...script });
+        }
+      },
+      getRegisteredContentScripts: async ({ ids }: { ids?: string[] } = {}) =>
+        this.registeredScripts.filter((script) => !ids || ids.includes(script.id)),
+      unregisterContentScripts: async ({ ids }: { ids?: string[] } = {}) => {
+        this.registeredScripts = this.registeredScripts.filter(
+          (script) => ids && !ids.includes(script.id),
+        );
+      },
+      executeScript: async ({
+        target,
+        files = [],
+      }: {
+        target: { tabId: number };
+        files?: string[];
+      }) => {
+        this.mustTab(target.tabId);
+        this.injections.push({ tabId: target.tabId, files });
+        return [];
+      },
+    },
   };
 
   /**
@@ -556,7 +628,7 @@ class FakeChrome {
     return panelPort;
   }
 
-  /** Replaces the global fake's windows, tabs, tabGroups and sidePanel, and adds runtime.onConnect and commands.onCommand. */
+  /** Replaces the global fake's windows, tabs, tabGroups, sidePanel, permissions and scripting, and adds runtime.onConnect and commands.onCommand. */
   install() {
     Object.assign(fakeBrowser, this.api);
     Object.assign(fakeBrowser.commands, { onCommand: this.events.commands.onCommand });

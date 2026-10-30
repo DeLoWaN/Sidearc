@@ -57,6 +57,7 @@ The search filters the Favorites, the Pinned Tabs and the Unpinned Tabs. It does
 - A link to the same host stays in the live tab.
 - A link to another host opens in a new Unpinned Tab. A different subdomain counts as another host: a link from `jira.example.com` to `wiki.example.com` opens a new tab.
 - Only link clicks are checked. Redirects, such as a single sign-on login, stay in the live tab.
+- The link guard is the rule of the two lines above. It is off until the user turns it on in the options page, because it needs access to all websites. Chrome asks the user for this access at that moment. While the access is missing, every link stays in its tab.
 - Favorites behave exactly like Pinned Tabs.
 - Auto Archive never closes the live tab of a Favorite or a Pinned Tab.
 
@@ -156,6 +157,7 @@ The options page holds:
 - the Auto Archive delay,
 - the switch "Group tabs opened from the same site",
 - the switch "Open new tabs at the top of the list",
+- the switch "Open links to other sites in a new tab", which turns the link guard on or off,
 - the background gradient,
 - the density,
 - the JSON export and import,
@@ -177,7 +179,7 @@ The service worker owns Auto Archive (through `chrome.alarms`), Tab Handoff, the
 
 ## Permissions
 
-`sidePanel`, `tabs`, `tabGroups`, `storage`, `alarms`, `favicon`, and a content script on all sites to check link clicks in live tabs. The Chrome Web Store reviews the all-sites permission more closely if Sidesweep is published.
+`sidePanel`, `tabs`, `tabGroups`, `storage`, `alarms`, `favicon` and `scripting`. The access to all websites is optional: Chrome asks for it when the user turns the link guard on. The worker then registers the link guard script for web pages, and runs it in the pages that are already open. So Chrome shows no warning about all websites at install.
 
 ## Project
 

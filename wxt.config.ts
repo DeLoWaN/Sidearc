@@ -1,5 +1,6 @@
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'wxt';
+import { LINK_GUARD_ORIGINS } from './src/link-guard/origins';
 
 export default defineConfig({
   srcDir: 'src',
@@ -10,11 +11,14 @@ export default defineConfig({
     // Each WXT build writes this file again, so the last build must bundle every package.
     build: { license: { fileName: 'THIRD_PARTY_LICENSES.md' } },
   }),
-  manifest: {
+  manifest: ({ mode }) => ({
     name: 'Sidesweep',
     description: 'An Arc-like sidebar in the Chrome side panel.',
     minimum_chrome_version: '141',
-    permissions: ['sidePanel', 'tabs', 'tabGroups', 'storage', 'alarms', 'favicon'],
+    permissions: ['sidePanel', 'tabs', 'tabGroups', 'storage', 'alarms', 'favicon', 'scripting'],
+    optional_host_permissions: LINK_GUARD_ORIGINS,
+    // Playwright cannot answer the permission prompt, so the e2e build grants the web pages at install.
+    ...(mode === 'e2e' && { host_permissions: LINK_GUARD_ORIGINS }),
     action: { default_title: 'Open Sidesweep' },
     commands: {
       'open-panel': {
@@ -26,5 +30,5 @@ export default defineConfig({
         description: 'Pin the current tab in Sidesweep',
       },
     },
-  },
+  }),
 });

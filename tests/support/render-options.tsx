@@ -5,6 +5,8 @@ import { type Ask, OptionsContext } from '../../src/options/options-context';
 import type { SaveSettingsResult } from '../../src/shared/protocol';
 import { DEFAULT_SETTINGS } from '../../src/shared/settings';
 import type { Settings } from '../../src/shared/types';
+// The Link guard section reads the permissions of the fake Chrome.
+import './fake-chrome';
 
 /**
  * Renders an options page component with a fake worker.

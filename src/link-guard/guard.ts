@@ -21,6 +21,11 @@ function isPlainClick(event: MouseEvent) {
  * Runs in the top frame. The worker pushes a message each time the live status of the tab changes.
  */
 export function startLinkGuard() {
+  // The worker injects the script again after each new grant: a second copy would open each link twice.
+  const page = globalThis as { sidesweepLinkGuard?: true };
+  if (page.sidesweepLinkGuard) return;
+  page.sidesweepLinkGuard = true;
+
   let live = false;
   let pushed = false;
 

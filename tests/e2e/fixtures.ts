@@ -3,7 +3,7 @@ import type { AddressInfo } from 'node:net';
 import path from 'node:path';
 import { type BrowserContext, test as base, chromium, type Worker } from '@playwright/test';
 
-const EXTENSION_PATH = path.resolve(import.meta.dirname, '../../.output/chrome-mv3');
+const EXTENSION_PATH = path.resolve(import.meta.dirname, '../../.output/chrome-mv3-e2e');
 
 type Fixtures = {
   context: BrowserContext;

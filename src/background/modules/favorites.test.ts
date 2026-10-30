@@ -1,6 +1,7 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { fakeChrome } from '../../../tests/support/fake-chrome';
 import { connectPanel, settle, startWorker, stopWorker } from '../../../tests/support/worker';
+import { LINK_GUARD_ORIGINS } from '../../link-guard/origins';
 import type { CommandBody } from '../../panel/connection';
 import { PANEL_PORT, type PortMessage } from '../../shared/protocol';
 import type { ItemRecord } from '../../shared/types';
@@ -418,6 +419,7 @@ it('links two restored tabs to a Favorite and a Pinned Tab that share a URL, one
 });
 
 it('tells the link guard that the tab of a Favorite is a live tab', async () => {
+  fakeChrome.grantedOrigins = [...LINK_GUARD_ORIGINS];
   await saveFavorites('https://a.test/');
   const { panel, favorites } = await connectedPanel([['https://b.test/']]);
   panel.send({ type: 'item/open', itemId: favorites()[0]?.id as string });

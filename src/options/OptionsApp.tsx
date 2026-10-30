@@ -5,6 +5,7 @@ import { AppearanceSection } from './sections/AppearanceSection';
 import { ArchiveDelaySection } from './sections/ArchiveDelaySection';
 import { ArcImportSection } from './sections/ArcImportSection';
 import { BackupSection } from './sections/BackupSection';
+import { LinkGuardSection } from './sections/LinkGuardSection';
 import { NewTabsSection } from './sections/NewTabsSection';
 import { SiteGroupsSection } from './sections/SiteGroupsSection';
 import { TroubleshootingSection } from './sections/TroubleshootingSection';
@@ -38,6 +39,7 @@ function OptionsPage() {
         <ArchiveDelaySection />
         <SiteGroupsSection />
         <NewTabsSection />
+        <LinkGuardSection />
         <AppearanceSection />
         <BackupSection />
         {startedEmpty === false && <ArcImportSection />}

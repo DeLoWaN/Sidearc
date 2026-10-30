@@ -1,7 +1,7 @@
 import { startLinkGuard } from '../link-guard/guard';
 
+// The worker registers this script once the user grants access to web pages.
 export default defineContentScript({
-  matches: ['<all_urls>'],
-  runAt: 'document_start',
+  registration: 'runtime',
   main: startLinkGuard,
 });

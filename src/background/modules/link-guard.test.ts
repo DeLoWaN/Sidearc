@@ -1,11 +1,15 @@
-import { beforeEach, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { fakeChrome } from '../../../tests/support/fake-chrome';
 import { connectPanel, settle, startWorker } from '../../../tests/support/worker';
+import { LINK_GUARD_ORIGINS } from '../../link-guard/origins';
 import type { LinkGuardPush } from '../../shared/protocol';
 
+// The user turned the link guard on before the worker started, unless a test says otherwise.
 beforeEach(async () => {
   fakeChrome.reset();
+  fakeChrome.grantedOrigins = [...LINK_GUARD_ORIGINS];
   await startWorker();
+  await settle();
 });
 
 const tabOf = async (url: string) => (await browser.tabs.query({ url }))[0] as chrome.tabs.Tab;
@@ -110,4 +114,81 @@ it.each([
   expect((await browser.tabs.query({ windowId })).map((tab) => tab.url)).toEqual([
     'https://a.test/',
   ]);
+});
+
+it('registers the link guard script for web pages while the user grants the access', async () => {
+  expect(fakeChrome.registeredScripts).toEqual([
+    {
+      id: 'link-guard',
+      js: ['content-scripts/link-guard.js'],
+      matches: LINK_GUARD_ORIGINS,
+      runAt: 'document_start',
+      persistAcrossSessions: true,
+    },
+  ]);
+});
+
+it('keeps one registration and runs the script in no page again when the worker restarts', async () => {
+  await fakeChrome.openWindow(['https://a.test/']);
+  fakeChrome.injections = [];
+
+  await startWorker();
+  await settle();
+
+  expect(fakeChrome.registeredScripts).toHaveLength(1);
+  expect(fakeChrome.injections).toEqual([]);
+});
+
+it('keeps the registration when Chrome restarts', async () => {
+  await fakeChrome.restartBrowser();
+  await startWorker();
+  await settle();
+
+  expect(fakeChrome.registeredScripts.map((script) => script.id)).toEqual(['link-guard']);
+});
+
+it('unregisters the script and tells the live tab that it is off when the user removes the access', async () => {
+  await fakeChrome.openWindow(['https://a.test/']);
+  await pin('https://a.test/');
+  const tabId = await idOf('https://a.test/');
+  expect(lastPush(tabId)).toBe(true);
+
+  await fakeChrome.removeOrigins(LINK_GUARD_ORIGINS);
+  await settle();
+
+  expect(fakeChrome.registeredScripts).toEqual([]);
+  expect(lastPush(tabId)).toBe(false);
+  expect(await isLive(tabId)).toBe(false);
+});
+
+describe('while the user has not granted the access', () => {
+  beforeEach(async () => {
+    fakeChrome.reset();
+    await startWorker();
+    await settle();
+  });
+
+  it('registers no script and tells the live tab that it is not live', async () => {
+    await fakeChrome.openWindow(['https://a.test/']);
+    await pin('https://a.test/');
+
+    expect(fakeChrome.registeredScripts).toEqual([]);
+    expect(await isLive(await idOf('https://a.test/'))).toBe(false);
+  });
+
+  it('registers the script and runs it in the open web pages once the user grants the access', async () => {
+    await fakeChrome.openWindow(['https://a.test/', 'chrome://newtab/', 'http://b.test/']);
+    await pin('https://a.test/');
+    const liveId = await idOf('https://a.test/');
+
+    await fakeChrome.grantOrigins(LINK_GUARD_ORIGINS);
+    await settle();
+
+    expect(fakeChrome.registeredScripts.map((script) => script.id)).toEqual(['link-guard']);
+    expect(fakeChrome.injections).toEqual([
+      { tabId: liveId, files: ['content-scripts/link-guard.js'] },
+      { tabId: await idOf('http://b.test/'), files: ['content-scripts/link-guard.js'] },
+    ]);
+    expect(await isLive(liveId)).toBe(true);
+  });
 });

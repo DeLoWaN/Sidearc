@@ -9,7 +9,7 @@ In short: Sidesweep keeps all its data in your browser. It sends no data to Dami
 ## Data that Sidesweep reads
 
 - **Your open tabs.** Sidesweep reads the title, the address (URL) and the icon of each tab, and the Chrome tab groups. It needs them to show your tabs in the panel.
-- **Link clicks in live tabs.** A live tab is the real Chrome tab that belongs to a saved link (a Favorite or a Pinned Tab). In each page, a small Sidesweep script waits for a click on a link. When the page is a live tab and the link goes to another site, the script sends the address of the link to Sidesweep, and Sidesweep opens it in a new tab. The script reads nothing else in the page.
+- **Link clicks in live tabs.** A live tab is the real Chrome tab that belongs to a saved link (a Favorite or a Pinned Tab). This feature, the link guard, is off until you turn it on in the options page. Chrome then asks you to give Sidesweep access to all websites. While the link guard is on, a small Sidesweep script in each page waits for a click on a link. When the page is a live tab and the link goes to another site, the script sends the address of the link to Sidesweep, and Sidesweep opens it in a new tab. The script reads nothing else in the page.
 - **The Arc file that you select.** When you import from Arc, Sidesweep reads the file `StorableSidebar.json` that you select in the file window. It keeps the saved links of one Arc space and ignores the rest of the file.
 
 ## Where Sidesweep keeps your data

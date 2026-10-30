@@ -20,7 +20,7 @@ Sidesweep uses the words of Arc. [docs/design-decisions.md](docs/design-decision
 - **Today.** The Unpinned Tabs section, also called Today, lists the open tabs of all windows that are not live tabs. The order is the order of the Chrome tab strip.
 - **Tab groups and Site groups.** The panel shows Chrome tab groups as blocks that you can collapse. It also groups tabs that opened from one another on the same site. Chrome does not see these Site groups.
 - **Tab Handoff.** A click on a tab of another window moves the tab into your current window. The tab does not reload, so a form that you started keeps its content.
-- **Link guard.** In a live tab, a link to another host opens in a new tab. The live tab stays on its site.
+- **Link guard.** In a live tab, a link to another host opens in a new tab. The live tab stays on its site. The link guard is off by default, because it needs access to all websites.
 - **Auto Archive.** Sidesweep closes an Unpinned Tab that nobody viewed for 12 hours. You can change the delay. The tab on screen and a tab that plays sound never close.
 - **View Archive.** This list keeps the tabs that Auto Archive closed, for 30 days. You can search it and reopen a tab.
 - **Search, multi-select and drag and drop.** The search field filters every section. Ctrl or Cmd and Shift clicks select several rows. You can drag rows between the sections.
@@ -69,6 +69,7 @@ Right-click the Sidesweep icon and choose **Options**. The options page holds th
 - **Auto Archive**: the delay in hours before Sidesweep closes an Unpinned Tab.
 - **Site groups**: the switch "Group tabs opened from the same site". It is on by default.
 - **New tabs**: the switch "Open new tabs at the top of the list". It is on by default.
+- **Link guard**: the switch "Open links to other sites in a new tab". It is off by default. When you turn it on, Chrome asks you to give Sidesweep access to all websites.
 - **Appearance**: the gradient colours, with presets, and the density.
 - **Backup**: the export and import of a JSON file.
 - **Import from Arc**: the import of one Arc space. This section comes first while Sidesweep is empty.
@@ -82,15 +83,16 @@ Right-click the Sidesweep icon and choose **Options**. The options page holds th
 
 Sidesweep asks Chrome for these permissions:
 
-| Permission          | Why Sidesweep needs it                                                           |
-| ------------------- | -------------------------------------------------------------------------------- |
-| `sidePanel`         | Shows the panel in the Chrome side panel.                                        |
-| `tabs`              | Lists, opens, moves and closes tabs, and reads their titles and URLs.            |
-| `tabGroups`         | Shows Chrome tab groups, and moves or collapses them.                            |
-| `storage`           | Keeps your Favorites, Pinned Tabs, Folders, settings and View Archive.           |
-| `alarms`            | Runs Auto Archive on a timer.                                                    |
-| `favicon`           | Shows site icons from the Chrome icon cache.                                     |
-| Access to all sites | A small script in each page checks link clicks in live tabs, for the link guard. |
+| Permission          | Why Sidesweep needs it                                                                                                    |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `sidePanel`         | Shows the panel in the Chrome side panel.                                                                                 |
+| `tabs`              | Lists, opens, moves and closes tabs, and reads their titles and URLs.                                                     |
+| `tabGroups`         | Shows Chrome tab groups, and moves or collapses them.                                                                     |
+| `storage`           | Keeps your Favorites, Pinned Tabs, Folders, settings and View Archive.                                                    |
+| `alarms`            | Runs Auto Archive on a timer.                                                                                             |
+| `favicon`           | Shows site icons from the Chrome icon cache.                                                                              |
+| `scripting`         | Runs the link guard script in web pages, once you turn the link guard on.                                                 |
+| Access to all sites | Optional. Chrome asks for it only when you turn the link guard on. The link guard script checks link clicks in live tabs. |
 
 Your data stays on your computer, in the extension storage of Chrome. Sidesweep sends no network request and collects no usage data. Your data does not sync between computers, so use the JSON export as a backup. [PRIVACY.md](PRIVACY.md) is the full privacy policy.
 
@@ -113,18 +115,18 @@ Sidesweep does not copy every Arc feature. Spaces, Live Folders and Peek are out
 
 Install once with `npm install`. Use npm, not pnpm.
 
-| Command                | What it does                                                      |
-| ---------------------- | ----------------------------------------------------------------- |
-| `npm run build`        | Builds the extension into `.output/chrome-mv3`.                   |
-| `npm run dev`          | Starts the WXT dev server.                                        |
-| `npm run lint`         | Runs the Biome linter.                                            |
-| `npm run format`       | Formats and fixes the code with Biome.                            |
-| `npm run format:check` | Checks the format without changing a file.                        |
-| `npm run typecheck`    | Checks the types with TypeScript.                                 |
-| `npm test`             | Runs the unit and component tests with Vitest.                    |
-| `npm run test:e2e`     | Builds the extension, then runs the Playwright tests in Chromium. |
+| Command                | What it does                                                                                                |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `npm run build`        | Builds the extension into `.output/chrome-mv3`.                                                             |
+| `npm run dev`          | Starts the WXT dev server.                                                                                  |
+| `npm run lint`         | Runs the Biome linter.                                                                                      |
+| `npm run format`       | Formats and fixes the code with Biome.                                                                      |
+| `npm run format:check` | Checks the format without changing a file.                                                                  |
+| `npm run typecheck`    | Checks the types with TypeScript.                                                                           |
+| `npm test`             | Runs the unit and component tests with Vitest.                                                              |
+| `npm run test:e2e`     | Builds the extension in e2e mode into `.output/chrome-mv3-e2e`, then runs the Playwright tests in Chromium. |
 
-The first end-to-end test is the Tab Handoff gate (`tests/e2e/00-tab-handoff-gate.spec.ts`). It checks that `chrome.tabs.move` moves a tab to another window without a reload.
+The e2e build grants access to all websites at install, because Playwright cannot answer the permission prompt of Chrome. The first end-to-end test is the Tab Handoff gate (`tests/e2e/00-tab-handoff-gate.spec.ts`). It checks that `chrome.tabs.move` moves a tab to another window without a reload.
 
 ### Layout
 

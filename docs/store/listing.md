@@ -34,6 +34,7 @@ YOUR OPEN TABS
 • Chrome tab groups show as blocks that you can collapse.
 • Tabs that you open from one another on the same site form a Site group.
 • A click on a tab of another window moves the tab into your window. The tab does not reload.
+• Optional link guard: in the tab of a saved link, a link to another site opens in a new tab.
 
 LESS CLUTTER
 • Auto Archive closes a tab that you did not view for 12 hours. You can change the delay.
@@ -74,22 +75,22 @@ Sidesweep shows the user's saved links and open tabs as one vertical sidebar in 
 
 **Permission justifications**:
 
-| Permission                                   | Justification                                                                                                                                       |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sidePanel`                                  | Sidesweep shows its sidebar in the Chrome side panel.                                                                                               |
-| `tabs`                                       | The sidebar lists the open tabs with their titles and addresses, and opens, moves, activates and closes tabs when the user asks.                    |
-| `tabGroups`                                  | The sidebar shows Chrome tab groups, and moves or collapses a group when the user does it in the sidebar.                                           |
-| `storage`                                    | Sidesweep keeps the saved links, Folders, settings and the list of archived tabs on the device.                                                     |
-| `alarms`                                     | Auto Archive checks on a timer for tabs that the user did not view for the delay that the user chose.                                               |
-| `favicon`                                    | The sidebar shows the icon of each saved link from the Chrome icon cache, with no network request.                                                  |
-| Host permission (content script on all URLs) | In a tab that belongs to a saved link, a click on a link to another site opens in a new tab. The script only reads the address of the clicked link. |
+| Permission  | Justification                                                                                                                                  |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sidePanel` | Sidesweep shows its sidebar in the Chrome side panel.                                                                                          |
+| `tabs`      | The sidebar lists the open tabs with their titles and addresses, and opens, moves, activates and closes tabs when the user asks.               |
+| `tabGroups` | The sidebar shows Chrome tab groups, and moves or collapses a group when the user does it in the sidebar.                                      |
+| `storage`   | Sidesweep keeps the saved links, Folders, settings and the list of archived tabs on the device.                                                |
+| `alarms`    | Auto Archive checks on a timer for tabs that the user did not view for the delay that the user chose.                                          |
+| `favicon`   | The sidebar shows the icon of each saved link from the Chrome icon cache, with no network request.                                             |
+| `scripting` | When the user turns the optional link guard on, Sidesweep registers its link guard script for web pages and runs it in the pages already open. |
 
 **Remote code**: No, I am not using remote code.
 
 **Data usage**: the store asks to declare user data even when it stays on the device ([User Data FAQ](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq)). Tick these two data types:
 
 - **Web history**: Sidesweep reads the titles and addresses of open tabs, and View Archive keeps them for 30 days.
-- **User activity**: the link guard script listens to clicks on links in live tabs.
+- **User activity**: the optional link guard script listens to clicks on links in live tabs.
 
 Sidesweep sends none of this data off the device.
 
@@ -103,4 +104,8 @@ Tick the three certifications: no sale of data, no use unrelated to the single p
 
 ## Review
 
-The content script on all sites asks for access to every site. The store reviews such an extension more closely, so the first review can take several days.
+The manifest asks for no host permission at install. The access to all websites is an optional host permission, which the user grants when they turn the link guard on. If the dashboard asks to justify it, paste:
+
+```text
+The access to all websites is optional. Sidesweep asks for it only when the user turns on the link guard in the options page. In the tab of a saved link, the link guard script opens a link to another site in a new tab. The script reads only the address of the clicked link.
+```

@@ -169,6 +169,27 @@ it('shows the site groups checkbox as cleared when the setting is off', async ()
   ).not.toBeChecked();
 });
 
+// --- new tabs
+
+it('shows the new tabs checkbox as checked by default and saves when the user clears it', async () => {
+  const { ask } = renderOptions(<OptionsApp />);
+  const box = await screen.findByRole('checkbox', { name: 'Open new tabs at the top of the list' });
+  expect(box).toBeChecked();
+
+  await userEvent.click(box);
+
+  expect(ask).toHaveBeenCalledWith('settings/save', { newTabsOnTop: false });
+  expect(box).not.toBeChecked();
+});
+
+it('shows the new tabs checkbox as cleared when the setting is off', async () => {
+  renderOptions(<OptionsApp />, { settings: { ...DEFAULT_SETTINGS, newTabsOnTop: false } });
+
+  expect(
+    await screen.findByRole('checkbox', { name: 'Open new tabs at the top of the list' }),
+  ).not.toBeChecked();
+});
+
 // --- gradient presets
 
 it('saves both gradient colours when the user clicks a preset', async () => {

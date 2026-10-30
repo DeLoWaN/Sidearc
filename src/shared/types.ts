@@ -163,6 +163,8 @@ export interface Settings {
   density: Density;
   /** True when a tab opened from a tab of the same site joins a site group. */
   groupBySite: boolean;
+  /** True when a tab that the user opens directly goes to the start of the Unpinned Tabs. */
+  newTabsOnTop: boolean;
 }
 
 export type SettingsState = { settings: Settings };

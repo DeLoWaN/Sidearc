@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it } from 'vitest';
-import { makeState, makeTab } from '../../../tests/support/builders';
+import { makeItem, makeState, makeTab } from '../../../tests/support/builders';
 import { renderPanel } from '../../../tests/support/render-panel';
 import type { TabGroupView, TabView } from '../../shared/types';
 import { resetPanelStore } from '../store';
@@ -104,6 +104,36 @@ it('shows only the tabs of a Tab group that the panel lists', () => {
   expect(screen.queryByText('Unlisted')).toBeNull();
 });
 
+it('offers the Favorites, the Pinned Tabs and every Folder to an Unpinned Tab, and sends the save command', async () => {
+  const tab = makeTab({ title: 'Docs' });
+  const work = makeItem({ kind: 'folder', url: '', title: 'Work' });
+  const state = makeState({ unpinnedTabs: [tab], items: [work] });
+  const { send } = renderPanel(<UnpinnedSection />, { state });
+  const open = async () => {
+    await userEvent.pointer({
+      keys: '[MouseRight]',
+      target: screen.getByRole('button', { name: 'Docs' }),
+    });
+    return screen.getByRole('menu', { name: 'Move to…' });
+  };
+
+  const menu = await open();
+  expect(
+    within(menu)
+      .getAllByRole('menuitem')
+      .map((entry) => entry.textContent),
+  ).toEqual(['Favorites', 'Pinned Tabs', 'Work']);
+  await userEvent.click(within(menu).getByRole('menuitem', { name: 'Favorites' }));
+  await userEvent.click(within(await open()).getByRole('menuitem', { name: 'Pinned Tabs' }));
+  await userEvent.click(within(await open()).getByRole('menuitem', { name: 'Work' }));
+
+  expect(send.mock.calls.map(([command]) => command)).toEqual([
+    { type: 'item/from-tab', tabId: tab.id, kind: 'favorite', parentId: null },
+    { type: 'item/from-tab', tabId: tab.id, kind: 'pinned', parentId: null },
+    { type: 'item/from-tab', tabId: tab.id, kind: 'pinned', parentId: work.id },
+  ]);
+});
+
 it('offers every Tab group to a tab that is outside of all groups', async () => {
   const [loose, inside] = [makeTab({ title: 'Loose' }), makeTab({ title: 'Docs' })] as [
     TabView,
@@ -169,16 +199,4 @@ it('closes the menu on Escape without sending a command', async () => {
 
   expect(screen.queryByRole('menu')).toBeNull();
   expect(send).not.toHaveBeenCalled();
-});
-
-it('shows no menu for a tab when there is no Tab group to move it to', async () => {
-  const tab = makeTab({ title: 'Docs' });
-  renderPanel(<UnpinnedSection />, { state: makeState({ unpinnedTabs: [tab] }) });
-
-  await userEvent.pointer({
-    keys: '[MouseRight]',
-    target: screen.getByRole('button', { name: 'Docs' }),
-  });
-
-  expect(screen.queryByRole('menu')).toBeNull();
 });

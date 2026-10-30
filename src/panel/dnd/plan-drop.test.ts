@@ -479,8 +479,60 @@ describe('the same command as the "Move to…" action', () => {
     const tabState = makeState({ unpinnedTabs: [dragged], tabGroups: [group] });
 
     expect(planDrop(tabState, tab(dragged), { zone: 'tab-group', groupId: 4 })).toEqual(
-      tabMoveTargets([group], dragged).find((entry) => entry.key === 'group-4')?.command,
+      tabMoveTargets([], [group], dragged).find((entry) => entry.key === 'group-4')?.command,
     );
+  });
+});
+
+describe('the same command as the "Move to…" action of an Unpinned Tab', () => {
+  const target = (targets: ReturnType<typeof tabMoveTargets>, key: string) =>
+    targets.find((entry) => entry.key === key)?.command;
+
+  const work = folder('Work', { collapsed: true, position: 0 });
+  const inner = folder('Inner', { parentId: work.id, collapsed: true, position: 0 });
+  const dragged = makeTab();
+  const state = makeState({ items: [work, inner], unpinnedTabs: [dragged] });
+  const targets = tabMoveTargets(state.items, [], dragged);
+
+  it('lists the Favorites, the Pinned Tabs and every Folder, indented by depth', () => {
+    expect(targets.map(({ label, depth }) => [label, depth])).toEqual([
+      ['Favorites', undefined],
+      ['Pinned Tabs', undefined],
+      ['Work', 1],
+      ['Inner', 2],
+    ]);
+  });
+
+  it('saves the tab as a Favorite', () => {
+    expect(planDrop(state, tab(dragged), { zone: 'favorites' })).toEqual(
+      target(targets, 'favorites'),
+    );
+  });
+
+  it('saves the tab as a Pinned Tab at the root', () => {
+    expect(planDrop(state, tab(dragged), { zone: 'pinned-root' })).toEqual(target(targets, 'root'));
+  });
+
+  it('saves the tab as a Pinned Tab in a collapsed Folder', () => {
+    for (const row of [work, inner]) {
+      expect(
+        planDrop(state, tab(dragged), { zone: 'tree-row', itemId: row.id, placement: 'inside' }),
+      ).toEqual(target(targets, row.id));
+    }
+  });
+});
+
+describe('the Folders that "Move to…" offers to a Favorite', () => {
+  it('lists the root and every Folder before the Unpinned Tabs, and sends the drag and drop command', () => {
+    const work = folder('Work', { collapsed: true, position: 0 });
+    const fav = favorite('Fav', 0);
+    const state = makeState({ items: [work, fav] });
+    const targets = itemMoveTargets(state.items, fav);
+
+    expect(targets.map((entry) => entry.label)).toEqual(['Pinned Tabs', 'Work', 'Unpinned Tabs']);
+    expect(
+      planDrop(state, item(fav), { zone: 'tree-row', itemId: work.id, placement: 'inside' }),
+    ).toEqual(targets.find((entry) => entry.key === work.id)?.command);
   });
 });
 

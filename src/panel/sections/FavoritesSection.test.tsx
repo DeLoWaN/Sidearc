@@ -191,7 +191,11 @@ it('moves a Favorite to the Pinned Tabs from "Move to…", and offers the Unpinn
   rightClick('Docs');
   await userEvent.click(screen.getByRole('menuitem', { name: 'Move to…' }));
   const targets = within(screen.getByRole('menu', { name: 'Move to…' })).getAllByRole('menuitem');
-  expect(targets.map((entry) => entry.textContent)).toEqual(['Pinned Tabs', 'Unpinned Tabs']);
+  expect(targets.map((entry) => entry.textContent)).toEqual([
+    'Pinned Tabs',
+    'Work',
+    'Unpinned Tabs',
+  ]);
   await userEvent.click(targets[0] as HTMLElement);
 
   expect(send).toHaveBeenCalledExactlyOnceWith({

@@ -1,4 +1,5 @@
 import { useArchiveUi } from '../archive-ui-store';
+import { SearchField } from '../components/SearchField';
 import { usePanel } from '../panel-context';
 
 /** The bottom bar. Controls sit in one row: a wider control goes before the archive button. */
@@ -7,12 +8,13 @@ export function FooterBar() {
   const openArchive = useArchiveUi((ui) => ui.openArchive);
   return (
     <footer className="flex shrink-0 items-center gap-2 px-2.5 pb-2.5">
+      <SearchField />
       <button
         type="button"
         aria-label="View Archive"
         title="View Archive"
         onClick={openArchive}
-        className="ml-auto grid size-7 shrink-0 place-items-center rounded-md text-(--text-muted) hover:bg-(--row-hover)"
+        className="grid size-7 shrink-0 place-items-center rounded-md text-(--text-muted) hover:bg-(--row-hover)"
       >
         <svg
           aria-hidden="true"

@@ -32,7 +32,17 @@ export type ItemsCommand =
   | { type: 'item/delete'; itemId: string };
 
 // folders (#4, #5)
-export type FoldersCommand = never;
+export type FoldersCommand =
+  /** Makes an open Folder at the end of the parent. Does nothing when the title is blank or the parent is not a Folder. */
+  | { type: 'folder/create'; title: string; parentId: string | null }
+  /** Collapses an open Folder, or opens a collapsed one. The state is saved. */
+  | { type: 'folder/toggle'; itemId: string }
+  /**
+   * Puts a Pinned Tab or a Folder at the end of a Folder, or at the root when `parentId` is null.
+   * Does nothing when the target is not a Folder, or is the item itself or inside it.
+   * A Pinned Tab keeps its live tab.
+   */
+  | { type: 'item/move'; itemId: string; parentId: string | null };
 
 // favorites (#6)
 export type FavoritesCommand = never;

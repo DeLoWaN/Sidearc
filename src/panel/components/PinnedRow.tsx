@@ -11,7 +11,16 @@ const iconButton =
  * One Pinned Tab. At rest the row is faded. With an open live tab it shows a close button.
  * When the live tab left the saved URL, the row adds "/", the current title and Reset.
  */
-export function PinnedRow({ item, highlighted }: { item: ItemView; highlighted: boolean }) {
+export function PinnedRow({
+  item,
+  highlighted,
+  path,
+}: {
+  item: ItemView;
+  highlighted: boolean;
+  /** The Folders above the item, outermost first. Search results show it: the Folders are not on screen. */
+  path?: string[];
+}) {
   const { send } = usePanel();
   const { openMenu, renamingId } = usePanelUi();
   const { live } = item;
@@ -40,6 +49,11 @@ export function PinnedRow({ item, highlighted }: { item: ItemView; highlighted: 
         >
           <SiteIcon iconUrl={item.iconUrl} title={item.title} />
           <span className={`truncate ${live ? '' : 'opacity-55'}`}>{item.title}</span>
+          {path && path.length > 0 && (
+            <span className="ml-auto max-w-[50%] shrink-0 truncate text-xs text-(--text-muted)">
+              {path.join(' / ')}
+            </span>
+          )}
           {live?.away && (
             <>
               <span className="text-(--text-muted)">/</span>

@@ -1,14 +1,16 @@
 import { FavoriteTile } from '../components/FavoriteTile';
 import { usePanel } from '../panel-context';
 import { usePanelStore } from '../store';
+import { useSearchResults } from '../use-search-results';
 
-/** The Favorites as a grid of large icons above the Pinned Tabs. It shows nothing without a Favorite. */
+/** The Favorites as a grid of large icons above the Pinned Tabs. It shows nothing without a Favorite. A search keeps the matching ones. */
 export function FavoritesSection() {
   const { windowId } = usePanel();
   const items = usePanelStore((store) => store.state.items);
-  const favorites = items
-    .filter((item) => item.kind === 'favorite')
-    .sort((a, b) => a.position - b.position);
+  const results = useSearchResults();
+  const favorites =
+    results?.favorites ??
+    items.filter((item) => item.kind === 'favorite').sort((a, b) => a.position - b.position);
   if (favorites.length === 0) return null;
 
   return (

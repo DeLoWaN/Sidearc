@@ -14,6 +14,7 @@ function toItemView(item: ItemRecord, tab: chrome.tabs.Tab | undefined): ItemVie
       tabId: tab.id as number,
       windowId: tab.windowId,
       title: tab.title || tab.url || '',
+      url: tab.url ?? '',
       active: tab.active,
       // A tab that has not loaded yet has no URL: it is not away.
       away: Boolean(tab.url) && tab.url !== item.url,

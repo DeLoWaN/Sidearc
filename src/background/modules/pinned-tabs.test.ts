@@ -207,7 +207,7 @@ it('shows the saved title and the current title after the live tab navigated awa
   expect(items()[0]).toMatchObject({
     title: 'Inbox',
     url: 'https://a.test/',
-    live: { title: 'Mail 42', away: true },
+    live: { title: 'Mail 42', url: 'https://a.test/mail/42', away: true },
   });
 });
 

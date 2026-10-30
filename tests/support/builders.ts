@@ -76,6 +76,7 @@ export function makeItem(
       tabId: n,
       windowId: 1,
       title: item.title,
+      url: item.url,
       active: false,
       away: false,
       ...live,

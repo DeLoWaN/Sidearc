@@ -71,7 +71,7 @@ const look = (item: ItemView) => ({
   open: item.live !== undefined,
 });
 
-/** Makes a sidebar: a Folder with one Pinned Tab inside, one Pinned Tab at the root, a closed tab. */
+/** Makes a sidebar: a Favorite, a Folder with one Pinned Tab inside, a closed tab. */
 async function buildSidebar() {
   const windowId = await fakeChrome.openWindow([
     'https://a.test/',
@@ -82,6 +82,9 @@ async function buildSidebar() {
   await pin('https://a.test/');
   await pin('https://b.test/');
   panel.send({ type: 'folder/create', title: 'Work', parentId: null });
+  await settle();
+  const a = panel.latest()?.items.find((item) => item.url === 'https://a.test/') as ItemView;
+  panel.send({ type: 'item/favorite', itemId: a.id });
   await settle();
   const folder = panel.latest()?.items.find((item) => item.kind === 'folder') as ItemView;
   const b = panel.latest()?.items.find((item) => item.url === 'https://b.test/') as ItemView;
@@ -106,7 +109,7 @@ it('restores the same panel in a new browser profile where the same tabs are ope
 
   expect(await importBackup(text)).toEqual({
     ok: true,
-    summary: { favorites: 0, pinnedTabs: 2, folders: 1, archivedTabs: expect.any(Number) },
+    summary: { favorites: 1, pinnedTabs: 1, folders: 1, archivedTabs: 1 },
   });
   await settle();
 
@@ -171,7 +174,7 @@ it('reports the counts of a backup file without changing anything', async () => 
 
   const result = await inspectBackup(text);
 
-  expect(result).toMatchObject({ ok: true, summary: { pinnedTabs: 2, folders: 1 } });
+  expect(result).toMatchObject({ ok: true, summary: { favorites: 1, pinnedTabs: 1, folders: 1 } });
   expect(await browser.runtime.sendMessage({ rpc: 'settings/get', request: null })).toMatchObject({
     density: 'compact',
   });
@@ -228,15 +231,17 @@ const refusals: [name: string, edit: (doc: Doc) => string][] = [
   [
     'an archive entry with a wrong field',
     (doc) => {
-      (doc.archive as Record<string, unknown>[])[0].closedAt = 'yesterday';
+      ((doc.archive as Record<string, unknown>[])[0] as Record<string, unknown>).closedAt =
+        'yesterday';
       return 'archive[0].closedAt must be a number, got "yesterday"';
     },
   ],
   [
     'two items with the same id',
     (doc) => {
-      doc.items[1].id = doc.items[0].id;
-      return `items[1].id ${JSON.stringify(doc.items[0].id)} is used twice`;
+      const [first, second] = doc.items as [Record<string, unknown>, Record<string, unknown>];
+      second.id = first.id;
+      return `items[1].id ${JSON.stringify(first.id)} is used twice`;
     },
   ],
   [
@@ -249,7 +254,7 @@ const refusals: [name: string, edit: (doc: Doc) => string][] = [
   [
     'an item whose parent is a Pinned Tab',
     (doc) => {
-      const pinned = doc.items.find((item) => item.kind === 'pinned' && item.parentId === null);
+      const pinned = doc.items.find((item) => item.kind === 'pinned');
       itemOf(doc, 'Work').parentId = pinned?.id;
       return `${pathOf(doc, 'Work')}.parentId ${JSON.stringify(pinned?.id)} is not the id of a Folder`;
     },
@@ -271,9 +276,20 @@ const refusals: [name: string, edit: (doc: Doc) => string][] = [
     },
   ],
   [
+    'a Favorite inside a Folder',
+    (doc) => {
+      const favorite = doc.items.find((item) => item.kind === 'favorite') as Record<
+        string,
+        unknown
+      >;
+      favorite.parentId = itemOf(doc, 'Work').id;
+      return `${pathOf(doc, favorite.title as string)}.parentId must be null for a Favorite, got ${JSON.stringify(favorite.parentId)}`;
+    },
+  ],
+  [
     'more than 12 Favorites',
     (doc) => {
-      for (let n = 0; n < 13; n++)
+      for (let n = 0; n < 12; n++)
         doc.items.push({
           id: `fav-${n}`,
           kind: 'favorite',

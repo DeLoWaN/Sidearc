@@ -1,3 +1,4 @@
+import { MAX_FAVORITES } from './item-tree';
 import type { BackupSummary } from './protocol';
 import { DEFAULT_SETTINGS, parseSettingsPatch } from './settings';
 import type { ArchiveEntry, ItemKind, ItemRecord, Settings } from './types';
@@ -22,7 +23,8 @@ export function backupFileName(date: Date): string {
   return `${BACKUP_FORMAT}-${date.getFullYear()}-${two(date.getMonth() + 1)}-${two(date.getDate())}.json`;
 }
 
-const ITEM_KINDS: readonly string[] = ['pinned', 'folder', 'favorite'];
+const KINDS: Record<ItemKind, true> = { pinned: true, folder: true, favorite: true };
+const ITEM_KINDS: readonly string[] = Object.keys(KINDS);
 
 const show = (value: unknown) => JSON.stringify(value) ?? String(value);
 
@@ -79,9 +81,6 @@ function parseItems(input: unknown): { ok: true; items: ItemRecord[] } | Fail {
   return { ok: true, items };
 }
 
-/** A profile holds 12 Favorites at most. */
-const FAVORITE_LIMIT = 12;
-
 /** Checks that the items make one tree: unique ids, parents that are Folders, no loop, 12 Favorites at most. */
 function checkTree(items: ItemRecord[]): string | undefined {
   const byId = new Map<string, ItemRecord>();
@@ -90,6 +89,8 @@ function checkTree(items: ItemRecord[]): string | undefined {
     byId.set(item.id, item);
   }
   for (const [index, item] of items.entries()) {
+    if (item.kind === 'favorite' && item.parentId !== null)
+      return `items[${index}].parentId must be null for a Favorite, got ${show(item.parentId)}`;
     if (item.parentId === null) continue;
     const parent = byId.get(item.parentId);
     if (!parent) return `items[${index}].parentId ${show(item.parentId)} is not the id of an item`;
@@ -105,8 +106,8 @@ function checkTree(items: ItemRecord[]): string | undefined {
     }
   }
   const favorites = items.filter((item) => item.kind === 'favorite').length;
-  if (favorites > FAVORITE_LIMIT)
-    return `items holds ${favorites} Favorites, but a profile has ${FAVORITE_LIMIT} at most`;
+  if (favorites > MAX_FAVORITES)
+    return `items holds ${favorites} Favorites, but a profile has ${MAX_FAVORITES} at most`;
   return undefined;
 }
 

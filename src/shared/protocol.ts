@@ -18,7 +18,9 @@ export type TabsCommand =
   | { type: 'tab/activate'; tabId: number }
   | { type: 'tab/close'; tabId: number }
   /** Puts the tab at this position of the tab strip of its own window. */
-  | { type: 'tab/move'; tabId: number; index: number };
+  | { type: 'tab/move'; tabId: number; index: number }
+  /** Closes every Unpinned Tab and puts it in View Archive. A window left empty gets a blank tab. */
+  | { type: 'tab/clear' };
 
 // items (#4, #5, #6)
 export type ItemsCommand =
@@ -46,7 +48,9 @@ export type GroupsCommand =
   | { type: 'group/remove-tab'; tabId: number };
 
 // archive (#8, #10)
-export type ArchiveCommand = never;
+export type ArchiveCommand =
+  /** Opens the archived tab in the window of the panel, and removes its entry. */
+  { type: 'archive/reopen'; entryId: string };
 
 // drag and drop (#11)
 export type DragCommand = never;

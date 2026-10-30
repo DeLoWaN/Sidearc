@@ -100,8 +100,26 @@ export type GroupsState = {
   tabGroups: TabGroupView[];
 };
 
+// archive (#8, #10)
+
+/** One closed tab in View Archive. */
+export interface ArchiveEntry {
+  /** Made by Sidearc. It never is a Chrome id. */
+  id: string;
+  url: string;
+  title: string;
+  iconUrl: string;
+  /** When the tab closed, in milliseconds since 1970. */
+  closedAt: number;
+}
+
+export type ArchiveState = {
+  /** The closed tabs of the last 30 days, the latest first. */
+  archive: ArchiveEntry[];
+};
+
 // settings (#14)
 export type SettingsState = unknown;
 
 /** The full state the worker sends to the panel after every change. */
-export type SidebarState = TabsState & ItemsState & GroupsState & SettingsState;
+export type SidebarState = TabsState & ItemsState & GroupsState & ArchiveState & SettingsState;

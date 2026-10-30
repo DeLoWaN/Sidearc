@@ -23,7 +23,7 @@ export function FavoriteTile({ item, highlighted }: { item: ItemView; highlighte
         event.preventDefault();
         openMenu(item.id, event.clientX, event.clientY);
       }}
-      className={`group relative grid h-[var(--favorite-size,52px)] place-items-center rounded-xl bg-(--favorite-bg) hover:bg-(--row-active) data-highlighted:bg-(--row-active) data-highlighted:shadow-sm ${renaming ? 'col-span-full' : ''}`}
+      className={`group relative grid h-(--favorite-size) place-items-center rounded-xl bg-(--favorite-bg) hover:bg-(--row-active) data-highlighted:bg-(--row-active) data-highlighted:shadow-sm ${renaming ? 'col-span-full' : ''}`}
     >
       {renaming ? (
         <div className="flex h-full w-full min-w-0 items-center gap-2.5 px-2.5">

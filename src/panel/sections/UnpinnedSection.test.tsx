@@ -68,3 +68,23 @@ it('asks the worker to close a tab when the user clicks its close button', async
 
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'tab/close', tabId: tab.id });
 });
+
+it('shows a Clear button above the tabs that closes all Unpinned Tabs', async () => {
+  const state = makeState({
+    unpinnedTabs: [makeTab({ title: 'Mail' }), makeTab({ title: 'Wiki' })],
+  });
+  const { send } = renderPanel(<UnpinnedSection />, { state });
+
+  const clear = screen.getByRole('button', { name: 'Clear' });
+  const firstRow = screen.getAllByRole('listitem')[0] as HTMLElement;
+  expect(clear.compareDocumentPosition(firstRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+  await userEvent.click(clear);
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'tab/clear' });
+});
+
+it('disables Clear when there is no Unpinned Tab', () => {
+  renderPanel(<UnpinnedSection />);
+  expect(screen.getByRole('button', { name: 'Clear' })).toBeDisabled();
+});

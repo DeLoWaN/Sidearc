@@ -1,4 +1,10 @@
-import type { ItemView, LiveTabView, SidebarState, TabView } from '../../src/shared/types';
+import type {
+  ArchiveEntry,
+  ItemView,
+  LiveTabView,
+  SidebarState,
+  TabView,
+} from '../../src/shared/types';
 
 let nextTabId = 1;
 
@@ -31,6 +37,9 @@ export function makeState(overrides: Partial<SidebarState> = {}): SidebarState {
 
     // tab groups (#9)
     tabGroups: [],
+
+    // archive (#8, #10)
+    archive: [],
 
     // settings (#14)
 
@@ -71,4 +80,19 @@ export function makeItem(
     };
   }
   return item;
+}
+
+let nextEntryId = 1;
+
+/** An archived tab with a new id, closed just now. Give the fields that the test looks at. */
+export function makeArchiveEntry(overrides: Partial<ArchiveEntry> = {}): ArchiveEntry {
+  const n = nextEntryId++;
+  return {
+    id: `entry-${n}`,
+    url: `https://archived-${n}.test/`,
+    title: `Archived ${n}`,
+    iconUrl: `https://archived-${n}.test/icon.png`,
+    closedAt: Date.now(),
+    ...overrides,
+  };
 }

@@ -1,3 +1,4 @@
+import { ClearDivider } from '../components/ClearDivider';
 import { TabGroupBlock } from '../components/TabGroupBlock';
 import { TabRow } from '../components/TabRow';
 import { usePanel } from '../panel-context';
@@ -11,6 +12,7 @@ export function UnpinnedSection() {
   const groups = usePanelStore((store) => store.state.tabGroups);
   return (
     <section aria-label="Unpinned Tabs">
+      <ClearDivider disabled={tabs.length === 0} />
       <ul>
         {arrangeUnpinned(tabs, groups).map((entry) =>
           entry.kind === 'group' ? (

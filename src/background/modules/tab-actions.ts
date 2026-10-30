@@ -7,12 +7,11 @@ import { getLiveTabs, linkLiveTab } from './live-tab-registry';
 // "Is there a live tab?" and "make one" must not overlap, or two clicks would open two tabs.
 const itemActions = createQueue();
 
+// Tab Handoff: the tab moves to the window of the panel. It never reloads or duplicates.
 async function showTab(tabId: number, windowId: number) {
-  const tab = await browser.tabs.update(tabId, { active: true });
-  // The panel window is already focused: only another window needs the focus.
-  if (tab?.windowId !== undefined && tab.windowId !== windowId) {
-    await browser.windows.update(tab.windowId, { focused: true });
-  }
+  const tab = await browser.tabs.get(tabId);
+  if (tab.windowId !== windowId) await browser.tabs.move(tabId, { windowId, index: -1 });
+  await browser.tabs.update(tabId, { active: true });
 }
 
 /** Saves the tab as a Pinned Tab at the root, and makes the tab its live tab. Does nothing for a tab that already has an item. */

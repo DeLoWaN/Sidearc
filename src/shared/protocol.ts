@@ -18,7 +18,9 @@ export type TabsCommand =
   | { type: 'tab/activate'; tabId: number }
   | { type: 'tab/close'; tabId: number }
   /** Puts the tab at this position of the tab strip of its own window. */
-  | { type: 'tab/move'; tabId: number; index: number };
+  | { type: 'tab/move'; tabId: number; index: number }
+  /** Closes every Unpinned Tab and puts it in View Archive. A window left empty gets a blank tab. */
+  | { type: 'tab/clear' };
 
 // items (#4, #5, #6)
 export type ItemsCommand =
@@ -56,7 +58,9 @@ export type GroupsCommand =
   | { type: 'group/remove-tab'; tabId: number };
 
 // archive (#8, #10)
-export type ArchiveCommand = never;
+export type ArchiveCommand =
+  /** Opens the archived tab in the window of the panel, and removes its entry. */
+  { type: 'archive/reopen'; entryId: string };
 
 // drag and drop (#11)
 export type DragCommand = never;
@@ -94,7 +98,15 @@ export interface MiscRpc {
 }
 
 // link guard (#12)
-export type LinkGuardRpc = unknown;
+export interface LinkGuardRpc {
+  /** Asks whether the sending tab is the live tab of an item. */
+  'link-guard/is-live': { request: null; response: boolean };
+  /** Opens the web link in a new Unpinned Tab, next to the sending tab. Answers false for another link. */
+  'link-guard/open': { request: { url: string }; response: boolean };
+}
+
+/** Sent by the worker to the top frame of a tab each time the live tabs change. */
+export type LinkGuardPush = { type: 'link-guard/live'; live: boolean };
 
 // settings (#14)
 export type SettingsRpc = unknown;

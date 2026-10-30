@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { sameUrl } from './url';
+import { isNewTabPageUrl, sameUrl } from './url';
 
 it.each([
   ['https://x.com', 'https://x.com/'],
@@ -25,4 +25,28 @@ it('falls back to string equality when an address does not parse', () => {
   expect(sameUrl('not a url', 'not a url')).toBe(true);
   expect(sameUrl('not a url', 'not a url/')).toBe(false);
   expect(sameUrl('not a url', 'https://x.com/')).toBe(false);
+});
+
+it.each([
+  'chrome://newtab/',
+  'chrome://newtab',
+  'chrome://new-tab-page/',
+  'chrome://new-tab-page-third-party/',
+  'chrome-untrusted://new-tab-page/foo',
+  'chrome-search://local-ntp/local-ntp.html',
+  'edge://newtab/',
+  'CHROME://NEWTAB/',
+])('knows %s as a New Tab page', (address) => {
+  expect(isNewTabPageUrl(address)).toBe(true);
+});
+
+it.each([
+  '',
+  'about:blank',
+  'https://example.com/newtab',
+  'chrome://settings/',
+  'chrome://newtabs/',
+  'chrome-extension://abc/newtab.html',
+])('does not know %s as a New Tab page', (address) => {
+  expect(isNewTabPageUrl(address)).toBe(false);
 });

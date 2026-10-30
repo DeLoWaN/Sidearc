@@ -50,7 +50,7 @@ it('leaves a tab that a link opens where Chrome put it, next to its opener', asy
   await browser.tabs.create({ windowId, url: 'chrome://newtab/', openerTabId: opener });
   await settle();
 
-  expect((await stripUrls()).at(-1)).toBe('chrome://newtab/');
+  expect((await stripUrls())[1]).toBe('chrome://newtab/');
 });
 
 it('leaves a tab with a real address where Chrome put it', async () => {

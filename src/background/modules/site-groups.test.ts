@@ -1,4 +1,4 @@
-import { beforeEach, expect, it } from 'vitest';
+import { beforeEach, expect, it, vi } from 'vitest';
 import { fakeChrome } from '../../../tests/support/fake-chrome';
 import { connectPanel, settle, startWorker, stopWorker } from '../../../tests/support/worker';
 import type { SiteGroupView } from '../../shared/types';
@@ -103,6 +103,108 @@ it('adds a third tab to the group of its opener', async () => {
   const groups = await siteGroups();
   expect(groups).toHaveLength(1);
   expect(groups[0]?.tabIds).toEqual([opener, first, second, third]);
+});
+
+// --- place in the tab strip
+
+/** The URLs of the tabs of a window, in tab strip order. */
+async function stripOf(id = windowId) {
+  return (await browser.tabs.query({ windowId: id })).map((tab) => tab.url);
+}
+
+/** A tab on another site, after the opener: it shows where the end of the group is. */
+async function openOtherSite() {
+  await browser.tabs.create({ url: 'https://x.test/', windowId, active: false });
+  await settle();
+}
+
+it('puts a tab that joins a site group after the last member, not next to its opener', async () => {
+  await openOtherSite();
+  const first = await openFrom('https://docs.test/one');
+  await openFrom('https://docs.test/two');
+
+  // Chrome puts the third tab right after `first`, which is before the member `two`.
+  await openFrom('https://docs.test/three', first);
+
+  expect(await stripOf()).toEqual([
+    'https://docs.test/start',
+    'https://docs.test/one',
+    'https://docs.test/two',
+    'https://docs.test/three',
+    'https://x.test/',
+  ]);
+});
+
+it('puts a tab after the last member once its address arrives and it joins the group', async () => {
+  await openOtherSite();
+  const far = await openFrom('https://docs.test/far');
+  await browser.tabs.move(far, { index: -1 });
+  const blank = await openFrom('about:blank');
+  expect(await stripOf()).toEqual([
+    'https://docs.test/start',
+    'about:blank',
+    'https://x.test/',
+    'https://docs.test/far',
+  ]);
+
+  await fakeChrome.patchTab(blank, { url: 'https://docs.test/loaded' });
+  await settle();
+
+  expect(await stripOf()).toEqual([
+    'https://docs.test/start',
+    'https://x.test/',
+    'https://docs.test/far',
+    'https://docs.test/loaded',
+  ]);
+});
+
+it('leaves a tab that does not join a group next to its opener', async () => {
+  await openOtherSite();
+  await openFrom('https://docs.test/one');
+
+  await openFrom('https://other.test/');
+
+  expect(await stripOf()).toEqual([
+    'https://docs.test/start',
+    'https://docs.test/one',
+    'https://other.test/',
+    'https://x.test/',
+  ]);
+});
+
+it('moves a joining tab once, and leaves it where the user puts it later', async () => {
+  await openOtherSite();
+  const first = await openFrom('https://docs.test/one');
+  await openFrom('https://docs.test/two');
+  const move = vi.spyOn(browser.tabs, 'move');
+
+  const third = await openFrom('https://docs.test/three', first);
+  await fakeChrome.patchTab(third, { url: 'https://docs.test/three-b' });
+  await settle();
+  expect(move).toHaveBeenCalledExactlyOnceWith(third, { index: 3 });
+
+  await browser.tabs.move(third, { index: 0 });
+  await settle();
+  await fakeChrome.patchTab(third, { url: 'https://docs.test/three-c' });
+  await settle();
+
+  expect((await stripOf())[0]).toBe('https://docs.test/three-c');
+});
+
+it('uses the window of the tab when the members sit in several windows', async () => {
+  await openOtherSite();
+  const first = await openFrom('https://docs.test/one');
+  const other = await fakeChrome.openWindow(['https://y.test/', 'https://z.test/']);
+  await browser.tabs.move(first, { windowId: other, index: -1 });
+  await settle();
+
+  await openFrom('https://docs.test/two');
+
+  expect(await stripOf()).toEqual([
+    'https://docs.test/start',
+    'https://docs.test/two',
+    'https://x.test/',
+  ]);
 });
 
 it('never puts a tab in two groups', async () => {

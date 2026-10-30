@@ -69,3 +69,33 @@ test('a New Tab page that the user opens becomes the first Unpinned Tab', async 
     .allTextContents();
   expect(titles[0]).toMatch(/new tab/i);
 });
+
+test('a link opened in the background from a tab of a site group of three lands as the last member', async ({
+  context,
+  extensionId,
+  serviceWorker,
+  site,
+}) => {
+  const start = await context.newPage();
+  await start.goto(`${site.origin}/links`);
+  const panel = await context.newPage();
+  await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
+  const block = panel.locator('[data-site-group]');
+  const stripTitles = () =>
+    serviceWorker.evaluate(async (origin) => {
+      const tabs = await chrome.tabs.query({ url: `${origin}/*` });
+      return tabs.sort((a, b) => a.index - b.index).map((tab) => tab.title);
+    }, site.origin);
+
+  await start.bringToFront();
+  await start.getByRole('link', { name: 'first' }).click({ button: 'middle' });
+  await start.getByRole('link', { name: 'second' }).click({ button: 'middle' });
+  await expect(block.getByRole('listitem')).toHaveCount(3);
+  // Chrome puts a tab right after its opener: opened from the first child, it lands before the member `links b`.
+  const first = context.pages().find((page) => page.url().endsWith('/links?a'));
+  await first?.bringToFront();
+  await first?.getByRole('link', { name: 'third' }).click({ button: 'middle' });
+
+  await expect(block.getByRole('listitem')).toHaveText(['links', 'links a', 'links b', 'other']);
+  await expect.poll(stripTitles).toEqual(['links', 'links a', 'links b', 'other']);
+});

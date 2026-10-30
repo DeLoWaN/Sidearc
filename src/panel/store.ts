@@ -9,19 +9,19 @@ type PanelStore = {
 };
 
 const emptyState: SidebarState = {
-  // tabs (#3)
+  // tabs
   unpinnedTabs: [],
 
-  // items (#4, #5, #6)
+  // items
   items: [],
 
-  // tab groups (#9)
+  // tab groups
   tabGroups: [],
 
-  // archive (#8, #10)
+  // archive
   archive: [],
 
-  // settings (#14)
+  // settings
   settings: DEFAULT_SETTINGS,
 };
 
@@ -30,5 +30,5 @@ export const usePanelStore = create<PanelStore>()((set) => ({
   receive: (state) => set({ state }),
 }));
 
-/** Puts the store back to its first state. Tests need it: a store is one object per module. */
+/** Puts the store back to its first state. The store is one object per module and keeps its state across tests. */
 export const resetPanelStore = () => usePanelStore.setState({ state: emptyState });

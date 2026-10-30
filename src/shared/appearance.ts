@@ -1,10 +1,7 @@
 import type { Density, Settings } from './types';
 
-/**
- * Sizes of each density, in pixels. Variant A of the prototype has rows of 36 and tiles of 52,
- * variant C has rows of 26 and tiles of 30: the normal density sits between them.
- */
-export const DENSITY_SIZES: Record<Density, { rowHeight: number; favoriteSize: number }> = {
+/** Sizes of each density, in pixels. */
+const DENSITY_SIZES: Record<Density, { rowHeight: number; favoriteSize: number }> = {
   compact: { rowHeight: 28, favoriteSize: 36 },
   normal: { rowHeight: 32, favoriteSize: 44 },
   spacious: { rowHeight: 40, favoriteSize: 56 },
@@ -13,7 +10,7 @@ export const DENSITY_SIZES: Record<Density, { rowHeight: number; favoriteSize: n
 /**
  * Readability rule: the panel never shows a gradient colour as it is.
  * In light mode it keeps 30% of the colour and adds white. In dark mode it keeps 35% and adds black.
- * So the text colours of app.css keep their contrast on any colour: appearance.test.ts checks it.
+ * So the text colours of app.css keep their contrast on any colour.
  */
 const KEEP_PERCENT = { light: 30, dark: 35 };
 const SCRIM = { light: 255, dark: 0 };

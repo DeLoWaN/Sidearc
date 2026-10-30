@@ -14,15 +14,13 @@ it.each([
   expect(look(density)).toMatchObject({ '--row-height': row, '--favorite-size': tile });
 });
 
-it('puts the normal density between variants A and C of the prototype', () => {
-  // Variant A: rows of 36px, Favorite tiles of 52px. Variant C: rows of 26px, tiles of 30px.
-  const normal = look('normal');
-  const row = Number.parseInt(normal['--row-height'] as string, 10);
-  const tile = Number.parseInt(normal['--favorite-size'] as string, 10);
-  expect(row).toBeGreaterThan(26);
-  expect(row).toBeLessThan(36);
-  expect(tile).toBeGreaterThan(30);
-  expect(tile).toBeLessThan(52);
+it('makes rows and Favorite tiles grow from compact to spacious', () => {
+  const size = (density: 'compact' | 'normal' | 'spacious', name: string) =>
+    Number.parseInt(look(density)[name] as string, 10);
+  for (const name of ['--row-height', '--favorite-size']) {
+    expect(size('compact', name)).toBeLessThan(size('normal', name));
+    expect(size('normal', name)).toBeLessThan(size('spacious', name));
+  }
 });
 
 it('mixes each colour with white in light mode and with black in dark mode', () => {

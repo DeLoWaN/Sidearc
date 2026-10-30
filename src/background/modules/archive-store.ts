@@ -6,7 +6,7 @@ import type { WorkerModule } from '../worker-module';
 
 const STORAGE_KEY = 'archive';
 
-export const ARCHIVE_RETENTION_MS = 30 * 24 * 3600 * 1000;
+const ARCHIVE_RETENTION_MS = 30 * 24 * 3600 * 1000;
 
 // Two writes in a row would both read the old list. The queue makes them take turns.
 const writes = createQueue();
@@ -40,7 +40,7 @@ export async function addArchiveEntries(entries: Omit<ArchiveEntry, 'id' | 'clos
   await change((current) => [...added, ...current]);
 }
 
-export async function removeArchiveEntry(id: string) {
+async function removeArchiveEntry(id: string) {
   await change((entries) => entries.filter((entry) => entry.id !== id));
 }
 

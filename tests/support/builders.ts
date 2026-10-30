@@ -24,25 +24,22 @@ export function makeTab(overrides: Partial<TabView> = {}): TabView {
   };
 }
 
-/**
- * A complete sidebar state. A ticket that adds a required field to SidebarState adds its default
- * on a line of its own below, so older tests keep compiling.
- */
+/** A complete sidebar state. Each field has an empty default. */
 export function makeState(overrides: Partial<SidebarState> = {}): SidebarState {
   return {
-    // tabs (#3)
+    // tabs
     unpinnedTabs: [],
 
-    // items (#4, #5, #6)
+    // items
     items: [],
 
-    // tab groups (#9)
+    // tab groups
     tabGroups: [],
 
-    // archive (#8, #10)
+    // archive
     archive: [],
 
-    // settings (#14)
+    // settings
     settings: DEFAULT_SETTINGS,
 
     ...overrides,

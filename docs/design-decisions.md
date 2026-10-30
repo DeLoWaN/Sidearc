@@ -1,6 +1,6 @@
 # Sidearc: design decisions
 
-Sidearc is a Chrome extension. It shows a vertical panel that mixes saved links and open tabs, like the sidebar of the Arc browser. This file records every decision taken on 2026-10-30, before any code exists.
+Sidearc is a Chrome extension. It shows a vertical panel that mixes saved links and open tabs, like the sidebar of the Arc browser. This file records the decisions taken on 2026-10-30, at the start of the project.
 
 ## Terms
 

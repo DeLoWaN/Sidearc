@@ -16,7 +16,7 @@ export function registerSidebarSection(name: string, compose: Section) {
   sections.set(name, compose);
 }
 
-export async function composeSidebarState(): Promise<SidebarState> {
+async function composeSidebarState(): Promise<SidebarState> {
   const parts = await Promise.all([...sections.values()].map((compose) => compose()));
   return Object.assign({}, ...parts) as SidebarState;
 }

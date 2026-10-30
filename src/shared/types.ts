@@ -1,10 +1,8 @@
 /**
  * Data types shared by the service worker and its views. Pure TypeScript: no browser API here.
- * Each ticket edits only the types of its own section, so merges stay clean.
- * A section that no ticket has filled yet is `unknown`, which adds nothing to the state.
  */
 
-// tabs (#3)
+// tabs
 
 /** One open Chrome tab, as the panel shows it. */
 export interface TabView {
@@ -25,7 +23,7 @@ export type TabsState = {
   unpinnedTabs: TabView[];
 };
 
-// items (#4, #5, #6)
+// items
 
 /** What an item is. A Favorite is flat: it has no parent. */
 export type ItemKind = 'pinned' | 'folder' | 'favorite';
@@ -72,7 +70,7 @@ export type ItemsState = {
   items: ItemView[];
 };
 
-// tab groups (#9)
+// tab groups
 
 /** The colours of a Chrome Tab group. */
 export type TabGroupColor =
@@ -102,7 +100,7 @@ export type GroupsState = {
   tabGroups: TabGroupView[];
 };
 
-// archive (#8, #10)
+// archive
 
 /** One closed tab in View Archive. */
 export interface ArchiveEntry {
@@ -120,7 +118,7 @@ export type ArchiveState = {
   archive: ArchiveEntry[];
 };
 
-// settings (#14)
+// settings
 
 /** How much room a row takes. */
 export type Density = 'compact' | 'normal' | 'spacious';

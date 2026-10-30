@@ -1,7 +1,5 @@
 /**
  * Messages between the service worker and its views.
- * Each ticket edits only the types of its own section, so merges stay clean.
- * A section that no ticket has filled yet is `never`.
  */
 import type { ArcImportResult } from './arc-import';
 import type { Settings, SidebarState } from './types';
@@ -13,9 +11,9 @@ export const PANEL_PORT = 'sidearc-panel';
 /** Does nothing. Tests use it as a command that needs no ticket. */
 export type MiscCommand = { type: 'noop' };
 
-// tabs (#3, #7, #9, #10)
+// tabs
 export type TabsCommand =
-  /** Shows the tab. The worker focuses its window when it is not the window of the panel. */
+  /** Shows the tab. A tab of another window moves into the window of the panel (Tab Handoff). */
   | { type: 'tab/activate'; tabId: number }
   | { type: 'tab/close'; tabId: number }
   /**
@@ -26,7 +24,7 @@ export type TabsCommand =
   /** Closes every Unpinned Tab and puts it in View Archive. A window left empty gets a blank tab. */
   | { type: 'tab/clear' };
 
-// items (#4, #5, #6)
+// items
 export type ItemsCommand =
   /** Opens the live tab of the item, or shows it when it is open. Never makes a second tab. */
   | { type: 'item/open'; itemId: string }
@@ -37,7 +35,7 @@ export type ItemsCommand =
   /** Deletes the item. Its live tab stays open and becomes an Unpinned Tab. */
   | { type: 'item/delete'; itemId: string };
 
-// folders (#4, #5)
+// folders
 export type FoldersCommand =
   /** Makes an open Folder at the end of the parent. Does nothing when the title is blank or the parent is not a Folder. */
   | { type: 'folder/create'; title: string; parentId: string | null }
@@ -52,7 +50,7 @@ export type FoldersCommand =
    */
   | { type: 'item/move'; itemId: string; parentId: string | null; index?: number };
 
-// favorites (#6)
+// favorites
 export type FavoritesCommand =
   /**
    * Turns a Pinned Tab into a Favorite at `index` among the Favorites, or after them without an index. It keeps its live tab.
@@ -61,7 +59,7 @@ export type FavoritesCommand =
    */
   { type: 'item/favorite'; itemId: string; index?: number };
 
-// tab groups (#9)
+// tab groups
 export type GroupsCommand =
   /** Collapses an expanded Tab group, or expands a collapsed one, in the tab strip too. */
   | { type: 'group/toggle'; groupId: number }
@@ -69,12 +67,12 @@ export type GroupsCommand =
   | { type: 'group/add-tab'; tabId: number; groupId: number }
   | { type: 'group/remove-tab'; tabId: number };
 
-// archive (#8, #10)
+// archive
 export type ArchiveCommand =
   /** Opens the archived tab in the window of the panel, and removes its entry. */
   { type: 'archive/reopen'; entryId: string };
 
-// drag and drop (#11)
+// drag and drop
 export type DragCommand =
   /**
    * Saves an Unpinned Tab as a Pinned Tab or a Favorite with its URL and title, and the tab becomes its live tab.
@@ -95,10 +93,7 @@ export type DragCommand =
    */
   | { type: 'item/unpin'; itemId: string };
 
-// search (#13)
-export type SearchCommand = never;
-
-// settings (#14)
+// settings
 export type SettingsCommand =
   /** Opens the options page: a new tab, or the tab that already shows it. */
   { type: 'options/open' };
@@ -113,7 +108,6 @@ export type Command = { windowId: number } & (
   | GroupsCommand
   | ArchiveCommand
   | DragCommand
-  | SearchCommand
   | SettingsCommand
 );
 
@@ -125,14 +119,14 @@ export type PortMessage =
   /** A short text for the user, sent to the one panel whose command the worker refused. */
   | { type: 'notice'; message: string };
 
-// --- rpc: one-off requests from the options page and the link guard, sent with runtime.sendMessage
+// --- rpc: one-off requests, sent with runtime.sendMessage
 
 /** Answers with the request. A view uses it to check that the worker is alive. */
 export interface MiscRpc {
   'worker/ping': { request: string; response: string };
 }
 
-// link guard (#12)
+// link guard
 export interface LinkGuardRpc {
   /** Asks whether the sending tab is the live tab of an item. */
   'link-guard/is-live': { request: null; response: boolean };
@@ -143,7 +137,7 @@ export interface LinkGuardRpc {
 /** Sent by the worker to the top frame of a tab each time the live tabs change. */
 export type LinkGuardPush = { type: 'link-guard/live'; live: boolean };
 
-// settings (#14)
+// settings
 export type SaveSettingsResult = { ok: true; settings: Settings } | { ok: false; error: string };
 
 export interface SettingsRpc {
@@ -155,7 +149,7 @@ export interface SettingsRpc {
   'settings/save': { request: Partial<Settings>; response: SaveSettingsResult };
 }
 
-// backup (#15)
+// backup
 /** The number of items of each kind in a backup, and its archived tabs. */
 export interface BackupSummary {
   favorites: number;
@@ -175,7 +169,7 @@ export interface BackupRpc {
   'backup/import': { request: string; response: BackupCheckResult };
 }
 
-// Arc import (#16)
+// Arc import
 export interface ArcImportRpc {
   /** True while Sidearc has no item, the one case where the import runs. */
   'arc-import/available': { request: null; response: boolean };

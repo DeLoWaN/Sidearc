@@ -143,7 +143,7 @@ function parseArchive(input: unknown): { ok: true; archive: ArchiveEntry[] } | F
 }
 
 /** What a backup text holds, once it passed every check. */
-export interface ParsedBackup {
+interface ParsedBackup {
   items: ItemRecord[];
   settings: Settings;
   archive: ArchiveEntry[];

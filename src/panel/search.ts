@@ -2,7 +2,7 @@ import type { ItemView, TabView } from '../shared/types';
 import { buildTree, type TreeNode } from './build-tree';
 
 /** A Pinned Tab that matches a search, with the names of the Folders above it, outermost first. */
-export interface PinnedResult {
+interface PinnedResult {
   item: ItemView;
   path: string[];
 }

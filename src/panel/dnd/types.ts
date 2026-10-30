@@ -14,5 +14,3 @@ export type DropTarget =
   | { zone: 'tab-group'; groupId: number }
   /** The Unpinned Tabs section, away from any tab. */
   | { zone: 'unpinned' };
-
-export type DropZone = DropTarget['zone'];

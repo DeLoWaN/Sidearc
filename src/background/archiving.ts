@@ -10,7 +10,7 @@ const closings = createQueue();
 const isReopenable = (url: string) => /^(https?|file|ftp):/i.test(url);
 
 /** The open tabs that belong to no Favorite and no Pinned Tab, in tab strip order. */
-export async function getUnpinnedChromeTabs(): Promise<chrome.tabs.Tab[]> {
+async function getUnpinnedChromeTabs(): Promise<chrome.tabs.Tab[]> {
   const [tabs, liveTabs] = await Promise.all([browser.tabs.query({}), getLiveTabs()]);
   const liveTabIds = new Set(liveTabs.values());
   return tabs.filter((tab) => !liveTabIds.has(tab.id as number));

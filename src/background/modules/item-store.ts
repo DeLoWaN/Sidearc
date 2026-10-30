@@ -85,7 +85,7 @@ export async function addItemsToEmptyStore(newItems: ItemRecord[]): Promise<bool
 }
 
 /** Gives the item a new title. Ignores a blank title and an unknown item. */
-export async function renameItem(id: string, title: string) {
+async function renameItem(id: string, title: string) {
   const trimmed = title.trim();
   if (!trimmed) return;
   await change((items) =>

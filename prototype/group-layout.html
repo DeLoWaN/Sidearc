@@ -1,0 +1,82 @@
+<!doctype html>
+<!-- PROTOTYPE, throw away: how a group looks in the Sidearc panel. ?variant=A (no guide line), B (guide line), C (tinted block). Light and dark side by side. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sidearc group layout prototype</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 24px 90px; background: #cfd3d9; font: 13px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .stage { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+  .note { text-align: center; margin: 0 0 18px; color: #333; }
+  /* Same tokens as src/assets/app.css */
+  .panel { width: 300px; padding: 10px; border-radius: 12px; min-height: 560px;
+    --text: #1f1f1f; --text-muted: #4a4e53; --row-hover: rgb(255 255 255 / .35); --row-active: rgb(255 255 255 / .9);
+    --unvisited: #0b57d0; --line: rgb(74 78 83 / .35); --tint: rgb(255 255 255 / .28);
+    background: linear-gradient(170deg, #e9e3f7, #dfe9f6); color: var(--text); }
+  .panel.dark { --text: #e8eaed; --text-muted: #b4b9bf; --row-hover: rgb(255 255 255 / .06); --row-active: rgb(255 255 255 / .14);
+    --unvisited: #8ab4f8; --line: rgb(180 185 191 / .35); --tint: rgb(255 255 255 / .05);
+    background: linear-gradient(170deg, #2b2640, #1f2a38); }
+  ul { list-style: none; margin: 0; padding: 0; }
+  .row { display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 10px; border-radius: 10px; position: relative; white-space: nowrap; }
+  .row:hover { background: var(--row-hover); }
+  .row.active { background: var(--row-active); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
+  .row.unvisited .t { font-weight: 600; }
+  .row.unvisited::before { content: ""; position: absolute; left: 4px; top: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--unvisited); }
+  .t { overflow: hidden; text-overflow: ellipsis; }
+  .fav { width: 16px; height: 16px; border-radius: 4px; flex: none; display: grid; place-items: center; color: #fff; font-size: 10px; font-weight: 700; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; margin: 0 2px; }
+  /* Group header: same level and height as a tab row; name in bold; chevron right of the name. */
+  .head { font-weight: 600; cursor: pointer; }
+  .chev { width: 10px; height: 10px; flex: none; color: var(--text-muted); transition: transform .12s; }
+  .collapsed .chev { transform: rotate(-90deg); }
+  .count { font-weight: 400; color: var(--text-muted); font-size: 12px; }
+  .members { margin-left: 24px; }
+  .group.collapsed .members { display: none; }
+  .group:not(.collapsed) .count { display: none; }
+  /* Variant B: a thin guide line under the header icon. */
+  .B .members { border-left: 1px solid var(--line); margin-left: 18px; padding-left: 6px; }
+  /* Variant C: the group sits on a faint tinted block, no line. */
+  .C .group { background: var(--tint); border-radius: 12px; margin: 2px 0; padding: 0 0 2px; }
+  .C .members { margin-left: 24px; }
+  .sep { height: 1px; background: var(--line); margin: 8px 6px; }
+  .switcher { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px;
+    background: #111; color: #fff; padding: 8px 12px; border-radius: 999px; box-shadow: 0 6px 24px rgb(0 0 0 / .35); font-size: 12px; z-index: 10; }
+  .switcher button { color: #fff; background: none; border: 0; font-size: 15px; cursor: pointer; padding: 0 6px; }
+</style>
+</head>
+<body>
+<p class="note" id="note"></p>
+<div class="stage" id="stage"></div>
+<div class="switcher"><button id="prev">←</button><span id="label"></span><button id="next">→</button></div>
+<script>
+const NAMES = { A: 'No guide line (Dia)', B: 'Thin guide line', C: 'Tinted block' };
+const chev = '<svg class="chev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5 5 6.5 8 3.5"/></svg>';
+const fav = (c, l) => `<span class="fav" style="background:${c}">${l}</span>`;
+const tab = (c, l, title, cls = '') => `<li class="row ${cls}">${fav(c, l)}<span class="t">${title}</span></li>`;
+const group = (icon, name, count, members, collapsed) =>
+  `<li class="group ${collapsed ? 'collapsed' : ''}"><div class="row head" onclick="this.parentNode.classList.toggle('collapsed')">${icon}<span class="t">${name}</span>${chev}<span class="count">${count}</span></div><ul class="members">${members}</ul></li>`;
+const content = () => `<ul>
+  ${tab('#24292f', 'G', 'arc-bookmarks-exporter/main.py at main')}
+  ${tab('#1a73e8', '★', 'Bookmarks')}
+  ${group(fav('#b32024', 'R'), 'redmine.org', '2', tab('#b32024', 'R', 'Redmine.org tickets vote count list', 'active') + tab('#b32024', 'R', 'Overview - Redmine', 'unvisited'), false)}
+  ${group(fav('#24292f', 'G'), 'github.com', '3', tab('#24292f', 'G', 'nisargkolhe/arcify') + tab('#24292f', 'G', 'Issues · arcify') + tab('#24292f', 'G', 'Pull requests', 'unvisited'), true)}
+  <div class="sep"></div>
+  ${group('<span class="dot" style="background:#1a73e8"></span>', 'Research', '3', tab('#4285f4', 'G', 'Arcify - Recherche Google') + tab('#24292f', 'G', 'nisargkolhe/arcify: A sidebar') + tab('#e8710a', 'A', 'Arcify'), false)}
+  ${group('<span class="dot" style="background:#188038"></span>', 'Leap', '4', tab('#4285f4', 'G', 'leap chrome extension') + tab('#6b4fbb', 'Y', 'Yoki Sidebar') + tab('#e8710a', 'A', 'Arcify: Arc like vertical tab') + tab('#4285f4', 'G', 'Chrome Web Store'), true)}
+  ${tab('#4285f4', 'G', 'Side Bar for Arc Users')}
+  ${tab('#111', 'D', 'Dia Browser | Update 1.55.0')}
+</ul>`;
+const v = (new URLSearchParams(location.search).get('variant') || 'A').toUpperCase();
+const keys = Object.keys(NAMES);
+document.getElementById('label').textContent = `${v} (${NAMES[v]})`;
+document.getElementById('note').textContent = 'Site groups have a favicon and the site name. Tab groups have a colour dot and the Chrome title. Click a header to collapse. The count shows only when collapsed.';
+document.getElementById('stage').innerHTML = ['light', 'dark'].map((m) => `<div class="panel ${m === 'dark' ? 'dark' : ''} ${v}">${content()}</div>`).join('');
+const go = (d) => { const u = new URL(location); u.searchParams.set('variant', keys[(keys.indexOf(v) + d + keys.length) % keys.length]); location = u; };
+document.getElementById('prev').onclick = () => go(-1);
+document.getElementById('next').onclick = () => go(1);
+addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') go(-1); if (e.key === 'ArrowRight') go(1); });
+</script>
+</body>
+</html>

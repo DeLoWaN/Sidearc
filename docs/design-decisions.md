@@ -111,7 +111,10 @@ Tab IDs change when Chrome restarts. When Chrome restores the tabs, Sidearc link
 
 - Sidearc keeps its data in `chrome.storage.local`, not in the Chrome bookmarks. Each item keeps its title, URL, Folder, Favorite status and collapsed state in one record.
 - The data does not sync between computers. The options page exports and imports a JSON file as a backup.
-- On the first run, Sidearc imports one Arc space from Arc's `StorableSidebar.json` file. The user selects the file in a file picker, because an extension cannot read `~/Library`. The import runs once.
+- Sidearc imports one Arc space from Arc's `StorableSidebar.json` file. The user selects the file in a file picker, because an extension cannot read `~/Library`. The folder is hidden, so the options page gives the path to paste in the file window (⌘ Shift G) and a button that copies it. A numbered guide in the "Import from Arc" section explains each step.
+- The Arc import can run at any time. The "Import from Arc" section is always on the options page, and it comes first while Sidearc is empty.
+- The import replaces the Favorites, Pinned Tabs and Folders. It keeps the settings and View Archive. When Sidearc already has items, the page asks for a confirmation first and advises a backup. The import is all-or-nothing: a refused file changes nothing. The Undo button reverts it.
+- While Sidearc has no Favorite, no Pinned Tab and no Folder, the panel shows a card with an "Import from Arc" button, which opens the options page, and the shortcut that pins the current tab.
 
 ## Appearance
 

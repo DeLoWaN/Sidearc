@@ -168,8 +168,8 @@ export function ArcImportSection() {
       <ol className="flex list-decimal flex-col gap-4 pl-5">
         <li>Sidearc reads the file where Arc keeps your sidebar. Arc can stay open.</li>
         <li>
-          Click <strong>Choose Arc file</strong>. In the file window, press ⌘ Shift G, paste the path
-          below, press Enter, then click Open.
+          Click <strong>Choose Arc file</strong>. In the file window, press ⌘ Shift G, paste the
+          path below, press Enter, then click Open.
           <ArcPath onError={setError} />
           <div className="mt-2">
             <FilePickerButton
@@ -211,8 +211,8 @@ export function ArcImportSection() {
           )}
         </li>
         <li>
-          Click <strong>Import</strong>. Sidearc shows how many Favorites, Pinned Tabs and Folders it
-          imported.
+          Click <strong>Import</strong>. Sidearc shows how many Favorites, Pinned Tabs and Folders
+          it imported.
           <div className="mt-2">
             <button
               type="button"

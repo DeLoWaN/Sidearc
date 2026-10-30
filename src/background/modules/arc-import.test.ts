@@ -90,9 +90,7 @@ it('replaces the items of Sidearc with the space, as an import into an empty Sid
 });
 
 it('keeps the settings and View Archive when it replaces the items', async () => {
-  const archive = [
-    { id: 'a1', url: 'https://old.test/', title: 'Old', iconUrl: '', closedAt: 1 },
-  ];
+  const archive = [{ id: 'a1', url: 'https://old.test/', title: 'Old', iconUrl: '', closedAt: 1 }];
   await browser.storage.local.set({
     items: [savedItem],
     archive,

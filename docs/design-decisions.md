@@ -177,7 +177,7 @@ The service worker owns Auto Archive (through `chrome.alarms`), Tab Handoff, the
 
 ## Permissions
 
-`sidePanel`, `tabs`, `tabGroups`, `storage`, `alarms`, `favicon`, and a content script on all sites to check link clicks in live tabs. The Chrome Web Store reviews the all-sites permission more closely if Sidesweep is published.
+`sidePanel`, `tabs`, `tabGroups`, `storage`, `alarms`, `favicon`, and content scripts on all sites. One checks link clicks in live tabs. The other closes the side panel while the page shows an element in fullscreen. The Chrome Web Store reviews the all-sites permission more closely if Sidesweep is published.
 
 ## Project
 

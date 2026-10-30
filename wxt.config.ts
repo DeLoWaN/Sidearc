@@ -13,7 +13,7 @@ export default defineConfig({
   manifest: {
     name: 'Sidesweep',
     description: 'An Arc-like sidebar in the Chrome side panel.',
-    minimum_chrome_version: '141',
+    minimum_chrome_version: '142',
     permissions: ['sidePanel', 'tabs', 'tabGroups', 'storage', 'alarms', 'favicon'],
     action: { default_title: 'Open Sidesweep' },
     commands: {

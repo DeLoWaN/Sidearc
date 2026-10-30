@@ -74,15 +74,15 @@ Sidesweep shows the user's saved links and open tabs as one vertical sidebar in 
 
 **Permission justifications**:
 
-| Permission                                   | Justification                                                                                                                                       |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sidePanel`                                  | Sidesweep shows its sidebar in the Chrome side panel.                                                                                               |
-| `tabs`                                       | The sidebar lists the open tabs with their titles and addresses, and opens, moves, activates and closes tabs when the user asks.                    |
-| `tabGroups`                                  | The sidebar shows Chrome tab groups, and moves or collapses a group when the user does it in the sidebar.                                           |
-| `storage`                                    | Sidesweep keeps the saved links, Folders, settings and the list of archived tabs on the device.                                                     |
-| `alarms`                                     | Auto Archive checks on a timer for tabs that the user did not view for the delay that the user chose.                                               |
-| `favicon`                                    | The sidebar shows the icon of each saved link from the Chrome icon cache, with no network request.                                                  |
-| Host permission (content script on all URLs) | In a tab that belongs to a saved link, a click on a link to another site opens in a new tab. The script only reads the address of the clicked link. |
+| Permission                                   | Justification                                                                                                                                                                                                                                                                          |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sidePanel`                                  | Sidesweep shows its sidebar in the Chrome side panel.                                                                                                                                                                                                                                  |
+| `tabs`                                       | The sidebar lists the open tabs with their titles and addresses, and opens, moves, activates and closes tabs when the user asks.                                                                                                                                                       |
+| `tabGroups`                                  | The sidebar shows Chrome tab groups, and moves or collapses a group when the user does it in the sidebar.                                                                                                                                                                              |
+| `storage`                                    | Sidesweep keeps the saved links, Folders, settings and the list of archived tabs on the device.                                                                                                                                                                                        |
+| `alarms`                                     | Auto Archive checks on a timer for tabs that the user did not view for the delay that the user chose.                                                                                                                                                                                  |
+| `favicon`                                    | The sidebar shows the icon of each saved link from the Chrome icon cache, with no network request.                                                                                                                                                                                     |
+| Host permission (content script on all URLs) | In a tab that belongs to a saved link, a click on a link to another site opens in a new tab. The script only reads the address of the clicked link. A second script closes the side panel while the page shows a video in fullscreen. It only reads whether the page is in fullscreen. |
 
 **Remote code**: No, I am not using remote code.
 

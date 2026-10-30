@@ -43,7 +43,7 @@ test('the extension opens the panel on an icon click and declares the panel shor
 
   const manifest = await serviceWorker.evaluate(() => chrome.runtime.getManifest());
   expect(manifest.side_panel?.default_path).toBe('sidepanel.html');
-  expect(manifest.minimum_chrome_version).toBe('141');
+  expect(manifest.minimum_chrome_version).toBe('142');
   expect(manifest.commands?.['open-panel']?.suggested_key).toMatchObject({
     default: 'Alt+Shift+S',
   });

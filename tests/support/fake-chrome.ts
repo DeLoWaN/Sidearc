@@ -83,6 +83,8 @@ class FakeChrome {
 
   /** Every windowId that received sidePanel.open(), in call order. */
   sidePanelOpened: number[] = [];
+  /** Every windowId that received sidePanel.close(), in call order. */
+  sidePanelClosed: number[] = [];
   panelBehavior = { openPanelOnActionClick: false };
   /** Every message that the worker sent to a tab with tabs.sendMessage, in call order. */
   tabMessages: { tabId: number; message: unknown; frameId?: number }[] = [];
@@ -96,6 +98,7 @@ class FakeChrome {
     this.nextGroupId = 1;
     this.lastFocusedId = undefined;
     this.sidePanelOpened = [];
+    this.sidePanelClosed = [];
     this.panelBehavior = { openPanelOnActionClick: false };
     this.tabMessages = [];
     for (const area of Object.values(this.events)) for (const ev of Object.values(area)) ev.clear();
@@ -541,6 +544,11 @@ class FakeChrome {
         const wid = o.windowId ?? this.mustTab(o.tabId as number).windowId;
         this.sidePanelOpened.push(wid);
         await this.events.sidePanel.onOpened.trigger({ windowId: wid });
+      },
+      close: async (o: { windowId?: number; tabId?: number }) => {
+        const wid = o.windowId ?? this.mustTab(o.tabId as number).windowId;
+        this.sidePanelClosed.push(wid);
+        await this.events.sidePanel.onClosed.trigger({ windowId: wid });
       },
       setOptions: async () => {},
     },

@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS: Settings = {
   gradientTo: '#a7c4f0',
   density: 'normal',
   groupBySite: true,
+  newTabsOnTop: true,
 };
 
 const COLOUR = /^#[0-9a-f]{6}$/i;
@@ -40,6 +41,7 @@ function checkSetting(
       if (DENSITIES.includes(value as Density)) return { value };
       return { error: `${name} must be compact, normal or spacious, got ${show(value)}` };
     case 'groupBySite':
+    case 'newTabsOnTop':
       if (typeof value === 'boolean') return { value };
       return { error: `${name} must be true or false, got ${show(value)}` };
   }

@@ -137,6 +137,19 @@ it('replaces the current data when the same panel imports its own backup', async
   expect(panel.latest()?.settings).toEqual(before?.settings);
 });
 
+it('imports a backup from before newTabsOnTop existed and gives the setting its default', async () => {
+  await saveSettings({ newTabsOnTop: false });
+  const doc = JSON.parse(await exportBackup());
+  delete doc.settings.newTabsOnTop;
+
+  const result = await importBackup(JSON.stringify(doc));
+
+  expect(result).toMatchObject({ ok: true });
+  expect(await browser.runtime.sendMessage({ rpc: 'settings/get', request: null })).toMatchObject({
+    newTabsOnTop: true,
+  });
+});
+
 it('leaves the items at rest when no open tab has their URL', async () => {
   await buildSidebar();
   const text = await exportBackup();

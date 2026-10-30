@@ -2,6 +2,7 @@ import { iconUrl } from './icons';
 import { addArchiveEntries } from './modules/archive-store';
 import { getLiveTabs } from './modules/live-tab-registry';
 import { createQueue } from './queue';
+import { createTabBySidearc } from './sidearc-tabs';
 
 // A Clear and an Auto Archive run must not close the same tab twice.
 const closings = createQueue();
@@ -45,7 +46,7 @@ export function closeAndArchive(choose: (tabs: chrome.tabs.Tab[]) => chrome.tabs
     const emptied = [...new Set(tabs.map((tab) => tab.windowId))].filter((windowId) =>
       open.every((tab) => tab.windowId !== windowId || closing.has(tab.id as number)),
     );
-    for (const windowId of emptied) await browser.tabs.create({ windowId, active: true });
+    for (const windowId of emptied) await createTabBySidearc({ windowId, active: true });
 
     await browser.tabs.remove([...closing]);
   });

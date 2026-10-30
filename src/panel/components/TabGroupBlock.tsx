@@ -13,6 +13,7 @@ export function TabGroupBlock({ group, tabs }: { group: TabGroupView; tabs: TabV
   return (
     <GroupBlock
       ref={block}
+      groupKey={`group-${group.id}`}
       name={group.title || 'Untitled group'}
       icon={
         <span

@@ -9,6 +9,10 @@ beforeEach(async () => {
 
 const tabOf = async (url: string) => (await browser.tabs.query({ url }))[0] as chrome.tabs.Tab;
 
+/** Chrome sends this event once, when the browser starts. */
+const fireStartup = () =>
+  (browser.runtime.onStartup as unknown as { trigger(): Promise<void> }).trigger();
+
 /** Pins the tab of this URL, as the user does with the shortcut. */
 async function pin(url: string) {
   await fakeChrome.events.commands.onCommand.trigger('pin-current-tab', await tabOf(url));
@@ -24,7 +28,7 @@ async function restartBrowser(restored: string[]) {
   await fakeChrome.restartBrowser();
   const windowId = await fakeChrome.openWindow(restored);
   await startWorker();
-  await browser.runtime.onStartup.trigger();
+  await fireStartup();
   const panel = connectPanel(windowId);
   await settle();
   return { windowId, panel };
@@ -86,7 +90,7 @@ it('links the tab of the first window when two windows restore the same URL', as
   const first = await fakeChrome.openWindow(['https://a.test/']);
   await fakeChrome.openWindow(['https://a.test/']);
   await startWorker();
-  await browser.runtime.onStartup.trigger();
+  await fireStartup();
   const panel = connectPanel(first);
   await settle();
 
@@ -167,7 +171,7 @@ it('links a restored tab that has not loaded yet, by its pending URL', async () 
   });
 
   await startWorker();
-  await browser.runtime.onStartup.trigger();
+  await fireStartup();
   const panel = connectPanel(windowId);
   await settle();
 
@@ -183,7 +187,7 @@ it('links a restored tab whose URL arrives after the start', async () => {
   const tab = await tabOf('https://a.test/');
   await fakeChrome.patchTab(tab.id as number, { url: '', status: 'loading' });
   await startWorker();
-  await browser.runtime.onStartup.trigger();
+  await fireStartup();
   const panel = connectPanel(windowId);
   await settle();
   expect(links(panel)).toEqual([['https://a.test/', undefined]]);
@@ -201,7 +205,7 @@ it('does not move a live tab that already belongs to an Item', async () => {
   await fakeChrome.events.commands.onCommand.trigger('pin-current-tab', late);
   await settle();
 
-  await browser.runtime.onStartup.trigger();
+  await fireStartup();
   await settle();
 
   expect(links(panel)).toEqual([['https://a.test/', late.id]]);

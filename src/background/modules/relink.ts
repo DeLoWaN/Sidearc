@@ -60,12 +60,12 @@ const relink: WorkerModule = {
     browser.runtime.onStartup.addListener(() => relinkOpenTabs().catch(console.error));
 
     browser.tabs.onUpdated.addListener((_tabId, change, tab) => {
-      if (change.url || change.pendingUrl) relinkLoadedTab(tab).catch(console.error);
+      if (change.url || change.status) relinkLoadedTab(tab).catch(console.error);
     });
 
     // An empty session storage means that Chrome or the extension started just now.
     readState()
-      .then((state) => state ?? relinkOpenTabs())
+      .then((state) => (state ? undefined : relinkOpenTabs()))
       .catch(console.error);
   },
 };

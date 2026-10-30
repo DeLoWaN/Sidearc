@@ -134,7 +134,7 @@ class FakeChrome {
     const answered = new Promise((resolve) => {
       answer = resolve;
     });
-    const results = await fakeBrowser.runtime.onMessage.trigger(message, sender, answer);
+    const results: unknown[] = await fakeBrowser.runtime.onMessage.trigger(message, sender, answer);
     return results.some((result) => result === true) ? answered : undefined;
   }
 

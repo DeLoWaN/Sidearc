@@ -21,7 +21,10 @@ function pushLiveStatus() {
     const liveIds = new Set(liveTabs.values());
     await Promise.all(
       tabs.map((tab) => {
-        const push: LinkGuardPush = { type: 'link-guard/live', live: liveIds.has(tab.id as number) };
+        const push: LinkGuardPush = {
+          type: 'link-guard/live',
+          live: liveIds.has(tab.id as number),
+        };
         // A tab without a link guard, for example one that is still loading, has no listener.
         return browser.tabs.sendMessage(tab.id as number, push, { frameId: 0 }).catch(() => {});
       }),
@@ -39,7 +42,7 @@ const linkGuard: WorkerModule = {
     });
 
     registerRpc('link-guard/open', async ({ url }, sender) => {
-      if (!sender.tab || !isWebAddress(url)) return;
+      if (!sender.tab || !isWebAddress(url)) return false;
       await browser.tabs.create({
         url,
         windowId: sender.tab.windowId,
@@ -47,6 +50,7 @@ const linkGuard: WorkerModule = {
         openerTabId: sender.tab.id,
         active: true,
       });
+      return true;
     });
 
     // The live tabs change when an item gets or loses its tab, and when an item is deleted.

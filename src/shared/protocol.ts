@@ -87,8 +87,8 @@ export interface MiscRpc {
 export interface LinkGuardRpc {
   /** Asks whether the sending tab is the live tab of an item. */
   'link-guard/is-live': { request: null; response: boolean };
-  /** Opens the web link in a new Unpinned Tab, next to the sending tab. Does nothing for another link. */
-  'link-guard/open': { request: { url: string }; response: void };
+  /** Opens the web link in a new Unpinned Tab, next to the sending tab. Answers false for another link. */
+  'link-guard/open': { request: { url: string }; response: boolean };
 }
 
 /** Sent by the worker to the top frame of a tab each time the live tabs change. */

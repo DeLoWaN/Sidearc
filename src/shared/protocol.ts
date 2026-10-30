@@ -223,6 +223,14 @@ export interface LinkGuardRpc {
 /** Sent by the worker to the top frame of a tab each time the live tabs change. */
 export type LinkGuardPush = { type: 'link-guard/live'; live: boolean };
 
+// fullscreen guard
+export interface FullscreenRpc {
+  /** The sending tab shows an element in fullscreen. Closes the side panel of its window. Answers true when the panel was open. */
+  'fullscreen/enter': { request: null; response: boolean };
+  /** The sending tab left fullscreen after an enter that answered true. Answers true when the side panel opened again. */
+  'fullscreen/exit': { request: null; response: boolean };
+}
+
 // settings
 export type SaveSettingsResult = { ok: true; settings: Settings } | { ok: false; error: string };
 
@@ -301,6 +309,7 @@ export interface DiagnosticsRpc {
 /** Maps the name of a request to its request type and its response type. */
 export type RpcMap = MiscRpc &
   LinkGuardRpc &
+  FullscreenRpc &
   SettingsRpc &
   BackupRpc &
   ArcImportRpc &

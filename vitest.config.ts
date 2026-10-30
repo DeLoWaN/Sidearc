@@ -26,7 +26,12 @@ export default defineConfig({
         test: {
           name: 'panel',
           environment: 'happy-dom',
-          include: ['src/**/*.test.tsx', 'src/panel/**/*.test.ts', 'src/options/**/*.test.ts'],
+          include: [
+            'src/**/*.test.tsx',
+            'src/panel/**/*.test.ts',
+            'src/options/**/*.test.ts',
+            'src/fullscreen-guard/**/*.test.ts',
+          ],
           setupFiles: ['tests/support/dom-setup.ts'],
         },
       },

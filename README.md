@@ -21,6 +21,7 @@ Sidesweep uses the words of Arc. [docs/design-decisions.md](docs/design-decision
 - **Tab groups and Site groups.** The panel shows Chrome tab groups as blocks that you can collapse. It also groups tabs that opened from one another on the same site. Chrome does not see these Site groups.
 - **Tab Handoff.** A click on a tab of another window moves the tab into your current window. The tab does not reload, so a form that you started keeps its content.
 - **Link guard.** In a live tab, a link to another host opens in a new tab. The live tab stays on its site.
+- **Fullscreen.** When a page shows a video in fullscreen, the panel closes. It opens again when you leave fullscreen with a click or a key in the page. After the Escape key, Chrome opens it again only at your next click or key in the page.
 - **Auto Archive.** Sidesweep closes an Unpinned Tab that nobody viewed for 12 hours. You can change the delay. The tab on screen and a tab that plays sound never close.
 - **View Archive.** This list keeps the tabs that Auto Archive closed, for 30 days. You can search it and reopen a tab.
 - **Search, multi-select and drag and drop.** The search field filters every section. Ctrl or Cmd and Shift clicks select several rows. You can drag rows between the sections.
@@ -30,7 +31,7 @@ Sidesweep uses the words of Arc. [docs/design-decisions.md](docs/design-decision
 
 ## Requirements
 
-- Chrome 141 or later.
+- Chrome 142 or later.
 - Node.js and npm, for the build.
 
 ## Install
@@ -82,15 +83,15 @@ Right-click the Sidesweep icon and choose **Options**. The options page holds th
 
 Sidesweep asks Chrome for these permissions:
 
-| Permission          | Why Sidesweep needs it                                                           |
-| ------------------- | -------------------------------------------------------------------------------- |
-| `sidePanel`         | Shows the panel in the Chrome side panel.                                        |
-| `tabs`              | Lists, opens, moves and closes tabs, and reads their titles and URLs.            |
-| `tabGroups`         | Shows Chrome tab groups, and moves or collapses them.                            |
-| `storage`           | Keeps your Favorites, Pinned Tabs, Folders, settings and View Archive.           |
-| `alarms`            | Runs Auto Archive on a timer.                                                    |
-| `favicon`           | Shows site icons from the Chrome icon cache.                                     |
-| Access to all sites | A small script in each page checks link clicks in live tabs, for the link guard. |
+| Permission          | Why Sidesweep needs it                                                                                                             |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `sidePanel`         | Shows the panel in the Chrome side panel.                                                                                          |
+| `tabs`              | Lists, opens, moves and closes tabs, and reads their titles and URLs.                                                              |
+| `tabGroups`         | Shows Chrome tab groups, and moves or collapses them.                                                                              |
+| `storage`           | Keeps your Favorites, Pinned Tabs, Folders, settings and View Archive.                                                             |
+| `alarms`            | Runs Auto Archive on a timer.                                                                                                      |
+| `favicon`           | Shows site icons from the Chrome icon cache.                                                                                       |
+| Access to all sites | Small scripts in each page check link clicks in live tabs, for the link guard, and close the panel while a video is in fullscreen. |
 
 Your data stays on your computer, in the extension storage of Chrome. Sidesweep sends no network request and collects no usage data. Your data does not sync between computers, so use the JSON export as a backup. [PRIVACY.md](PRIVACY.md) is the full privacy policy.
 

@@ -1,4 +1,6 @@
-/** The context menu, the confirm dialog and View Archive. Renders nothing until tickets #4 and #10. */
+import { ItemMenu } from '../components/ItemMenu';
+
+/** The right-click menu of items. Tickets #5 and #10 add the confirm dialog and View Archive. */
 export function Overlays() {
-  return null;
+  return <ItemMenu />;
 }

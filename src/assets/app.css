@@ -9,6 +9,7 @@
   --row-hover: rgb(255 255 255 / 0.35);
   --row-active: rgb(255 255 255 / 0.9);
   --icon-fallback: rgb(0 0 0 / 0.12);
+  --menu-bg: #fff;
   --row-height: 36px;
 }
 
@@ -21,6 +22,7 @@
     --row-hover: rgb(255 255 255 / 0.06);
     --row-active: rgb(255 255 255 / 0.14);
     --icon-fallback: rgb(255 255 255 / 0.18);
+    --menu-bg: #2e3340;
   }
 }
 

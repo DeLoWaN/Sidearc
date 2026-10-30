@@ -290,7 +290,6 @@ it('keeps the Pinned Tabs, at rest, after Chrome restarted', async () => {
   await browser.storage.local.set(stored);
   const window = await fakeChrome.openWindow(['https://a.test/', 'https://b.test/']);
   await startWorker();
-  await browser.runtime.onStartup.trigger();
   const panel = connectPanel(window);
   await settle();
 

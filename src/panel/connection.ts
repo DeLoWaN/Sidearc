@@ -2,9 +2,15 @@ import { type Command, PANEL_PORT, type PortMessage } from '../shared/protocol';
 import { usePanelStore } from './store';
 
 /** A command as the panel writes it: the connection adds the window id. */
-export type CommandBody = Command extends infer C ? Omit<C, 'windowId'> : never;
+export type CommandBody = Command extends infer C
+  ? C extends unknown
+    ? Omit<C, 'windowId'>
+    : never
+  : never;
 
 export interface Connection {
+  /** The window that holds this panel. */
+  windowId: number;
   send(command: CommandBody): void;
 }
 
@@ -26,5 +32,5 @@ export async function connectToWorker(): Promise<Connection> {
   };
   open();
 
-  return { send: (command) => port.postMessage({ ...command, windowId }) };
+  return { windowId, send: (command) => port.postMessage({ ...command, windowId }) };
 }

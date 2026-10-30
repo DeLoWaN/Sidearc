@@ -5,7 +5,25 @@
  */
 
 // tabs (#3)
-export type TabsState = unknown;
+
+/** One open Chrome tab, as the panel shows it. */
+export interface TabView {
+  id: number;
+  windowId: number;
+  /** Position in the tab strip of its window, from 0. */
+  index: number;
+  title: string;
+  url: string;
+  /** Address of an image the panel can show: the page icon, or the Chrome cache of site icons. */
+  iconUrl: string;
+  /** True for the tab on screen in its window. */
+  active: boolean;
+}
+
+export type TabsState = {
+  /** The Unpinned Tabs of all windows: windows by id, tabs in tab strip order. */
+  unpinnedTabs: TabView[];
+};
 
 // items (#4, #5, #6)
 export type ItemsState = unknown;

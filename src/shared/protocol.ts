@@ -13,7 +13,12 @@ export const PANEL_PORT = 'sidearc-panel';
 export type MiscCommand = { type: 'noop' };
 
 // tabs (#3, #7, #9, #10)
-export type TabsCommand = never;
+export type TabsCommand =
+  /** Shows the tab. The worker focuses its window when it is not the window of the panel. */
+  | { type: 'tab/activate'; tabId: number }
+  | { type: 'tab/close'; tabId: number }
+  /** Puts the tab at this position of the tab strip of its own window. */
+  | { type: 'tab/move'; tabId: number; index: number };
 
 // items (#4, #5, #6)
 export type ItemsCommand = never;

@@ -7,7 +7,16 @@ type PanelStore = {
   receive: (state: SidebarState) => void;
 };
 
-const emptyState: SidebarState = {};
+const emptyState: SidebarState = {
+  // tabs (#3)
+  unpinnedTabs: [],
+
+  // items (#4, #5, #6)
+
+  // tab groups (#9)
+
+  // settings (#14)
+};
 
 export const usePanelStore = create<PanelStore>()((set) => ({
   state: emptyState,

@@ -1,6 +1,12 @@
+import { ConfirmDeleteDialog } from '../components/ConfirmDeleteDialog';
 import { ItemMenu } from '../components/ItemMenu';
 
-/** The right-click menu of items. Tickets #5 and #10 add the confirm dialog and View Archive. */
+/** The right-click menu of items and the delete confirmation. Ticket #10 adds View Archive. */
 export function Overlays() {
-  return <ItemMenu />;
+  return (
+    <>
+      <ItemMenu />
+      <ConfirmDeleteDialog />
+    </>
+  );
 }

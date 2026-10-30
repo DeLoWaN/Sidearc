@@ -2,14 +2,22 @@ import { create } from 'zustand';
 
 /** What the panel itself remembers: no part of it goes to the worker. */
 type PanelUi = {
-  /** The right-click menu: the item it belongs to and where it opens. */
-  menu?: { itemId: string; x: number; y: number };
+  /** The right-click menu: the item it belongs to (null for the root of the Pinned Tabs) and where it opens. */
+  menu?: { itemId: string | null; x: number; y: number };
   /** The item whose title the user is editing. */
   renamingId?: string;
-  openMenu: (itemId: string, x: number, y: number) => void;
+  /** The Folder (null for the root) that is getting a new Folder: the panel shows a name field in it. */
+  creatingIn?: { parentId: string | null };
+  /** The Folder that waits for the user to confirm its deletion. */
+  confirmingDeleteId?: string;
+  openMenu: (itemId: string | null, x: number, y: number) => void;
   closeMenu: () => void;
   startRename: (itemId: string) => void;
   stopRename: () => void;
+  startCreateFolder: (parentId: string | null) => void;
+  stopCreateFolder: () => void;
+  askDeleteConfirmation: (itemId: string) => void;
+  cancelDelete: () => void;
 };
 
 export const usePanelUi = create<PanelUi>()((set) => ({
@@ -17,7 +25,17 @@ export const usePanelUi = create<PanelUi>()((set) => ({
   closeMenu: () => set({ menu: undefined }),
   startRename: (itemId) => set({ renamingId: itemId }),
   stopRename: () => set({ renamingId: undefined }),
+  startCreateFolder: (parentId) => set({ creatingIn: { parentId } }),
+  stopCreateFolder: () => set({ creatingIn: undefined }),
+  askDeleteConfirmation: (itemId) => set({ confirmingDeleteId: itemId }),
+  cancelDelete: () => set({ confirmingDeleteId: undefined }),
 }));
 
 /** Closes every menu and edit field. Tests need it: a store is one object per module. */
-export const resetPanelUi = () => usePanelUi.setState({ menu: undefined, renamingId: undefined });
+export const resetPanelUi = () =>
+  usePanelUi.setState({
+    menu: undefined,
+    renamingId: undefined,
+    creatingIn: undefined,
+    confirmingDeleteId: undefined,
+  });

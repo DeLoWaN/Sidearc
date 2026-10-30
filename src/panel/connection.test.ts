@@ -4,12 +4,14 @@ import { PANEL_PORT } from '../shared/protocol';
 import type { SidebarState } from '../shared/types';
 import { connectToWorker } from './connection';
 import { resetPanelStore, usePanelStore } from './store';
+import { resetPanelUi, usePanelUi } from './ui-store';
 
 type WorkerPort = chrome.runtime.Port;
 
 beforeEach(() => {
   fakeChrome.reset();
   resetPanelStore();
+  resetPanelUi();
 });
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -55,4 +57,13 @@ it('connects again when the worker stops, and keeps sending commands', async () 
   connection.send({ type: 'noop' });
   await settle();
   expect(worker.received).toEqual([{ type: 'noop', windowId: window }]);
+});
+
+it('shows the notice that the worker sends', async () => {
+  const worker = fakeWorker();
+  await fakeChrome.openWindow(['https://a.test/']);
+  await connectToWorker();
+  worker.ports[0]?.postMessage({ type: 'notice', message: 'Too many Favorites' });
+  await settle();
+  expect(usePanelUi.getState().notice).toBe('Too many Favorites');
 });

@@ -263,7 +263,7 @@ const moveTargets = () =>
     .getAllByRole('menuitem')
     .map((entry) => entry.textContent);
 
-it('lists the root and every Folder as targets of a Pinned Tab, but not its own Folder', async () => {
+it('lists the Favorites, the root and every Folder as targets of a Pinned Tab, but not its own Folder', async () => {
   const { items } = moveFixture();
   renderPinned(items);
 
@@ -271,7 +271,7 @@ it('lists the root and every Folder as targets of a Pinned Tab, but not its own 
   await userEvent.click(screen.getByRole('menuitem', { name: 'Move to…' }));
 
   expect(screen.queryByRole('menu', { name: /Actions for/ })).toBeNull();
-  expect(moveTargets()).toEqual(['Pinned Tabs', 'Work', 'Home']);
+  expect(moveTargets()).toEqual(['Favorites', 'Pinned Tabs', 'Work', 'Home']);
 });
 
 it('moves a Pinned Tab to the Folder that the user picks', async () => {
@@ -332,9 +332,9 @@ it('moves a Folder into another Folder', async () => {
 });
 
 it('disables Move to… when an item has nowhere to go', () => {
-  renderPinned([makeItem({ title: 'Mail' })]);
+  renderPinned([makeFolder({ title: 'Work' })]);
 
-  rightClick('Mail');
+  rightClick('Work');
 
   expect(screen.getByRole('menuitem', { name: 'Move to…' })).toBeDisabled();
 });
@@ -352,8 +352,8 @@ it('moves an item with the keyboard only', async () => {
   expect(screen.getByRole('menuitem', { name: 'Move to…' })).toHaveFocus();
   await userEvent.keyboard('{Enter}');
 
-  expect(screen.getByRole('menuitem', { name: 'Pinned Tabs' })).toHaveFocus();
-  await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+  expect(screen.getByRole('menuitem', { name: 'Favorites' })).toHaveFocus();
+  await userEvent.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{Enter}');
 
   expect(send).toHaveBeenCalledExactlyOnceWith({
     type: 'item/move',

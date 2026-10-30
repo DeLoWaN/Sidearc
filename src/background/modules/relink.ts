@@ -19,11 +19,14 @@ async function readState(): Promise<RelinkState | undefined> {
 
 const writeState = (state: RelinkState) => browser.storage.session.set({ [STORAGE_KEY]: state });
 
-/** Links each tab, in the given order, to the first item at rest with the same URL. */
+/** Links each tab, in the given order, to the first item at rest with the same URL. Favorites come first. */
 async function linkByUrl(tabs: chrome.tabs.Tab[]) {
   const [items, liveTabs] = await Promise.all([getItems(), getLiveTabs()]);
   const linkedTabs = new Set(liveTabs.values());
-  const atRest = items.filter((item) => !liveTabs.has(item.id));
+  const favoriteRank = (item: { kind: string }) => (item.kind === 'favorite' ? 0 : 1);
+  const atRest = items
+    .filter((item) => !liveTabs.has(item.id))
+    .sort((a, b) => favoriteRank(a) - favoriteRank(b));
   for (const tab of tabs) {
     if (linkedTabs.has(tab.id as number)) continue;
     const item = atRest.find((candidate) => candidate.url === urlOf(tab));

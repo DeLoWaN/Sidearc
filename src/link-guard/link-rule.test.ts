@@ -1,33 +1,33 @@
 import { describe, expect, it } from 'vitest';
 import { opensOtherHost } from './link-rule';
 
-const PAGE = 'https://jira.iwd.io/browse/A-1';
+const PAGE = 'https://jira.example.com/browse/A-1';
 
 describe('opensOtherHost', () => {
   it.each([
     ['another domain', 'https://example.com/'],
-    ['a different subdomain', 'https://wiki.iwd.io/'],
-    ['a parent domain', 'https://iwd.io/'],
-    ['a child subdomain', 'https://a.jira.iwd.io/'],
-    ['the same name with www.', 'https://www.jira.iwd.io/'],
-    ['another port', 'https://jira.iwd.io:8443/'],
-    ['http on the same name with another port', 'http://jira.iwd.io:8080/'],
-    ['a link with no scheme and another host', '//wiki.iwd.io/x'],
+    ['a different subdomain', 'https://wiki.example.com/'],
+    ['a parent domain', 'https://example.com/'],
+    ['a child subdomain', 'https://a.jira.example.com/'],
+    ['the same name with www.', 'https://www.jira.example.com/'],
+    ['another port', 'https://jira.example.com:8443/'],
+    ['http on the same name with another port', 'http://jira.example.com:8080/'],
+    ['a link with no scheme and another host', '//wiki.example.com/x'],
   ])('is true for %s', (_name, link) => {
     expect(opensOtherHost(PAGE, link)).toBe(true);
   });
 
   it.each([
-    ['the same host and another path', 'https://jira.iwd.io/browse/A-2'],
-    ['the same host with another query and fragment', 'https://jira.iwd.io/x?y=1#z'],
-    ['the same host in capital letters', 'https://JIRA.iwd.io/'],
-    ['the same host with the default port written', 'https://jira.iwd.io:443/'],
-    ['the same host on http', 'http://jira.iwd.io/'],
+    ['the same host and another path', 'https://jira.example.com/browse/A-2'],
+    ['the same host with another query and fragment', 'https://jira.example.com/x?y=1#z'],
+    ['the same host in capital letters', 'https://JIRA.example.com/'],
+    ['the same host with the default port written', 'https://jira.example.com:443/'],
+    ['the same host on http', 'http://jira.example.com/'],
     ['a relative path', '/browse/A-3'],
     ['a relative file', 'A-4'],
     ['a fragment only', '#comments'],
     ['a query only', '?page=2'],
-    ['a link with no scheme and the same host', '//jira.iwd.io/x'],
+    ['a link with no scheme and the same host', '//jira.example.com/x'],
   ])('is false for %s', (_name, link) => {
     expect(opensOtherHost(PAGE, link)).toBe(false);
   });

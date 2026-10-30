@@ -183,7 +183,7 @@ export function ArcImportSection() {
         </li>
         <li>
           Pick the Arc space to import. Sidesweep imports one space. Each Chrome profile has its own
-          Sidesweep data, so import 'Perso' in your Perso profile and 'IWD' in your IWD profile.
+          Sidesweep data, so import each Arc space into its own Chrome profile.
           {spaces.length > 0 && (
             <div className="mt-2 flex flex-col gap-1">
               <label className="flex flex-col gap-1">

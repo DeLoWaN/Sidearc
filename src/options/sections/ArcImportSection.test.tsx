@@ -74,7 +74,7 @@ it('explains the import in four numbered steps', () => {
   expect(steps[2]).toHaveTextContent('Pick the Arc space to import.');
   expect(steps[2]).toHaveTextContent('Sidesweep imports one space.');
   expect(steps[2]).toHaveTextContent(
-    "Each Chrome profile has its own Sidesweep data, so import 'Perso' in your Perso profile and 'IWD' in your IWD profile.",
+    'Each Chrome profile has its own Sidesweep data, so import each Arc space into its own Chrome profile.',
   );
   expect(steps[3]).toHaveTextContent('Click Import.');
   expect(steps[3]).toHaveTextContent(

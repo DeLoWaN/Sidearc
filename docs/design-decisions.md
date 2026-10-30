@@ -24,7 +24,7 @@ Sidesweep uses the vocabulary of Arc. Each term below has one meaning in this fi
 - Sidesweep is for one user first. Other people can install it later.
 - Sidesweep is written from scratch. Arcify was tested and rejected, because its panel has no Folders.
 - Version 1 targets Chrome only. The build tool also supports Firefox later.
-- Spaces are out of scope. Each Chrome profile has its own Sidesweep data. The Arc space "IWD" goes to the Chrome profile "pro", and the Arc space "Perso" goes to the Chrome profile "perso".
+- Spaces are out of scope. Each Chrome profile has its own Sidesweep data. To keep two Arc spaces apart, the user imports each one into its own Chrome profile.
 - Arc Live Folders and Peek are out of scope.
 
 ## Chrome limits accepted
@@ -55,7 +55,7 @@ The search filters the Favorites, the Pinned Tabs and the Unpinned Tabs. It does
 - Closing the live tab returns the Pinned Tab to its saved state. The Pinned Tab stays in the tree.
 - After a navigation inside the live tab, the panel shows the saved title, a "/", the current page title and a Reset button.
 - A link to the same host stays in the live tab.
-- A link to another host opens in a new Unpinned Tab. A different subdomain counts as another host: a link from `jira.iwd.io` to `wiki.iwd.io` opens a new tab.
+- A link to another host opens in a new Unpinned Tab. A different subdomain counts as another host: a link from `jira.example.com` to `wiki.example.com` opens a new tab.
 - Only link clicks are checked. Redirects, such as a single sign-on login, stay in the live tab.
 - Favorites behave exactly like Pinned Tabs.
 - Auto Archive never closes the live tab of a Favorite or a Pinned Tab.
@@ -142,9 +142,9 @@ The user can act on several rows at once.
 
 ## Appearance
 
-- The look follows Arc: a coloured background, rounded rows, large Favorite icons. This is variant A of the prototype.
+- The look follows Arc: a coloured background, rounded rows, large Favorite icons.
 - The options page sets the background as a free gradient of two colours.
-- The options page sets the density: compact, normal or spacious. Normal is the default, between variants A and C of the prototype.
+- The options page sets the density: compact, normal or spacious. Normal is the default.
 - The panel follows the light or dark mode of the system.
 - Any gradient stays readable. In light mode the panel keeps 30% of each chosen colour and adds white. In dark mode it keeps 35% and adds black. A test checks the text contrast on extreme colours.
 - Density sets the row height and the Favorite tile size: compact 28 and 36 pixels, normal 32 and 44, spacious 40 and 56.
@@ -182,5 +182,4 @@ The service worker owns Auto Archive (through `chrome.alarms`), Tab Handoff, the
 ## Project
 
 - Name: Sidesweep. The name does not contain "Arc", a trademark of The Browser Company. The description names Arc, so a user still finds the extension as an Arc replacement.
-- Location: `~/git_perso/Sidearc`.
 - Hosting: a public GitHub repository.

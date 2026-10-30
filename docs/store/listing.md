@@ -86,7 +86,12 @@ Sidesweep shows the user's saved links and open tabs as one vertical sidebar in 
 
 **Remote code**: No, I am not using remote code.
 
-**Data usage**: Sidesweep reads the titles and addresses of open tabs and keeps them on the device. It sends no data off the device. Check the current definitions in the dashboard help before you tick a data type: the answer depends on whether the store counts data that stays on the device.
+**Data usage**: the store asks to declare user data even when it stays on the device ([User Data FAQ](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq)). Tick these two data types:
+
+- **Web history**: Sidesweep reads the titles and addresses of open tabs, and View Archive keeps them for 30 days.
+- **User activity**: the link guard script listens to clicks on links in live tabs.
+
+Sidesweep sends none of this data off the device.
 
 Tick the three certifications: no sale of data, no use unrelated to the single purpose, no use for credit decisions.
 

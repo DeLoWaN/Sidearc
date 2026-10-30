@@ -1,11 +1,14 @@
 import type { SaveSettingsResult } from '../../shared/protocol';
 import { parseSettingsPatch, readSettings } from '../../shared/settings';
 import type { Settings } from '../../shared/types';
+import { createQueue } from '../queue';
 import { registerCommand, registerRpc } from '../registry';
 import { notifySidebarChanged, registerSidebarSection } from '../sidebar-hub';
 import type { WorkerModule } from '../worker-module';
 
 const STORAGE_KEY = 'settings';
+
+const saves = createQueue();
 
 /** The stored settings. A setting that is not stored has its default. */
 export async function getSettings(): Promise<Settings> {
@@ -14,12 +17,15 @@ export async function getSettings(): Promise<Settings> {
 }
 
 /** Saves the given settings and keeps the others. Saves nothing when one value is not valid. */
-export async function saveSettings(patch: unknown): Promise<SaveSettingsResult> {
+export function saveSettings(patch: unknown): Promise<SaveSettingsResult> {
   const parsed = parseSettingsPatch(patch);
-  if (!parsed.ok) return parsed;
-  const settings = { ...(await getSettings()), ...parsed.patch };
-  await browser.storage.local.set({ [STORAGE_KEY]: settings });
-  return { ok: true, settings };
+  if (!parsed.ok) return Promise.resolve(parsed);
+  // Two saves at once would read the same old settings and lose one patch.
+  return saves.run(async () => {
+    const settings = { ...(await getSettings()), ...parsed.patch };
+    await browser.storage.local.set({ [STORAGE_KEY]: settings });
+    return { ok: true, settings };
+  });
 }
 
 const settings: WorkerModule = {

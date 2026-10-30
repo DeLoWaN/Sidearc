@@ -102,6 +102,8 @@ Tab IDs change when Chrome restarts. When Chrome restores the tabs, Sidearc link
 - The options page sets the background as a free gradient of two colours.
 - The options page sets the density: compact, normal or spacious. Normal is the default, between variants A and C of the prototype.
 - The panel follows the light or dark mode of the system.
+- Any gradient stays readable. In light mode the panel keeps 30% of each chosen colour and adds white. In dark mode it keeps 35% and adds black. A test checks the text contrast on extreme colours.
+- Density sets the row height and the Favorite tile size: compact 28 and 36 pixels, normal 32 and 44, spacious 40 and 56.
 
 ## Options page
 

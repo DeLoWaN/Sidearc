@@ -42,6 +42,20 @@ it('saves the settings of a patch and keeps the others', async () => {
   expect(await getSettings()).toEqual((result as { settings: unknown }).settings);
 });
 
+it('keeps every setting when two saves arrive at the same time', async () => {
+  await Promise.all([
+    saveSettings({ gradientFrom: '#111111' }),
+    saveSettings({ gradientTo: '#222222' }),
+    saveSettings({ density: 'compact' }),
+  ]);
+
+  expect(await getSettings()).toMatchObject({
+    gradientFrom: '#111111',
+    gradientTo: '#222222',
+    density: 'compact',
+  });
+});
+
 it('keeps the saved settings when Chrome stops and restarts the worker', async () => {
   await saveSettings({ gradientFrom: '#112233', gradientTo: '#445566' });
 

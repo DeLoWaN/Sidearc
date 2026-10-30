@@ -71,3 +71,55 @@ it('keeps the Tab group of a tab that moves without a group in the command', asy
     `https://c.test/@${groupId}`,
   ]);
 });
+
+it('moves a tab into another window at the index, without a reload', async () => {
+  const { windowId, panel } = await setup();
+  const other = await fakeChrome.openWindow(['https://x.test/', 'https://y.test/']);
+  const moved = await tabOf('https://a.test/');
+
+  panel.send({ type: 'tab/move', tabId: moved, index: 1, targetWindowId: other });
+  await settle();
+
+  expect(await strip(other)).toEqual(['https://x.test/', 'https://a.test/', 'https://y.test/']);
+  expect((await browser.tabs.get(moved)).windowId).toBe(other);
+  expect((await strip(windowId))[0]).toBe('https://b.test/');
+});
+
+it('takes the tab out of its Tab group when it moves to another window with a null group', async () => {
+  const { panel } = await setup();
+  const other = await fakeChrome.openWindow(['https://x.test/']);
+
+  panel.send({
+    type: 'tab/move',
+    tabId: await tabOf('https://c.test/'),
+    index: 0,
+    groupId: null,
+    targetWindowId: other,
+  });
+  await settle();
+
+  expect(await strip(other)).toEqual(['https://c.test/', 'https://x.test/']);
+});
+
+it('joins a Tab group of the other window when the command names it', async () => {
+  const { panel } = await setup();
+  const other = await fakeChrome.openWindow(['https://x.test/', 'https://y.test/']);
+  const otherGroup = (await browser.tabs.group({
+    tabIds: [await tabOf('https://x.test/'), await tabOf('https://y.test/')] as [number, number],
+  })) as number;
+
+  panel.send({
+    type: 'tab/move',
+    tabId: await tabOf('https://a.test/'),
+    index: 1,
+    groupId: otherGroup,
+    targetWindowId: other,
+  });
+  await settle();
+
+  expect(await strip(other)).toEqual([
+    `https://x.test/@${otherGroup}`,
+    `https://a.test/@${otherGroup}`,
+    `https://y.test/@${otherGroup}`,
+  ]);
+});

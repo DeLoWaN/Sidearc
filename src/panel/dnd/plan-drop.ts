@@ -104,9 +104,10 @@ function planItemFromTab(
 }
 
 /**
- * Reorders a tab in its tab strip. The index is the place where the tab ends, as `tabs.move` counts it.
+ * Reorders a tab in its tab strip, or moves it to the place of a row in another window.
+ * The index is the place where the tab ends, as `tabs.move` counts it.
  * The tab joins the group of the row when it lands between two tabs of that group, or when it already is in that group.
- * Otherwise it leaves its group. A drop that changes nothing, or that crosses windows, gives null.
+ * Otherwise it leaves its group. A drop that changes nothing gives null.
  */
 function planTabReorder(
   state: SidebarState,
@@ -114,10 +115,12 @@ function planTabReorder(
   target: Extract<DropTarget, { zone: 'tab-row' }>,
 ): CommandBody | null {
   const row = state.unpinnedTabs.find((tab) => tab.id === target.tabId);
-  if (!row || row.id === source.id || row.windowId !== source.windowId) return null;
+  if (!row || row.id === source.id) return null;
 
+  // The tab leaves its own strip when the window changes, so no place of the new strip shifts.
+  const sameWindow = row.windowId === source.windowId;
   const insertAt = row.index + (target.edge === 'below' ? 1 : 0);
-  const index = source.index < insertAt ? insertAt - 1 : insertAt;
+  const index = sameWindow && source.index < insertAt ? insertAt - 1 : insertAt;
 
   const groupOf = (tabId: number) => state.tabGroups.find((group) => group.tabIds.includes(tabId));
   const current = groupOf(source.id);
@@ -130,6 +133,10 @@ function planTabReorder(
     if (strictlyInside || current === rowGroup) destination = rowGroup.id;
   }
 
+  if (!sameWindow) {
+    const leaves = destination === null && current === undefined ? undefined : destination;
+    return moveTabCommand(source.id, index, leaves, row.windowId);
+  }
   if (destination === (current?.id ?? null)) {
     return index === source.index ? null : moveTabCommand(source.id, index);
   }

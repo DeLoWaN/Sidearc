@@ -310,8 +310,49 @@ describe('an Unpinned Tab reordered in the tab strip', () => {
     expect(move(t1, t0, 'below')).toBeNull();
   });
 
-  it('is refused for a row in another window', () => {
-    expect(move(t0, other, 'above')).toBeNull();
+  it('moves into the window of a row of another window, at the place of the row', () => {
+    expect(move(t0, other, 'above')).toEqual({
+      type: 'tab/move',
+      tabId: t0.id,
+      index: 0,
+      targetWindowId: 2,
+    });
+    expect(move(t4, other, 'below')).toEqual({
+      type: 'tab/move',
+      tabId: t4.id,
+      index: 1,
+      targetWindowId: 2,
+    });
+  });
+
+  it('leaves its Tab group when it moves to another window', () => {
+    expect(move(t2, other, 'above')).toEqual({
+      type: 'tab/move',
+      tabId: t2.id,
+      index: 0,
+      groupId: null,
+      targetWindowId: 2,
+    });
+  });
+
+  it('joins the Tab group of the other window when it lands between two of its tabs', () => {
+    const second = makeTab({ id: 106, index: 1, windowId: 2 });
+    const inOther: TabGroupView = {
+      id: 8,
+      windowId: 2,
+      title: 'H',
+      color: 'red',
+      collapsed: false,
+      tabIds: [other.id, second.id],
+    };
+    const crossState = makeState({
+      unpinnedTabs: [...tabs, other, second],
+      tabGroups: [group, inOther],
+    });
+
+    expect(
+      planDrop(crossState, tab(t0), { zone: 'tab-row', tabId: second.id, edge: 'above' }),
+    ).toEqual({ type: 'tab/move', tabId: t0.id, index: 1, groupId: 8, targetWindowId: 2 });
   });
 
   it('joins the group when it lands between two tabs of the group', () => {

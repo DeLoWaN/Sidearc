@@ -14,10 +14,17 @@ export type TabsCommand =
   | { type: 'tab/activate'; tabId: number }
   | { type: 'tab/close'; tabId: number }
   /**
-   * Puts the tab at this position of the tab strip of its own window.
+   * Puts the tab at this position of the tab strip of its own window, or of `targetWindowId` when given.
    * `groupId` puts the tab in that Tab group first, and `null` takes it out of its group first. Without it the group stays.
+   * A tab that moves to another window leaves its Tab group, unless `groupId` names a group of that window.
    */
-  | { type: 'tab/move'; tabId: number; index: number; groupId?: number | null }
+  | {
+      type: 'tab/move';
+      tabId: number;
+      index: number;
+      groupId?: number | null;
+      targetWindowId?: number;
+    }
   /** Closes every Unpinned Tab and puts it in View Archive. A window left empty gets a blank tab. */
   | { type: 'tab/clear' };
 

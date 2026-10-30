@@ -49,12 +49,15 @@ const tabActions: WorkerModule = {
 
     registerCommand('tab/close', ({ tabId }) => browser.tabs.remove(tabId));
 
-    registerCommand('tab/move', async ({ tabId, index, groupId }) => {
+    registerCommand('tab/move', async ({ tabId, index, groupId, targetWindowId }) => {
       // The group change comes first: joining a group puts the tab at its end, and the move then sets the place.
       if (groupId === null) await removeTabFromGroup(tabId);
       else if (groupId !== undefined) await addTabToGroup(tabId, groupId);
       // Without a window id, Chrome keeps the tab in its own window.
-      await browser.tabs.move(tabId, { index });
+      await browser.tabs.move(
+        tabId,
+        targetWindowId === undefined ? { index } : { index, windowId: targetWindowId },
+      );
     });
 
     registerCommand('item/open', ({ itemId, windowId }) =>

@@ -50,11 +50,21 @@ export function removeTabFromGroupCommand(tabId: number): Of<'group/remove-tab'>
   return { type: 'group/remove-tab', tabId };
 }
 
-/** Moves a tab in its tab strip. `groupId` also joins a group, and null leaves the group. */
+/**
+ * Moves a tab in its tab strip. `groupId` also joins a group, and null leaves the group.
+ * `targetWindowId` moves the tab into that window.
+ */
 export function moveTabCommand(
   tabId: number,
   index: number,
   groupId?: number | null,
+  targetWindowId?: number,
 ): Of<'tab/move'> {
-  return { type: 'tab/move', tabId, index, ...(groupId === undefined ? {} : { groupId }) };
+  return {
+    type: 'tab/move',
+    tabId,
+    index,
+    ...(groupId === undefined ? {} : { groupId }),
+    ...(targetWindowId === undefined ? {} : { targetWindowId }),
+  };
 }

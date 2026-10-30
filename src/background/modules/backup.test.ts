@@ -137,6 +137,20 @@ it('replaces the current data when the same panel imports its own backup', async
   expect(panel.latest()?.settings).toEqual(before?.settings);
 });
 
+it('offers the Arc import only while the imported backup holds no item', async () => {
+  const askAvailable = () =>
+    browser.runtime.sendMessage({ rpc: 'arc-import/available', request: null }) as Promise<boolean>;
+  await buildSidebar();
+  const full = await exportBackup();
+  const empty = JSON.stringify({ ...JSON.parse(full), items: [] });
+
+  expect(await askAvailable()).toBe(false);
+  expect((await importBackup(empty)).ok).toBe(true);
+  expect(await askAvailable()).toBe(true);
+  expect((await importBackup(full)).ok).toBe(true);
+  expect(await askAvailable()).toBe(false);
+});
+
 it('leaves the items at rest when no open tab has their URL', async () => {
   await buildSidebar();
   const text = await exportBackup();

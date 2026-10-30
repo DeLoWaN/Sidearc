@@ -1,6 +1,6 @@
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, expect, it } from 'vitest';
+import { beforeEach, expect, it, vi } from 'vitest';
 import { makeItem, makeState, makeTab } from '../../../tests/support/builders';
 import { renderPanel } from '../../../tests/support/render-panel';
 import type { TabGroupView, TabView } from '../../shared/types';
@@ -117,28 +117,90 @@ it('shows only the tabs of a Tab group that the panel lists', () => {
   expect(screen.queryByText('Unlisted')).toBeNull();
 });
 
+/** Right-clicks the Unpinned Tab with this title. */
+const rightClick = (title: string) =>
+  userEvent.pointer({ keys: '[MouseRight]', target: screen.getByRole('button', { name: title }) });
+
+/** Right-clicks the tab, then opens the "Move to…" submenu. */
+async function openMoveTo(title: string) {
+  await rightClick(title);
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Move to…' }));
+  return screen.getByRole('menu', { name: 'Move to…' });
+}
+
+it('offers Copy URL, Move to… and Close tab in the right-click menu of an Unpinned Tab', async () => {
+  renderPanel(<UnpinnedSection />, {
+    state: makeState({ unpinnedTabs: [makeTab({ title: 'Docs' })] }),
+  });
+
+  await rightClick('Docs');
+
+  const menu = screen.getByRole('menu', { name: 'Actions for Docs' });
+  expect(
+    within(menu)
+      .getAllByRole('menuitem')
+      .map((entry) => entry.textContent),
+  ).toEqual(['Copy URL', 'Move to…', 'Close tab']);
+  // The separator comes before the destructive entry.
+  const [separator] = within(menu).getAllByRole('separator');
+  const close = within(menu).getByRole('menuitem', { name: 'Close tab' });
+  expect(separator?.compareDocumentPosition(close)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+});
+
+it('copies the URL of an Unpinned Tab', async () => {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+  const tab = makeTab({ title: 'Docs', url: 'https://docs.test/home' });
+  renderPanel(<UnpinnedSection />, { state: makeState({ unpinnedTabs: [tab] }) });
+
+  await rightClick('Docs');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Copy URL' }));
+
+  expect(writeText).toHaveBeenCalledExactlyOnceWith('https://docs.test/home');
+  expect(screen.queryByRole('menu')).toBeNull();
+  vi.unstubAllGlobals();
+});
+
+it('closes the tab from its right-click menu', async () => {
+  const tab = makeTab({ title: 'Docs' });
+  const { send } = renderPanel(<UnpinnedSection />, {
+    state: makeState({ unpinnedTabs: [tab] }),
+  });
+
+  await rightClick('Docs');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Close tab' }));
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'tab/close', tabId: tab.id });
+  expect(screen.queryByRole('menu')).toBeNull();
+});
+
+it('gives no menu to the header of a Tab group', () => {
+  const tab = makeTab({ title: 'Docs' });
+  const state = makeState({ unpinnedTabs: [tab], tabGroups: [makeGroup([tab])] });
+  renderPanel(<UnpinnedSection />, { state });
+
+  fireEvent.contextMenu(screen.getByRole('button', { name: 'Work' }));
+
+  expect(screen.queryByRole('menu')).toBeNull();
+});
+
 it('offers the Favorites, the Pinned Tabs and every Folder to an Unpinned Tab, and sends the save command', async () => {
   const tab = makeTab({ title: 'Docs' });
   const work = makeItem({ kind: 'folder', url: '', title: 'Work' });
   const state = makeState({ unpinnedTabs: [tab], items: [work] });
   const { send } = renderPanel(<UnpinnedSection />, { state });
-  const open = async () => {
-    await userEvent.pointer({
-      keys: '[MouseRight]',
-      target: screen.getByRole('button', { name: 'Docs' }),
-    });
-    return screen.getByRole('menu', { name: 'Move to…' });
-  };
 
-  const menu = await open();
+  const menu = await openMoveTo('Docs');
   expect(
     within(menu)
       .getAllByRole('menuitem')
       .map((entry) => entry.textContent),
   ).toEqual(['Favorites', 'Pinned Tabs', 'Work']);
   await userEvent.click(within(menu).getByRole('menuitem', { name: 'Favorites' }));
-  await userEvent.click(within(await open()).getByRole('menuitem', { name: 'Pinned Tabs' }));
-  await userEvent.click(within(await open()).getByRole('menuitem', { name: 'Work' }));
+  await userEvent.click(
+    within(await openMoveTo('Docs')).getByRole('menuitem', { name: 'Pinned Tabs' }),
+  );
+  await userEvent.click(within(await openMoveTo('Docs')).getByRole('menuitem', { name: 'Work' }));
 
   expect(send.mock.calls.map(([command]) => command)).toEqual([
     { type: 'item/from-tab', tabId: tab.id, kind: 'favorite', parentId: null },
@@ -161,11 +223,7 @@ it('offers every Tab group to a tab that is outside of all groups', async () => 
   });
   const { send } = renderPanel(<UnpinnedSection />, { state });
 
-  await userEvent.pointer({
-    keys: '[MouseRight]',
-    target: screen.getByRole('button', { name: 'Loose' }),
-  });
-  const menu = screen.getByRole('menu');
+  const menu = await openMoveTo('Loose');
   expect(within(menu).queryByRole('menuitem', { name: 'Out of group' })).toBeNull();
   await userEvent.click(within(menu).getByRole('menuitem', { name: 'Home' }));
 
@@ -185,11 +243,7 @@ it('offers to take a tab out of its Tab group, and not to put it in the same gro
   });
   const { send } = renderPanel(<UnpinnedSection />, { state });
 
-  await userEvent.pointer({
-    keys: '[MouseRight]',
-    target: screen.getByRole('button', { name: 'Docs' }),
-  });
-  const menu = screen.getByRole('menu');
+  const menu = await openMoveTo('Docs');
   expect(within(menu).queryByRole('menuitem', { name: 'Work' })).toBeNull();
   await userEvent.click(within(menu).getByRole('menuitem', { name: 'Out of group' }));
 
@@ -204,10 +258,7 @@ it('closes the menu on Escape without sending a command', async () => {
   });
   const { send } = renderPanel(<UnpinnedSection />, { state });
 
-  await userEvent.pointer({
-    keys: '[MouseRight]',
-    target: screen.getByRole('button', { name: 'Docs' }),
-  });
+  await openMoveTo('Docs');
   await userEvent.keyboard('{Escape}');
 
   expect(screen.queryByRole('menu')).toBeNull();

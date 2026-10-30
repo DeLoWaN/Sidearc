@@ -1,121 +1,74 @@
-import { useRef } from 'react';
 import { countBelow } from '../../shared/item-tree';
-import { useDismiss } from '../../ui/use-dismiss';
+import { copyToClipboard } from '../clipboard';
 import { itemMoveTargets } from '../move-targets';
 import { usePanel } from '../panel-context';
 import { usePanelStore } from '../store';
 import { usePanelUi } from '../ui-store';
-import { moveFocusWithKeys, useFocusFirstEntry } from './menu-keys';
-
-const entry =
-  'block w-full rounded-md px-2.5 py-1.5 text-left hover:bg-(--row-hover) disabled:opacity-40';
+import { MoveToSubMenu } from './MoveToSubMenu';
+import { ContextMenu, MenuItem, MenuSeparator } from './menu';
 
 /**
- * The right-click menu of an item: rename, Reset, copy URL and delete, and New folder for a Folder.
- * With no item, it is the menu of the root of the Pinned Tabs: only New folder.
+ * The right-click menu of an item: New folder for a Folder, rename, Reset and copy URL for a link,
+ * Move to… and delete. With no item, it is the menu of the root of the Pinned Tabs: only New folder.
  */
 export function ItemMenu() {
   const { send } = usePanel();
-  const { menu, closeMenu, openMoveMenu, startRename, startCreateFolder, askDeleteConfirmation } =
-    usePanelUi();
+  const { menu, closeMenu, startRename, startCreateFolder, askDeleteConfirmation } = usePanelUi();
   const items = usePanelStore((store) => store.state.items);
   const item = items.find((i) => i.id === menu?.itemId);
-  const root = useRef<HTMLDivElement>(null);
-  useFocusFirstEntry(root, menu);
-
-  useDismiss(root, closeMenu, Boolean(menu));
 
   if (!menu || (menu.itemId !== null && !item)) return null;
 
-  const run = (action: () => void) => () => {
-    closeMenu();
-    action();
-  };
-
-  const parentId = item?.kind === 'folder' ? item.id : null;
   const newFolder = (
-    <button
-      type="button"
-      role="menuitem"
-      className={entry}
-      onClick={run(() => {
+    <MenuItem
+      onSelect={() => {
         // The new Folder needs an open parent to show its name field.
         if (item?.collapsed) send({ type: 'folder/toggle', itemId: item.id });
-        startCreateFolder(parentId);
-      })}
+        startCreateFolder(item?.kind === 'folder' ? item.id : null);
+      }}
     >
       New folder
-    </button>
+    </MenuItem>
   );
 
   return (
-    <div
-      ref={root}
-      role="menu"
-      aria-label={`Actions for ${item?.title ?? 'Pinned Tabs'}`}
-      tabIndex={-1}
-      onKeyDown={moveFocusWithKeys}
-      style={{ left: menu.x, top: menu.y }}
-      className="fixed z-10 min-w-36 rounded-xl bg-(--menu-bg) p-1 shadow-lg"
+    <ContextMenu
+      label={`Actions for ${item?.title ?? 'Pinned Tabs'}`}
+      x={menu.x}
+      y={menu.y}
+      returnFocusTo={menu.opener}
+      onClose={closeMenu}
     >
       {(!item || item.kind === 'folder') && newFolder}
       {item && (
         <>
-          <button
-            type="button"
-            role="menuitem"
-            className={entry}
-            onClick={run(() => startRename(item.id))}
-          >
-            Rename
-          </button>
+          <MenuItem onSelect={() => startRename(item.id)}>Rename</MenuItem>
           {item.kind !== 'folder' && (
             <>
-              <button
-                type="button"
-                role="menuitem"
+              <MenuItem
                 disabled={!item.live}
-                className={entry}
-                onClick={run(() => send({ type: 'item/reset', itemId: item.id }))}
+                onSelect={() => send({ type: 'item/reset', itemId: item.id })}
               >
                 Reset
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className={entry}
-                onClick={run(() => {
-                  navigator.clipboard.writeText(item.url).catch(console.error);
-                })}
-              >
-                Copy URL
-              </button>
+              </MenuItem>
+              <MenuItem onSelect={() => copyToClipboard(item.url)}>Copy URL</MenuItem>
             </>
           )}
-          <button
-            type="button"
-            role="menuitem"
-            disabled={itemMoveTargets(items, item).length === 0}
-            className={entry}
-            onClick={run(() => openMoveMenu(item.id, menu.x, menu.y))}
-          >
-            Move to…
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className={entry}
-            onClick={run(() =>
+          <MoveToSubMenu targets={itemMoveTargets(items, item)} onChoose={send} />
+          <MenuSeparator />
+          <MenuItem
+            danger
+            onSelect={() =>
               // Deleting a Folder deletes its content too: the user must confirm that.
               countBelow(items, item.id) > 0
                 ? askDeleteConfirmation(item.id)
-                : send({ type: 'item/delete', itemId: item.id }),
-            )}
+                : send({ type: 'item/delete', itemId: item.id })
+            }
           >
             Delete
-          </button>
+          </MenuItem>
         </>
       )}
-    </div>
+    </ContextMenu>
   );
 }

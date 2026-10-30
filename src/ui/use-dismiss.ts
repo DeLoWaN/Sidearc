@@ -10,13 +10,17 @@ export function useEscape(onEscape: () => void, active = true) {
   }, [onEscape, active]);
 }
 
-/** Calls `onDismiss` on Escape and on a press outside `root`, while `active` is true. */
+/**
+ * Calls `onDismiss` on a press outside `root`, and on Escape, while `active` is true.
+ * `onEscape` replaces `onDismiss` for Escape.
+ */
 export function useDismiss(
   root: RefObject<HTMLElement | null>,
   onDismiss: () => void,
   active = true,
+  onEscape = onDismiss,
 ) {
-  useEscape(onDismiss, active);
+  useEscape(onEscape, active);
   useEffect(() => {
     if (!active) return;
     const onPointer = (event: PointerEvent) => {

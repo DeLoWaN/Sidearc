@@ -186,6 +186,19 @@ it('offers rename, Reset, copy URL, Move to… and delete in a right-click menu'
   ).toEqual(['Rename', 'Reset', 'Copy URL', 'Move to…', 'Delete']);
 });
 
+it('puts a separator between the safe entries and Delete', () => {
+  renderPinned({ state: makeState({ items: [makeItem({ title: 'Mail' })] }) });
+
+  const menu = openMenu('Mail');
+
+  const [separator] = within(menu).getAllByRole('separator');
+  const remove = within(menu).getByRole('menuitem', { name: 'Delete' });
+  expect(separator?.compareDocumentPosition(remove)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  expect(
+    separator?.compareDocumentPosition(within(menu).getByRole('menuitem', { name: 'Move to…' })),
+  ).toBe(Node.DOCUMENT_POSITION_PRECEDING);
+});
+
 it('resets the item from the right-click menu and closes the menu', async () => {
   const item = makeItem({ title: 'Mail', live: { tabId: 7 } });
   const { send } = renderPinned({ state: makeState({ items: [item] }) });
@@ -272,8 +285,8 @@ it('keeps the menu of a Pinned Tab and the menu of a Tab group apart', () => {
 
   fireEvent.pointerDown(screen.getByRole('button', { name: 'Docs' }));
   fireEvent.contextMenu(screen.getByRole('button', { name: 'Docs' }));
-  expect(screen.getByRole('menu', { name: 'Move to…' })).toBeVisible();
-  expect(screen.queryByRole('menu', { name: /Actions for/ })).toBeNull();
+  expect(screen.getByRole('menu', { name: 'Actions for Docs' })).toBeVisible();
+  expect(screen.queryByRole('menuitem', { name: 'Rename' })).toBeNull();
 });
 
 it('closes the right-click menu on Escape', async () => {

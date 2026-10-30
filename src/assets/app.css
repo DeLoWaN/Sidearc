@@ -11,6 +11,9 @@
   --icon-fallback: rgb(0 0 0 / 0.12);
   --unvisited: #0b57d0;
   --menu-bg: #fff;
+  --menu-active: #dce3f5;
+  --menu-separator: rgb(0 0 0 / 0.1);
+  --danger: #b3261e;
   --row-height: 32px;
   --favorite-size: 44px;
   --favorite-bg: rgb(255 255 255 / 0.55);
@@ -36,6 +39,9 @@
     --icon-fallback: rgb(255 255 255 / 0.18);
     --unvisited: #8ab4f8;
     --menu-bg: #2e3340;
+    --menu-active: #454c60;
+    --menu-separator: rgb(255 255 255 / 0.14);
+    --danger: #ffb4ab;
     --favorite-bg: rgb(255 255 255 / 0.08);
     --g-grey: #9aa0a6;
     --g-blue: #8ab4f8;

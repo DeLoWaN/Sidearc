@@ -19,6 +19,8 @@ export function SiteIcon({
       <img
         src={iconUrl}
         alt=""
+        // A native image drag would hide the drag of the row.
+        draggable={false}
         className={`${size} shrink-0`}
         onError={() => setFailedUrl(iconUrl)}
       />

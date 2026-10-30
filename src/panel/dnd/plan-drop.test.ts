@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { makeItem, makeState, makeTab } from '../../../tests/support/builders';
 import type { ItemView, TabGroupView, TabView } from '../../shared/types';
+import { itemMoveTargets, tabMoveTargets } from '../move-targets';
 import { planDrop } from './plan-drop';
 import type { DropTarget } from './types';
 
@@ -379,6 +380,66 @@ describe('an Unpinned Tab dropped on a Tab group', () => {
   it('is refused for a tab that already is in the group, and for a tab of another window', () => {
     expect(planDrop(state, tab(inGroup), { zone: 'tab-group', groupId: 9 })).toBeNull();
     expect(planDrop(state, tab(elsewhere), { zone: 'tab-group', groupId: 9 })).toBeNull();
+  });
+});
+
+describe('the same command as the "Move to…" action', () => {
+  const target = (targets: ReturnType<typeof itemMoveTargets>, key: string) =>
+    targets.find((entry) => entry.key === key)?.command;
+
+  const work = folder('Work', { collapsed: true, position: 0 });
+  const mail = makeItem({ title: 'Mail', position: 1 });
+  const inWork = makeItem({ title: 'Inside', parentId: work.id, position: 0 });
+  const fav = favorite('Fav', 0);
+  const state = makeState({ items: [work, mail, inWork, fav] });
+
+  it('moves a Pinned Tab into a collapsed Folder', () => {
+    expect(
+      planDrop(state, item(mail), { zone: 'tree-row', itemId: work.id, placement: 'inside' }),
+    ).toEqual(target(itemMoveTargets(state.items, mail), work.id));
+  });
+
+  it('moves a Pinned Tab to the end of the Favorites', () => {
+    expect(planDrop(state, item(mail), { zone: 'favorites' })).toEqual(
+      target(itemMoveTargets(state.items, mail), 'favorites'),
+    );
+  });
+
+  it('moves a Pinned Tab out of a Folder to the root', () => {
+    expect(planDrop(state, item(inWork), { zone: 'pinned-root' })).toEqual(
+      target(itemMoveTargets(state.items, inWork), 'root'),
+    );
+  });
+
+  it('moves a Favorite to the root', () => {
+    expect(planDrop(state, item(fav), { zone: 'pinned-root' })).toEqual(
+      target(itemMoveTargets(state.items, fav), 'root'),
+    );
+  });
+
+  it('makes a Pinned Tab and a Favorite an Unpinned Tab', () => {
+    for (const source of [mail, fav]) {
+      expect(planDrop(state, item(source), { zone: 'unpinned' })).toEqual(
+        target(itemMoveTargets(state.items, source), 'unpinned'),
+      );
+    }
+  });
+
+  it('puts an Unpinned Tab in a Tab group', () => {
+    const dragged = makeTab();
+    const group: TabGroupView = {
+      id: 4,
+      windowId: dragged.windowId,
+      title: 'G',
+      color: 'blue',
+      collapsed: false,
+      tabIds: [],
+    };
+    const tabState = makeState({ unpinnedTabs: [dragged], tabGroups: [group] });
+
+    expect(planDrop(tabState, tab(dragged), { zone: 'tab-group', groupId: 4 })).toEqual(
+      tabMoveTargets([group], dragged).find((entry) => entry.key === 'group-4')?.command,
+    );
   });
 });
 

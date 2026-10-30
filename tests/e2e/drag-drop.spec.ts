@@ -1,99 +1,18 @@
-import type { Locator, Page, Worker } from '@playwright/test';
+import {
+  dragTo,
+  drop,
+  hasLiveTab,
+  openPanel,
+  openTabs,
+  rowOf,
+  saved,
+  saveItems,
+  storedItems,
+  strip,
+} from './dnd-support';
 import { expect, test } from './fixtures';
 
-// Pragmatic drag and drop uses native drag events. Playwright turns real mouse moves into them.
-// Playwright cannot drive the real side panel, so the panel page runs in a normal tab.
-
-interface SavedItem {
-  id: string;
-  kind: 'pinned' | 'folder' | 'favorite';
-  title: string;
-  url: string;
-  parentId: string | null;
-  position: number;
-  collapsed: boolean;
-}
-
-const saved = (
-  id: string,
-  kind: SavedItem['kind'],
-  title: string,
-  position: number,
-  parentId: string | null = null,
-  url = kind === 'folder' ? '' : `http://saved.test/${id}`,
-): SavedItem => ({ id, kind, title, url, parentId, position, collapsed: false });
-
-const saveItems = (serviceWorker: Worker, items: SavedItem[]) =>
-  serviceWorker.evaluate((list) => chrome.storage.local.set({ items: list }), items);
-
-/** The saved items by id, from the storage of the worker. */
-const storedItems = (serviceWorker: Worker) =>
-  serviceWorker.evaluate(async () => {
-    const { items } = await chrome.storage.local.get('items');
-    return (items ?? []) as SavedItem[];
-  });
-
-/** The ids inside one parent in position order, for the Pinned Tabs and Folders or the Favorites. */
-async function order(serviceWorker: Worker, parentId: string | null, favorites = false) {
-  return (await storedItems(serviceWorker))
-    .filter((item) => item.parentId === parentId && (item.kind === 'favorite') === favorites)
-    .sort((a, b) => a.position - b.position)
-    .map((item) => item.id);
-}
-
-/** The tabs of the first window in strip order, as `title@group` when a Tab group holds the tab. */
-const strip = (serviceWorker: Worker, titles: string[]) =>
-  serviceWorker.evaluate(async (wanted) => {
-    const tabs = (await chrome.tabs.query({})).sort((a, b) => a.index - b.index);
-    return tabs
-      .filter((tab) => wanted.includes(tab.title ?? ''))
-      .map((tab) => `${tab.title}${tab.groupId === -1 ? '' : '@group'}`);
-  }, titles);
-
-/** The row of a section or list that holds the button with this name. */
-const rowOf = (scope: Locator, name: string) =>
-  scope
-    .getByRole('listitem')
-    .filter({ has: scope.page().getByRole('button', { name, exact: true }) })
-    .last();
-
-/** Presses on the source, drags to a point of the target (as fractions of its box), and holds. */
-async function dragTo(page: Page, source: Locator, target: Locator, fx: number, fy: number) {
-  const from = await source.boundingBox();
-  if (!from) throw new Error('Source is not on screen');
-  const startX = from.x + from.width / 2;
-  const startY = from.y + from.height / 2;
-  await page.mouse.move(startX, startY);
-  await page.mouse.down();
-  await page.mouse.move(startX + 4, startY + 6, { steps: 3 });
-  // The panel can add a drop place when a drag starts: measure the target after that.
-  await page.waitForTimeout(200);
-  const to = await target.boundingBox();
-  if (!to) throw new Error('Target is not on screen');
-  await page.mouse.move(to.x + to.width * fx, to.y + to.height * fy, { steps: 12 });
-  await page.mouse.move(to.x + to.width * fx, to.y + to.height * fy);
-}
-
-const drop = (page: Page) => page.mouse.up();
-
-async function openPanel(context: import('@playwright/test').BrowserContext, extensionId: string) {
-  const panel = await context.newPage();
-  await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
-  return panel;
-}
-
-async function openTabs(context: import('@playwright/test').BrowserContext, urls: string[]) {
-  for (const url of urls) {
-    const page = await context.newPage();
-    await page.goto(url);
-  }
-}
-
-const hasLiveTab = (serviceWorker: Worker, itemId: string) =>
-  serviceWorker.evaluate(async (id) => {
-    const links = (await chrome.storage.session.get('liveTabs')).liveTabs ?? {};
-    return id in links;
-  }, itemId);
+// Drags that start from an Unpinned Tab.
 
 test('an Unpinned Tab dropped inside a Folder becomes a Pinned Tab and the tab becomes its live tab', async ({
   context,
@@ -119,4 +38,89 @@ test('an Unpinned Tab dropped inside a Folder becomes a Pinned Tab and the tab b
   expect(created).toMatchObject({ kind: 'pinned', parentId: 'work', url: `${site.origin}/form` });
   await expect.poll(() => hasLiveTab(serviceWorker, created?.id as string)).toBe(true);
   await expect(panel.getByRole('button', { name: 'Close form' })).toBeAttached();
+});
+
+test('an Unpinned Tab dropped in the empty Favorites area becomes the first Favorite', async ({
+  context,
+  extensionId,
+  serviceWorker,
+  site,
+}) => {
+  await openTabs(context, [`${site.origin}/form`]);
+  const panel = await openPanel(context, extensionId);
+  const tab = rowOf(panel.getByRole('region', { name: 'Unpinned Tabs' }), 'form');
+  await expect(tab).toBeVisible();
+  await expect(panel.getByRole('region', { name: 'Favorites' })).toBeHidden();
+
+  // The Favorites show a place to drop while the user drags.
+  await dragTo(
+    panel,
+    tab.getByRole('button', { name: 'form', exact: true }),
+    panel.getByRole('region', { name: 'Pinned Tabs', exact: true }),
+    0.5,
+    0.5,
+  );
+  const zone = panel.getByRole('region', { name: 'Favorites' });
+  await expect(zone).toBeVisible();
+  const box = await zone.boundingBox();
+  if (!box) throw new Error('No Favorites zone');
+  await panel.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 8 });
+  await expect(zone).toHaveAttribute('data-drop', 'inside');
+  await drop(panel);
+
+  await expect(
+    panel
+      .getByRole('list', { name: 'Favorites list' })
+      .getByRole('button', { name: 'form', exact: true }),
+  ).toBeVisible();
+  const [created] = await storedItems(serviceWorker);
+  expect(created).toMatchObject({ kind: 'favorite', title: 'form', url: `${site.origin}/form` });
+  await expect.poll(() => hasLiveTab(serviceWorker, created?.id as string)).toBe(true);
+});
+
+test('an Unpinned Tab is reordered, joins a Tab group between two of its tabs, and leaves it', async ({
+  context,
+  extensionId,
+  serviceWorker,
+  site,
+}) => {
+  await openTabs(context, [`${site.origin}/form`, `${site.origin}/other`, `${site.origin}/blank`]);
+  const panel = await openPanel(context, extensionId);
+  await serviceWorker.evaluate(async () => {
+    const tabs = await chrome.tabs.query({});
+    const ids = ['other', 'blank'].map(
+      (title) => tabs.find((tab) => tab.title === title)?.id as number,
+    );
+    const group = await chrome.tabs.group({ tabIds: ids });
+    await chrome.tabGroups.update(group, { title: 'G' });
+  });
+  const unpinned = panel.getByRole('region', { name: 'Unpinned Tabs' });
+  const handle = (name: string) => unpinned.getByRole('button', { name, exact: true });
+  const row = (name: string) => rowOf(unpinned, name);
+  await expect(handle('blank')).toBeVisible();
+  const titles = ['form', 'other', 'blank'];
+  expect(await strip(serviceWorker, titles)).toEqual(['form', 'other@group', 'blank@group']);
+
+  // Outside any group: form goes after the panel tab.
+  await dragTo(panel, handle('form'), row('Sidearc'), 0.5, 0.85);
+  await expect(row('Sidearc')).toHaveAttribute('data-drop', 'below');
+  await drop(panel);
+  await expect
+    .poll(() => strip(serviceWorker, titles))
+    .toEqual(['other@group', 'blank@group', 'form']);
+
+  // Between two tabs of the group: form joins it.
+  await dragTo(panel, handle('form'), row('blank'), 0.5, 0.15);
+  await expect(row('blank')).toHaveAttribute('data-drop', 'above');
+  await drop(panel);
+  await expect
+    .poll(() => strip(serviceWorker, titles))
+    .toEqual(['other@group', 'form@group', 'blank@group']);
+
+  // Onto a row outside the group: form leaves it.
+  await dragTo(panel, handle('form'), row('Sidearc'), 0.5, 0.85);
+  await drop(panel);
+  await expect
+    .poll(() => strip(serviceWorker, titles))
+    .toEqual(['other@group', 'blank@group', 'form']);
 });

@@ -50,6 +50,17 @@ it('shows Folders and Pinned Tabs as a tree, ordered by position inside each par
   expect(labels(within(screen.getByRole('list', { name: 'Projects content' })))).toEqual(['Deep']);
 });
 
+it('ignores a middle click on a Folder', async () => {
+  const { send } = renderPinned([makeFolder({ title: 'Work' })]);
+
+  await userEvent.pointer({
+    keys: '[MouseMiddle]',
+    target: screen.getByRole('button', { name: /Work/ }),
+  });
+
+  expect(send).not.toHaveBeenCalled();
+});
+
 it('hides the content of a collapsed Folder and shows it when the state says expanded', () => {
   const work = makeFolder({ title: 'Work', collapsed: true });
   const mail = makeItem({ title: 'Mail', parentId: work.id });

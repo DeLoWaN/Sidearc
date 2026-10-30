@@ -114,6 +114,21 @@ it('closes the live tab of a Favorite from a close button, and shows none at res
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'tab/close', tabId: 7 });
 });
 
+it('closes the live tab of a Favorite on a middle click, and ignores one at rest', async () => {
+  const live = makeFavorite({ title: 'Docs', position: 0, live: { tabId: 7 } });
+  const rest = makeFavorite({ title: 'Wiki', position: 1 });
+  const { send } = renderFavorites([live, rest]);
+  const tile = (title: string) =>
+    screen.getByRole('button', { name: title }).closest('li') as HTMLElement;
+
+  await userEvent.pointer({ keys: '[MouseMiddle]', target: tile('Wiki') });
+  expect(send).not.toHaveBeenCalled();
+
+  expect(fireEvent.mouseDown(tile('Docs'), { button: 1 })).toBe(false);
+  await userEvent.pointer({ keys: '[MouseMiddle]', target: tile('Docs') });
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'tab/close', tabId: 7 });
+});
+
 it('offers rename, Reset, copy URL, Move to… and delete in a right-click menu', () => {
   renderFavorites([makeFavorite({ title: 'Docs', live: { tabId: 7 } })]);
 

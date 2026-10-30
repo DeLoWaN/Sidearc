@@ -70,6 +70,19 @@ it('asks the worker to toggle a Tab group when the user clicks its header', asyn
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'group/toggle', groupId: 7 });
 });
 
+it('ignores a middle click on a Tab group header', async () => {
+  const tab = makeTab({ title: 'Docs' });
+  const state = makeState({ unpinnedTabs: [tab], tabGroups: [makeGroup([tab], { id: 7 })] });
+  const { send } = renderPanel(<UnpinnedSection />, { state });
+
+  await userEvent.pointer({
+    keys: '[MouseMiddle]',
+    target: screen.getByRole('button', { name: 'Work' }),
+  });
+
+  expect(send).not.toHaveBeenCalled();
+});
+
 it('hides the tabs of a collapsed Tab group and shows how many there are', () => {
   const tabs = [makeTab({ title: 'Docs' }), makeTab({ title: 'Mail' })];
   const state = makeState({

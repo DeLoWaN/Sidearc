@@ -60,6 +60,25 @@ it('asks the worker to show a tab when the user clicks it', async () => {
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'tab/activate', tabId: tab.id });
 });
 
+it('asks the worker to close a tab when the user clicks it with the middle button', async () => {
+  const tab = makeTab({ title: 'Mail' });
+  const { send } = renderPanel(<UnpinnedSection />, { state: makeState({ unpinnedTabs: [tab] }) });
+
+  await userEvent.pointer({ keys: '[MouseMiddle]', target: screen.getByRole('listitem') });
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'tab/close', tabId: tab.id });
+});
+
+it('stops the browser autoscroll on a middle mousedown over a tab', () => {
+  renderPanel(<UnpinnedSection />, {
+    state: makeState({ unpinnedTabs: [makeTab({ title: 'Mail' })] }),
+  });
+  const row = screen.getByRole('listitem');
+
+  expect(fireEvent.mouseDown(row, { button: 1 })).toBe(false);
+  expect(fireEvent.mouseDown(row, { button: 0 })).toBe(true);
+});
+
 it('asks the worker to close a tab when the user clicks its close button', async () => {
   const tab = makeTab({ title: 'Mail' });
   const { send } = renderPanel(<UnpinnedSection />, { state: makeState({ unpinnedTabs: [tab] }) });

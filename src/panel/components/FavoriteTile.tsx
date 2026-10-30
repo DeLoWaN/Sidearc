@@ -8,6 +8,7 @@ import { usePanelUi } from '../ui-store';
 import { RenameField } from './RenameField';
 import { SiteIcon } from './SiteIcon';
 import { useItemContextMenu } from './use-item-context-menu';
+import { useMiddleClickClose } from './use-middle-click-close';
 
 /**
  * One Favorite: a large icon. The title is the tooltip.
@@ -19,6 +20,7 @@ export function FavoriteTile({ item, highlighted }: { item: ItemView; highlighte
   const { renamingId } = usePanelUi();
   const onContextMenu = useItemContextMenu(item.id);
   const { live } = item;
+  const middleClick = useMiddleClickClose(live?.tabId);
   const renaming = renamingId === item.id;
   const tile = useRef<HTMLLIElement>(null);
   const { placement, dragging } = useDnd(tile, {
@@ -35,6 +37,7 @@ export function FavoriteTile({ item, highlighted }: { item: ItemView; highlighte
       data-live={live ? true : undefined}
       data-highlighted={highlighted || undefined}
       onContextMenu={onContextMenu}
+      {...middleClick}
       className={`group relative grid h-(--favorite-size) place-items-center rounded-xl bg-(--favorite-bg) hover:bg-(--row-active) data-dragging:opacity-40 data-highlighted:bg-(--row-active) data-highlighted:shadow-sm ${renaming ? 'col-span-full' : ''}`}
     >
       {placement && <DropIndicator placement={placement} />}

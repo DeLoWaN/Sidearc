@@ -70,6 +70,25 @@ it('asks the worker to close the live tab when the user clicks the close button'
   expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'tab/close', tabId: 7 });
 });
 
+it('closes the live tab when the user clicks a Pinned Tab with the middle button', async () => {
+  const item = makeItem({ title: 'Mail', live: { tabId: 7 } });
+  const { send } = renderPinned({ state: makeState({ items: [item] }) });
+
+  await userEvent.pointer({ keys: '[MouseMiddle]', target: screen.getByRole('listitem') });
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'tab/close', tabId: 7 });
+});
+
+it('ignores a middle click on a Pinned Tab at rest', async () => {
+  const { send } = renderPinned({ state: makeState({ items: [makeItem({ title: 'Mail' })] }) });
+  const row = screen.getByRole('listitem');
+
+  await userEvent.pointer({ keys: '[MouseMiddle]', target: row });
+
+  expect(send).not.toHaveBeenCalled();
+  expect(fireEvent.mouseDown(row, { button: 1 })).toBe(true);
+});
+
 it('highlights the live tab that is on screen in the window of the panel', () => {
   const state = makeState({
     items: [

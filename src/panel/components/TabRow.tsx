@@ -7,11 +7,13 @@ import { usePanel } from '../panel-context';
 import { CloseIcon } from './CloseIcon';
 import { SiteIcon } from './SiteIcon';
 import { useTabGroupMenu } from './TabGroupMenu';
+import { useMiddleClickClose } from './use-middle-click-close';
 
 /** One open tab. A click shows the tab, the close button closes it. */
 export function TabRow({ tab, highlighted }: { tab: TabView; highlighted: boolean }) {
   const { send } = usePanel();
   const { onContextMenu, menu } = useTabGroupMenu(tab);
+  const middleClick = useMiddleClickClose(tab.id);
   const row = useRef<HTMLLIElement>(null);
   const { placement, dragging } = useDnd(row, {
     source: { type: 'tab', tabId: tab.id },
@@ -23,6 +25,7 @@ export function TabRow({ tab, highlighted }: { tab: TabView; highlighted: boolea
       data-drop={placement ?? undefined}
       data-dragging={dragging || undefined}
       onContextMenu={onContextMenu}
+      {...middleClick}
       data-highlighted={highlighted || undefined}
       className="group relative flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover) data-dragging:opacity-40 data-highlighted:bg-(--row-active) data-highlighted:shadow-sm"
     >

@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { buildTree } from '../build-tree';
+import { FirstRunCard } from '../components/FirstRunCard';
 import { ItemList } from '../components/ItemTree';
 import { PinnedRow } from '../components/PinnedRow';
 import { useItemContextMenu } from '../components/use-item-context-menu';
@@ -65,6 +66,7 @@ export function PinnedSection() {
           +
         </button>
       </div>
+      {items.length === 0 && <FirstRunCard />}
       <ItemList nodes={buildTree(items)} parentId={null} label="Pinned Tabs list" />
       {placement && <DropIndicator placement={placement} />}
     </section>

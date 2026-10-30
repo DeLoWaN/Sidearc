@@ -119,7 +119,22 @@ export type ArchiveState = {
 };
 
 // settings (#14)
-export type SettingsState = unknown;
+
+/** How much room a row takes. */
+export type Density = 'compact' | 'normal' | 'spacious';
+
+/** The settings of the user, saved in `chrome.storage.local`. */
+export interface Settings {
+  /** Whole hours without a visit before Auto Archive closes an Unpinned Tab. */
+  autoArchiveHours: number;
+  /** First colour of the panel gradient, as `#rrggbb`. */
+  gradientFrom: string;
+  /** Second colour of the panel gradient, as `#rrggbb`. */
+  gradientTo: string;
+  density: Density;
+}
+
+export type SettingsState = { settings: Settings };
 
 /** The full state the worker sends to the panel after every change. */
 export type SidebarState = TabsState & ItemsState & GroupsState & ArchiveState & SettingsState;

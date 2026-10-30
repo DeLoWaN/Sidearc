@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { DEFAULT_SETTINGS } from '../shared/settings';
 import type { SidebarState } from '../shared/types';
 
 type PanelStore = {
@@ -21,6 +22,7 @@ const emptyState: SidebarState = {
   archive: [],
 
   // settings (#14)
+  settings: DEFAULT_SETTINGS,
 };
 
 export const usePanelStore = create<PanelStore>()((set) => ({

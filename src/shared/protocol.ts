@@ -3,7 +3,7 @@
  * Each ticket edits only the types of its own section, so merges stay clean.
  * A section that no ticket has filled yet is `never`.
  */
-import type { SidebarState } from './types';
+import type { Settings, SidebarState } from './types';
 
 export const PANEL_PORT = 'sidearc-panel';
 
@@ -59,7 +59,9 @@ export type DragCommand = never;
 export type SearchCommand = never;
 
 // settings (#14)
-export type SettingsCommand = never;
+export type SettingsCommand =
+  /** Opens the options page: a new tab, or the tab that already shows it. */
+  { type: 'options/open' };
 
 /** A command sent by the panel on its port. Every command carries the id of the sending window. */
 export type Command = { windowId: number } & (
@@ -99,7 +101,16 @@ export interface LinkGuardRpc {
 export type LinkGuardPush = { type: 'link-guard/live'; live: boolean };
 
 // settings (#14)
-export type SettingsRpc = unknown;
+export type SaveSettingsResult = { ok: true; settings: Settings } | { ok: false; error: string };
+
+export interface SettingsRpc {
+  'settings/get': { request: null; response: Settings };
+  /**
+   * Saves the given settings and keeps the others. Saves nothing when one value is not valid.
+   * The error names the setting and the wrong value.
+   */
+  'settings/save': { request: Partial<Settings>; response: SaveSettingsResult };
+}
 
 // backup (#15)
 export type BackupRpc = unknown;

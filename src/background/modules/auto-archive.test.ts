@@ -94,6 +94,21 @@ it('uses the stored delay', async () => {
   expect(await openUrls()).toEqual(['https://recent.test/', 'https://on-screen.test/']);
 });
 
+it('follows a delay change from the options page at the next alarm', async () => {
+  await windowOf('https://old.test/');
+  await idleFor('https://old.test/', 20 * HOUR);
+  const save = (autoArchiveHours: number) =>
+    browser.runtime.sendMessage({ rpc: 'settings/save', request: { autoArchiveHours } });
+
+  await save(48);
+  await tick();
+  expect(await openUrls()).toContain('https://old.test/');
+
+  await save(6);
+  await tick();
+  expect(await openUrls()).toEqual(['https://on-screen.test/']);
+});
+
 it('keeps 12 hours as the delay while the stored settings hold no delay', async () => {
   await browser.storage.local.set({ settings: {} });
   await windowOf('https://old.test/');

@@ -1,3 +1,4 @@
+import { DEFAULT_SETTINGS } from '../../src/shared/settings';
 import type {
   ArchiveEntry,
   ItemView,
@@ -42,6 +43,7 @@ export function makeState(overrides: Partial<SidebarState> = {}): SidebarState {
     archive: [],
 
     // settings (#14)
+    settings: DEFAULT_SETTINGS,
 
     ...overrides,
   };

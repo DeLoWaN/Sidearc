@@ -1,5 +1,5 @@
+import { endPosition, isFolderOrRoot, subtreeIds } from '../../shared/item-tree';
 import type { ItemKind, ItemRecord } from '../../shared/types';
-import { endPosition, isFolderOrRoot, subtreeIds } from '../item-tree';
 import { createQueue } from '../queue';
 import { registerCommand } from '../registry';
 import { notifySidebarChanged } from '../sidebar-hub';

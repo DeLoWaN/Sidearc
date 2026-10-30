@@ -1,4 +1,4 @@
-import { isFolderOrRoot } from '../item-tree';
+import { isFolderOrRoot } from '../../shared/item-tree';
 import { registerCommand } from '../registry';
 import type { WorkerModule } from '../worker-module';
 import { addItem, getItems, moveItem, toggleFolder } from './item-store';

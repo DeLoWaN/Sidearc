@@ -1,5 +1,5 @@
+import { buildTree } from '../build-tree';
 import { ItemList } from '../components/ItemTree';
-import { buildTree } from '../item-tree';
 import { usePanelStore } from '../store';
 import { usePanelUi } from '../ui-store';
 

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { countBelow } from '../item-tree';
+import { countBelow } from '../../shared/item-tree';
 import { usePanel } from '../panel-context';
 import { usePanelStore } from '../store';
 import { usePanelUi } from '../ui-store';

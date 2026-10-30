@@ -1,5 +1,5 @@
 import type { ItemView } from '../../shared/types';
-import type { TreeNode } from '../item-tree';
+import type { TreeNode } from '../build-tree';
 import { usePanel } from '../panel-context';
 import { usePanelUi } from '../ui-store';
 import { ItemList } from './ItemTree';

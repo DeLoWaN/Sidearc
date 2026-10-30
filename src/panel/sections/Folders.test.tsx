@@ -163,7 +163,7 @@ it('opens a collapsed Folder before it asks for the name of a new Folder inside 
   });
 });
 
-it('offers New folder, rename and delete in the right-click menu of a Folder', () => {
+it('offers New folder, rename, Move to… and delete in the right-click menu of a Folder', () => {
   renderPinned([makeFolder({ title: 'Work' })]);
 
   rightClick('Work');
@@ -172,7 +172,7 @@ it('offers New folder, rename and delete in the right-click menu of a Folder', (
     within(screen.getByRole('menu'))
       .getAllByRole('menuitem')
       .map((entry) => entry.textContent),
-  ).toEqual(['New folder', 'Rename', 'Delete']);
+  ).toEqual(['New folder', 'Rename', 'Move to…', 'Delete']);
 });
 
 it('renames a Folder in place from its menu', async () => {
@@ -246,6 +246,131 @@ it('closes the confirmation on Escape', async () => {
   await userEvent.keyboard('{Escape}');
 
   expect(screen.queryByRole('alertdialog')).toBeNull();
+  expect(send).not.toHaveBeenCalled();
+});
+
+/** Two Folders at the root, one of them with a Folder inside, and a Pinned Tab in "Projects". */
+function moveFixture() {
+  const work = makeFolder({ title: 'Work', position: 0 });
+  const projects = makeFolder({ title: 'Projects', parentId: work.id });
+  const home = makeFolder({ title: 'Home', position: 1 });
+  const mail = makeItem({ title: 'Mail', parentId: projects.id });
+  return { work, projects, home, mail, items: [work, projects, home, mail] };
+}
+
+const moveTargets = () =>
+  within(screen.getByRole('menu', { name: 'Move to…' }))
+    .getAllByRole('menuitem')
+    .map((entry) => entry.textContent);
+
+it('lists the root and every Folder as targets of a Pinned Tab, but not its own Folder', async () => {
+  const { items } = moveFixture();
+  renderPinned(items);
+
+  rightClick('Mail');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Move to…' }));
+
+  expect(screen.queryByRole('menu', { name: /Actions for/ })).toBeNull();
+  expect(moveTargets()).toEqual(['Pinned Tabs', 'Work', 'Home']);
+});
+
+it('moves a Pinned Tab to the Folder that the user picks', async () => {
+  const { items, home, mail } = moveFixture();
+  const { send } = renderPinned(items);
+
+  rightClick('Mail');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Move to…' }));
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Home' }));
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({
+    type: 'item/move',
+    itemId: mail.id,
+    parentId: home.id,
+  });
+  expect(screen.queryByRole('menu')).toBeNull();
+});
+
+it('moves a Pinned Tab to the root', async () => {
+  const { items, mail } = moveFixture();
+  const { send } = renderPinned(items);
+
+  rightClick('Mail');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Move to…' }));
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Pinned Tabs' }));
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({
+    type: 'item/move',
+    itemId: mail.id,
+    parentId: null,
+  });
+});
+
+it('does not offer a Folder or its content as a target for that Folder', async () => {
+  const { items } = moveFixture();
+  renderPinned(items);
+
+  rightClick('Work');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Move to…' }));
+
+  // "Work" is at the root, so the root is not a target either. "Projects" lies inside "Work".
+  expect(moveTargets()).toEqual(['Home']);
+});
+
+it('moves a Folder into another Folder', async () => {
+  const { items, work, home } = moveFixture();
+  const { send } = renderPinned(items);
+
+  rightClick('Work');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Move to…' }));
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Home' }));
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({
+    type: 'item/move',
+    itemId: work.id,
+    parentId: home.id,
+  });
+});
+
+it('disables Move to… when an item has nowhere to go', () => {
+  renderPinned([makeItem({ title: 'Mail' })]);
+
+  rightClick('Mail');
+
+  expect(screen.getByRole('menuitem', { name: 'Move to…' })).toBeDisabled();
+});
+
+it('moves an item with the keyboard only', async () => {
+  const { items, home, mail } = moveFixture();
+  const { send } = renderPinned(items);
+
+  // The menu key of the keyboard sends the same event as a right click, on the focused row.
+  screen.getByRole('button', { name: 'Mail' }).focus();
+  fireEvent.contextMenu(document.activeElement as HTMLElement);
+  expect(screen.getByRole('menuitem', { name: 'Rename' })).toHaveFocus();
+  // Reset is disabled for a Pinned Tab at rest: the arrow keys skip it.
+  await userEvent.keyboard('{ArrowDown}{ArrowDown}');
+  expect(screen.getByRole('menuitem', { name: 'Move to…' })).toHaveFocus();
+  await userEvent.keyboard('{Enter}');
+
+  expect(screen.getByRole('menuitem', { name: 'Pinned Tabs' })).toHaveFocus();
+  await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+
+  expect(send).toHaveBeenCalledExactlyOnceWith({
+    type: 'item/move',
+    itemId: mail.id,
+    parentId: home.id,
+  });
+});
+
+it('closes the Move to… menu on Escape', async () => {
+  const { items } = moveFixture();
+  const { send } = renderPinned(items);
+
+  rightClick('Mail');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Move to…' }));
+  await userEvent.keyboard('{Escape}');
+
+  expect(screen.queryByRole('menu')).toBeNull();
   expect(send).not.toHaveBeenCalled();
 });
 

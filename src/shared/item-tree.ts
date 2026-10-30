@@ -1,4 +1,4 @@
-import type { ItemRecord } from '../shared/types';
+import type { ItemRecord } from './types';
 
 /** The ids of the item and of everything below it. */
 export function subtreeIds(items: ItemRecord[], rootId: string): Set<string> {
@@ -14,6 +14,11 @@ export function subtreeIds(items: ItemRecord[], rootId: string): Set<string> {
     }
   }
   return ids;
+}
+
+/** How many items lie below the item, at any depth. */
+export function countBelow(items: ItemRecord[], id: string): number {
+  return subtreeIds(items, id).size - 1;
 }
 
 /** True when the id is null (the root) or the id of a Folder. */

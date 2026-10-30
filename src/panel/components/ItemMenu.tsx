@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { countBelow } from '../item-tree';
+import { countBelow } from '../../shared/item-tree';
+import { itemMoveTargets } from '../move-targets';
 import { usePanel } from '../panel-context';
 import { usePanelStore } from '../store';
 import { usePanelUi } from '../ui-store';
+import { moveFocusWithKeys, useFocusFirstEntry } from './menu-keys';
 
 const entry =
   'block w-full rounded-md px-2.5 py-1.5 text-left hover:bg-(--row-hover) disabled:opacity-40';
@@ -13,10 +15,12 @@ const entry =
  */
 export function ItemMenu() {
   const { send } = usePanel();
-  const { menu, closeMenu, startRename, startCreateFolder, askDeleteConfirmation } = usePanelUi();
+  const { menu, closeMenu, openMoveMenu, startRename, startCreateFolder, askDeleteConfirmation } =
+    usePanelUi();
   const items = usePanelStore((store) => store.state.items);
   const item = items.find((i) => i.id === menu?.itemId);
   const root = useRef<HTMLDivElement>(null);
+  useFocusFirstEntry(root, menu);
 
   useEffect(() => {
     if (!menu) return;
@@ -60,6 +64,8 @@ export function ItemMenu() {
       ref={root}
       role="menu"
       aria-label={`Actions for ${item?.title ?? 'Pinned Tabs'}`}
+      tabIndex={-1}
+      onKeyDown={moveFocusWithKeys}
       style={{ left: menu.x, top: menu.y }}
       className="fixed z-10 min-w-36 rounded-xl bg-(--menu-bg) p-1 shadow-lg"
     >
@@ -97,6 +103,15 @@ export function ItemMenu() {
               </button>
             </>
           )}
+          <button
+            type="button"
+            role="menuitem"
+            disabled={itemMoveTargets(items, item).length === 0}
+            className={entry}
+            onClick={run(() => openMoveMenu(item.id, menu.x, menu.y))}
+          >
+            Move to…
+          </button>
           <button
             type="button"
             role="menuitem"

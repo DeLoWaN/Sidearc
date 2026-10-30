@@ -23,9 +23,3 @@ export function buildTree(items: ItemView[]): TreeNode[] {
   for (const node of nodes.values()) node.children.sort(byPosition);
   return roots;
 }
-
-/** How many items lie below the item, at any depth. */
-export function countBelow(items: ItemView[], id: string): number {
-  const children = items.filter((item) => item.parentId === id);
-  return children.reduce((sum, child) => sum + 1 + countBelow(items, child.id), 0);
-}

@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { usePanel } from './panel-context';
 import { usePanelStore } from './store';
 
-const isTextField = (target: EventTarget | null) =>
+/** True when the target takes typed text: an input, a text area, a select, or an element that the user edits. */
+export const isTextField = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
   (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 

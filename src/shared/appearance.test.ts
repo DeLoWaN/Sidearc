@@ -109,3 +109,36 @@ it('makes the first preset the default gradient', () => {
     to: DEFAULT_SETTINGS.gradientTo,
   });
 });
+
+// A selected row tints the panel with a translucent colour. The text keeps its contrast on the tinted gradient.
+const tint = (block: string) => {
+  const [r = 0, g = 0, b = 0, a = 0] = (
+    /--row-selected:\s*rgb\(([\d.]+) ([\d.]+) ([\d.]+) \/ ([\d.]+)\)/.exec(block) ?? []
+  )
+    .slice(1)
+    .map(Number);
+  return { r, g, b, a };
+};
+const over = (background: string, { r, g, b, a }: ReturnType<typeof tint>) => {
+  const mixed = rgb(background).map((value, i) =>
+    Math.round(value * (1 - a) + ([r, g, b][i] as number) * a)
+      .toString(16)
+      .padStart(2, '0'),
+  );
+  return `#${mixed.join('')}`;
+};
+
+it.each([...EXTREMES, ...GRADIENT_PRESETS.map((preset) => preset.from)])(
+  'keeps the text readable on a selected row over a gradient that holds %s',
+  (colour) => {
+    const vars = look('normal', colour, colour);
+    for (const [scheme, tokens] of [
+      ['light', lightTokens],
+      ['dark', darkTokens],
+    ] as const) {
+      const background = over(vars[`--panel-from-${scheme}`] as string, tint(tokens));
+      expect(contrast(background, token(tokens, 'text'))).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(background, token(tokens, 'text-muted'))).toBeGreaterThanOrEqual(3);
+    }
+  },
+);

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { isSearching } from './search';
+import { resetPanelSelection, usePanelSelection } from './selection-store';
 
 /** What the panel itself remembers: no part of it goes to the worker. */
 type PanelUi = {
@@ -44,7 +45,11 @@ type PanelUi = {
 export const usePanelUi = create<PanelUi>()((set) => ({
   searchQuery: '',
   searching: false,
-  setSearchQuery: (query) => set({ searchQuery: query, searching: isSearching(query) }),
+  setSearchQuery: (query) => {
+    // A search shows only some rows: no selection stays.
+    if (isSearching(query)) usePanelSelection.getState().clear();
+    set({ searchQuery: query, searching: isSearching(query) });
+  },
   showUndoToast: (message) => set({ undoToast: message }),
   dismissUndoToast: () => set({ undoToast: undefined }),
   showNotice: (message) => set({ notice: message }),
@@ -61,8 +66,9 @@ export const usePanelUi = create<PanelUi>()((set) => ({
   cancelDelete: () => set({ confirmingDeleteId: undefined }),
 }));
 
-/** Closes every menu and edit field. The store is one object per module and keeps its state across tests. */
-export const resetPanelUi = () =>
+/** Closes every menu and edit field and empties the selection. The store is one object per module and keeps its state across tests. */
+export const resetPanelUi = () => {
+  resetPanelSelection();
   usePanelUi.setState({
     menu: undefined,
     renamingId: undefined,
@@ -74,3 +80,4 @@ export const resetPanelUi = () =>
     searchQuery: '',
     searching: false,
   });
+};

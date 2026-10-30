@@ -4,7 +4,7 @@ import type { SidebarState } from '../shared/types';
 /** One selected row: an Unpinned Tab, or an item (a Pinned Tab or a Folder). */
 export type SelectionId = { kind: 'tab'; id: number } | { kind: 'item'; id: string };
 
-const sameId = (a: SelectionId, b: SelectionId) => a.kind === b.kind && a.id === b.id;
+export const sameRow = (a: SelectionId, b: SelectionId) => a.kind === b.kind && a.id === b.id;
 
 type PanelSelection = {
   /** The selected rows, in the order of the clicks. */
@@ -34,8 +34,8 @@ export const usePanelSelection = create<PanelSelection>()((set) => ({
   confirmingClose: false,
   toggle: (id) =>
     set((selection) => ({
-      selected: selection.selected.some((other) => sameId(other, id))
-        ? selection.selected.filter((other) => !sameId(other, id))
+      selected: selection.selected.some((other) => sameRow(other, id))
+        ? selection.selected.filter((other) => !sameRow(other, id))
         : [...selection.selected, id],
       anchor: id,
     })),
@@ -53,7 +53,7 @@ export const usePanelSelection = create<PanelSelection>()((set) => ({
       return {
         selected,
         anchor:
-          selection.anchor && selected.some((row) => sameId(row, selection.anchor as SelectionId))
+          selection.anchor && selected.some((row) => sameRow(row, selection.anchor as SelectionId))
             ? selection.anchor
             : undefined,
         ...(selected.length === 0 ? { menu: undefined, confirmingClose: false } : {}),

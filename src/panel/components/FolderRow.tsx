@@ -5,6 +5,7 @@ import { DropIndicator } from '../dnd/DropIndicator';
 import { folderRowTarget } from '../dnd/locators';
 import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
+import { selectOnClick, useRowSelection } from '../selection-actions';
 import { usePanelUi } from '../ui-store';
 import { ItemList } from './ItemTree';
 import { RenameField } from './RenameField';
@@ -29,9 +30,12 @@ export function FolderRow({ item, nodes }: { item: ItemView; nodes: TreeNode[] }
   const { send } = usePanel();
   const { renamingId } = usePanelUi();
   const onContextMenu = useItemContextMenu(item.id);
+  const selectable = { kind: 'item', id: item.id } as const;
+  const { selected, marking } = useRowSelection(selectable);
   const header = useRef<HTMLDivElement>(null);
   const { placement, dragging } = useDnd(header, {
     source: { type: 'item', itemId: item.id },
+    row: selectable,
     canDrag: renamingId !== item.id,
     locate: folderRowTarget(item),
   });
@@ -41,6 +45,7 @@ export function FolderRow({ item, nodes }: { item: ItemView; nodes: TreeNode[] }
       <div
         ref={header}
         data-dragging={dragging || undefined}
+        data-selected={selected || undefined}
         onContextMenu={onContextMenu}
         className="relative flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover) data-dragging:opacity-40"
       >
@@ -54,7 +59,11 @@ export function FolderRow({ item, nodes }: { item: ItemView; nodes: TreeNode[] }
           <button
             type="button"
             aria-expanded={!item.collapsed}
-            onClick={() => send({ type: 'folder/toggle', itemId: item.id })}
+            aria-pressed={marking ? selected : undefined}
+            onClick={(event) => {
+              if (!selectOnClick(event, selectable))
+                send({ type: 'folder/toggle', itemId: item.id });
+            }}
             className="flex h-full min-w-0 flex-1 items-center gap-2.5 rounded-[10px] px-2.5 text-left"
           >
             <svg

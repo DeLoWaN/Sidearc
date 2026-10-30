@@ -3,6 +3,7 @@ import type { TabView } from '../../shared/types';
 import { copyToClipboard } from '../clipboard';
 import { tabMoveTargets } from '../move-targets';
 import { usePanel } from '../panel-context';
+import { claimContextMenu } from '../selection-actions';
 import { usePanelStore } from '../store';
 import { MoveToSubMenu } from './MoveToSubMenu';
 import { ContextMenu, MenuItem, MenuSeparator } from './menu';
@@ -27,8 +28,10 @@ export function useTabGroupMenu(tab: TabView): {
 
   return {
     onContextMenu: (event) => {
+      const opener = focusableUnder(event.target);
+      if (claimContextMenu(event, { kind: 'tab', id: tab.id }, opener)) return;
       event.preventDefault();
-      setOpen({ x: event.clientX, y: event.clientY, opener: focusableUnder(event.target) });
+      setOpen({ x: event.clientX, y: event.clientY, opener });
     },
     menu: open && (
       <ContextMenu

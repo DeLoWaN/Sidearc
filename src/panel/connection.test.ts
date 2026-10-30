@@ -149,6 +149,16 @@ describe('the Undo toast', () => {
     expect(usePanelUi.getState().undoToast).toBeUndefined();
   });
 
+  it('offers an Undo for a selection that the panel closes, with the number of items', async () => {
+    const connection = await connectedWith(makeState());
+
+    connection.send({ type: 'selection/close', tabIds: [1, 2], itemIds: ['a'] });
+    expect(usePanelUi.getState().undoToast).toBe('Closed 3 items');
+
+    connection.send({ type: 'selection/close', tabIds: [], itemIds: ['a'] });
+    expect(usePanelUi.getState().undoToast).toBe('Closed 1 item');
+  });
+
   it('hides the toast when any other command goes out, or when the worker sends a notice', async () => {
     const item = makeItem({ title: 'Mail' });
     const worker = fakeWorker();

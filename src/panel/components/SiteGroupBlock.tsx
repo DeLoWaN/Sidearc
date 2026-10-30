@@ -1,4 +1,7 @@
+import { useRef } from 'react';
 import type { SiteGroupView, TabView } from '../../shared/types';
+import { siteGroupTarget } from '../dnd/locators';
+import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
 import { usePanelUi } from '../ui-store';
 import { GroupBlock } from './GroupBlock';
@@ -13,9 +16,14 @@ export function SiteGroupBlock({ group, tabs }: { group: SiteGroupView; tabs: Ta
   const startRename = usePanelUi((ui) => ui.startRenameGroup);
   const stopRename = usePanelUi((ui) => ui.stopRenameGroup);
   const name = group.name ?? group.host;
+  const block = useRef<HTMLDivElement>(null);
+  // Only a selection of Unpinned Tabs drops here: a single tab keeps its membership.
+  const { placement } = useDnd(block, { locate: siteGroupTarget(group.id) });
 
   return (
     <GroupBlock
+      ref={block}
+      dropPlacement={placement}
       site
       name={name}
       icon={<SiteIcon iconUrl={tabs[0]?.iconUrl ?? ''} title={name} />}

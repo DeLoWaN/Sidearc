@@ -73,7 +73,8 @@ export const favoriteTileTarget =
   (item: ItemView): Locate =>
   ({ source, input, element }) => {
     // A Folder cannot become a Favorite: the Favorites section refuses it too, so the cursor shows "no drop".
-    if (isFolder(source)) return null;
+    // A selection never goes to the Favorites.
+    if (isFolder(source) || source.type === 'selection') return null;
     const edge = closestEdge(input, element, ['left', 'right']);
     return (
       edge && { zone: 'favorite-tile', itemId: item.id, edge: edge === 'left' ? 'before' : 'after' }
@@ -89,10 +90,23 @@ export const tabRowTarget =
     return edge && { zone: 'tab-row', tabId, edge: edge === 'top' ? 'above' : 'below' };
   };
 
+/** A selection of Unpinned Tabs only: a Pinned Tab or a Folder cannot join a group. */
+const holdsTabsOnly = (source: DragSource) =>
+  source.type === 'selection' && source.itemIds.length === 0;
+
 export const tabGroupTarget =
   (groupId: number): Locate =>
   ({ source }) =>
-    source.type === 'tab' ? { zone: 'tab-group', groupId } : null;
+    source.type === 'tab' || holdsTabsOnly(source) ? { zone: 'tab-group', groupId } : null;
+
+export const siteGroupTarget =
+  (groupId: string): Locate =>
+  ({ source }) =>
+    holdsTabsOnly(source) ? { zone: 'site-group', groupId } : null;
+
+const holdsFolder = (source: DragSource) =>
+  source.type === 'selection' &&
+  source.itemIds.some((id) => isFolder({ type: 'item', itemId: id }));
 
 const section =
   (
@@ -104,8 +118,13 @@ const section =
 
 /** A whole section takes what no row inside it took. */
 export const pinnedSectionTarget = section('pinned-root', () => true);
-export const favoritesSectionTarget = section('favorites', (source) => !isFolder(source));
+export const favoritesSectionTarget = section(
+  'favorites',
+  (source) => source.type !== 'selection' && !isFolder(source),
+);
 export const unpinnedSectionTarget = section(
   'unpinned',
-  (source) => source.type === 'item' && !isFolder(source),
+  (source) =>
+    (source.type === 'item' && !isFolder(source)) ||
+    (source.type === 'selection' && !holdsFolder(source)),
 );

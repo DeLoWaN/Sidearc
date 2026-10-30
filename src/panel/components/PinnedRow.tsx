@@ -4,6 +4,7 @@ import { DropIndicator } from '../dnd/DropIndicator';
 import { pinnedRowTarget } from '../dnd/locators';
 import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
+import { selectOnClick, useRowSelection } from '../selection-actions';
 import { usePanelUi } from '../ui-store';
 import { CloseIcon } from './CloseIcon';
 import { RenameField } from './RenameField';
@@ -34,9 +35,12 @@ export function PinnedRow({
   const onContextMenu = useItemContextMenu(item.id);
   const { live } = item;
   const middleClick = useMiddleClickClose({ type: 'item/delete', itemId: item.id });
+  const selectable = { kind: 'item', id: item.id } as const;
+  const { selected, marking } = useRowSelection(selectable);
   const row = useRef<HTMLLIElement>(null);
   const { placement, dragging } = useDnd(row, {
     source: { type: 'item', itemId: item.id },
+    row: selectable,
     canDrag: renamingId !== item.id,
     locate: pinnedRowTarget(item),
   });
@@ -48,6 +52,7 @@ export function PinnedRow({
       data-dragging={dragging || undefined}
       data-live={live ? true : undefined}
       data-highlighted={highlighted || undefined}
+      data-selected={selected || undefined}
       onContextMenu={onContextMenu}
       {...middleClick}
       className="group relative flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover) data-dragging:opacity-40 data-highlighted:bg-(--row-active) data-highlighted:shadow-sm"
@@ -62,7 +67,10 @@ export function PinnedRow({
         <button
           type="button"
           aria-current={highlighted || undefined}
-          onClick={() => send({ type: 'item/open', itemId: item.id })}
+          aria-pressed={marking ? selected : undefined}
+          onClick={(event) => {
+            if (!selectOnClick(event, selectable)) send({ type: 'item/open', itemId: item.id });
+          }}
           className="flex h-full min-w-0 flex-1 items-center gap-2.5 rounded-[10px] px-2.5 text-left"
         >
           <SiteIcon iconUrl={item.iconUrl} title={item.title} />

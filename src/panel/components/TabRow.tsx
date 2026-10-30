@@ -4,6 +4,7 @@ import { DropIndicator } from '../dnd/DropIndicator';
 import { tabRowTarget } from '../dnd/locators';
 import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
+import { selectOnClick, useRowSelection } from '../selection-actions';
 import { CloseIcon } from './CloseIcon';
 import { SiteIcon } from './SiteIcon';
 import { useTabGroupMenu } from './TabGroupMenu';
@@ -14,9 +15,12 @@ export function TabRow({ tab, highlighted }: { tab: TabView; highlighted: boolea
   const { send } = usePanel();
   const { onContextMenu, menu } = useTabGroupMenu(tab);
   const middleClick = useMiddleClickClose({ type: 'tab/close', tabId: tab.id });
+  const selectable = { kind: 'tab', id: tab.id } as const;
+  const { selected, marking } = useRowSelection(selectable);
   const row = useRef<HTMLLIElement>(null);
   const { placement, dragging } = useDnd(row, {
     source: { type: 'tab', tabId: tab.id },
+    row: selectable,
     locate: tabRowTarget(tab.id),
   });
   return (
@@ -27,13 +31,17 @@ export function TabRow({ tab, highlighted }: { tab: TabView; highlighted: boolea
       onContextMenu={onContextMenu}
       {...middleClick}
       data-highlighted={highlighted || undefined}
+      data-selected={selected || undefined}
       className="group relative flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover) data-dragging:opacity-40 data-highlighted:bg-(--row-active) data-highlighted:shadow-sm"
     >
       {placement && <DropIndicator placement={placement} />}
       <button
         type="button"
         aria-current={highlighted || undefined}
-        onClick={() => send({ type: 'tab/activate', tabId: tab.id })}
+        aria-pressed={marking ? selected : undefined}
+        onClick={(event) => {
+          if (!selectOnClick(event, selectable)) send({ type: 'tab/activate', tabId: tab.id });
+        }}
         className="flex h-full min-w-0 flex-1 items-center gap-2.5 rounded-[10px] px-2.5 text-left"
       >
         <span className="relative shrink-0">

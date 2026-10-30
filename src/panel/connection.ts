@@ -1,3 +1,4 @@
+import { plural } from '../shared/plural';
 import { type Command, PANEL_PORT, type PortMessage } from '../shared/protocol';
 import { usePanelStore } from './store';
 import { usePanelUi } from './ui-store';
@@ -26,6 +27,9 @@ function undoToastFor(command: CommandBody): string | undefined {
   if (command.type === 'tab/close') {
     const tab = unpinnedTabs.find((candidate) => candidate.id === command.tabId);
     return tab && `Closed "${tab.title}"`;
+  }
+  if (command.type === 'selection/close') {
+    return `Closed ${plural(command.tabIds.length + command.itemIds.length, 'item')}`;
   }
   if (command.type === 'site-group/close') {
     const group = siteGroups.find((candidate) => candidate.id === command.groupId);

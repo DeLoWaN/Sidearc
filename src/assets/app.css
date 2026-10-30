@@ -8,6 +8,7 @@
   --text-muted: #4a4e53;
   --row-hover: rgb(255 255 255 / 0.35);
   --row-active: rgb(255 255 255 / 0.9);
+  --row-selected: rgb(11 87 208 / 0.2);
   --group-tint: rgb(255 255 255 / 0.28);
   --icon-fallback: rgb(0 0 0 / 0.12);
   --unvisited: #0b57d0;
@@ -37,6 +38,7 @@
     --text-muted: #b4b9bf;
     --row-hover: rgb(255 255 255 / 0.06);
     --row-active: rgb(255 255 255 / 0.14);
+    --row-selected: rgb(60 100 220 / 0.35);
     --group-tint: rgb(255 255 255 / 0.05);
     --icon-fallback: rgb(255 255 255 / 0.18);
     --unvisited: #8ab4f8;
@@ -84,6 +86,11 @@
 }
 [data-color="orange"] {
   --group-color: var(--g-orange);
+}
+
+/* A selected row. This rule is outside the Tailwind layers, so it wins over the hover and active colours. */
+[data-selected] {
+  background-color: var(--row-selected);
 }
 
 html {

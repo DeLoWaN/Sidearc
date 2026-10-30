@@ -100,6 +100,20 @@ A manual test confirms this at the start of development. If the test fails, Tab 
 
 Tab IDs change when Chrome restarts. When Chrome restores the tabs, Sidearc links each restored tab back to its Pinned Tab by URL. A Pinned Tab with no matching tab starts closed.
 
+### Selection of rows
+
+The user can act on several rows at once.
+
+- Selectable rows: Unpinned Tabs (also inside Tab groups and site groups), Pinned Tabs and Folders. Favorites and group headers are not selectable.
+- A click with Ctrl or Cmd adds a row to the selection, or removes it. On macOS, Ctrl and a click is a right click, so use Cmd. A Ctrl or Cmd click on a Folder does not collapse it.
+- A click with Shift selects the rows from the anchor to the clicked row, in the visible order of the panel, and replaces the selection. The anchor is the last row clicked with Ctrl, Cmd or Shift. Rows inside a collapsed Folder or group, group headers and Favorites are not in the range.
+- A click without a key does its normal action and ends the selection. Escape ends it too, and so does any command that the panel sends. A search turns the selection off.
+- A selected Folder stands for itself and its content. A selected row inside a selected Folder does not count.
+- A bar above the footer shows "N selected" and the buttons Close, Move to… and Clear. Delete and Backspace close the selection when no text field has the focus. A right click on a selected row opens a menu with the same two actions. A right click on another row ends the selection and shows the normal menu.
+- Close removes the selected Unpinned Tabs and deletes the selected Pinned Tabs and Folders with their content. The live tab of a deleted item stays open as an Unpinned Tab. The panel asks for a confirmation first when a selected Folder is not empty. One Undo reverts the whole close.
+- Move takes the selection to one place: the root of the Pinned Tabs or a Folder, the Unpinned Tabs (no Folder in the selection), a Tab group or a site group (Unpinned Tabs only). A drag of a selected row, with a count badge, and Move to… in the bar send the same command. The panel refuses a place that does not fit the whole selection, and changes nothing. The rows keep their visible order in the new place. One Undo reverts the items of the whole move.
+- A tab that moves into a site group by hand becomes a member of that group. It leaves its Tab group and its former site group.
+
 ### Interactions
 
 - Drag and drop between the Favorites, the Pinned Tabs, the Folders and the Unpinned Tabs.
@@ -108,7 +122,7 @@ Tab IDs change when Chrome restarts. When Chrome restores the tabs, Sidearc link
 - A right-click menu: rename, Reset, copy URL, delete, and "Move to…". "Move to…" is the keyboard way to move an item, because the drag and drop library has no keyboard support.
 - A keyboard shortcut pins the current tab at the root of the Pinned Tabs.
 - A Pinned Tab has a delete cross, and a middle click on it deletes it. A middle click on a Favorite or an Unpinned Tab closes its tab.
-- An Undo button in the bottom bar reverts the last 20 actions, one at a time: every change of the Folders, Pinned Tabs and Favorites, the close of an Unpinned Tab from the panel, and "Close group". Ctrl+Z or Cmd+Z does the same while the panel has the focus, because the browser keeps Ctrl+Z for itself elsewhere. The list clears when Chrome restarts.
+- An Undo button in the bottom bar reverts the last 20 actions, one at a time: every change of the Folders, Pinned Tabs and Favorites, the close of an Unpinned Tab from the panel, "Close group", and the close and the move of a selection of rows. Ctrl+Z or Cmd+Z does the same while the panel has the focus, because the browser keeps Ctrl+Z for itself elsewhere. The list clears when Chrome restarts.
 
 ## Data
 

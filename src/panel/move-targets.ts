@@ -56,12 +56,7 @@ export function itemMoveTargets(items: ItemView[], item: ItemView): MoveTarget[]
         ]
       : [];
   const unpin = item.kind === 'pinned' ? [unpinned] : [];
-  return [
-    ...favorites,
-    ...(item.parentId === null ? [] : [root]),
-    ...folderTargets,
-    ...unpin,
-  ];
+  return [...favorites, ...(item.parentId === null ? [] : [root]), ...folderTargets, ...unpin];
 }
 
 /** Where an Unpinned Tab can go: every Tab group but its own, then "Out of group" when it is in one. */

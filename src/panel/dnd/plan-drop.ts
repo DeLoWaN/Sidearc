@@ -16,9 +16,7 @@ const byPosition = (a: ItemView, b: ItemView) => a.position - b.position;
 /** The Pinned Tabs and Folders inside one parent, in order, without the item that moves. */
 function treeSiblings(items: ItemView[], parentId: string | null, leaving?: string): ItemView[] {
   return items
-    .filter(
-      (item) => item.kind !== 'favorite' && item.parentId === parentId && item.id !== leaving,
-    )
+    .filter((item) => item.kind !== 'favorite' && item.parentId === parentId && item.id !== leaving)
     .sort(byPosition);
 }
 
@@ -62,7 +60,9 @@ function planItemDrop(
     case 'favorite-tile': {
       const tile = items.find((item) => item.id === target.itemId);
       if (source.kind === 'folder' || !tile || tile.id === source.id) return null;
-      const at = favoritesWithout(items, source.id).findIndex((favorite) => favorite.id === tile.id);
+      const at = favoritesWithout(items, source.id).findIndex(
+        (favorite) => favorite.id === tile.id,
+      );
       return at < 0 ? null : favoriteCommand(source.id, at + (target.edge === 'after' ? 1 : 0));
     }
     case 'favorites':

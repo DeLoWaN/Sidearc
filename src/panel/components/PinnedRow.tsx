@@ -1,4 +1,8 @@
+import { useRef } from 'react';
 import type { ItemView } from '../../shared/types';
+import { DropIndicator } from '../dnd/DropIndicator';
+import { pinnedRowTarget } from '../dnd/locators';
+import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
 import { usePanelUi } from '../ui-store';
 import { RenameField } from './RenameField';
@@ -24,17 +28,27 @@ export function PinnedRow({
   const { send } = usePanel();
   const { openMenu, renamingId } = usePanelUi();
   const { live } = item;
+  const row = useRef<HTMLLIElement>(null);
+  const { placement, dragging } = useDnd(row, {
+    source: { type: 'item', itemId: item.id },
+    canDrag: renamingId !== item.id,
+    locate: pinnedRowTarget(item),
+  });
 
   return (
     <li
+      ref={row}
+      data-drop={placement ?? undefined}
+      data-dragging={dragging || undefined}
       data-live={live ? true : undefined}
       data-highlighted={highlighted || undefined}
       onContextMenu={(event) => {
         event.preventDefault();
         openMenu(item.id, event.clientX, event.clientY);
       }}
-      className="group flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover) data-highlighted:bg-(--row-active) data-highlighted:shadow-sm"
+      className="group relative flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover) data-dragging:opacity-40 data-highlighted:bg-(--row-active) data-highlighted:shadow-sm"
     >
+      {placement && <DropIndicator placement={placement} />}
       {renamingId === item.id ? (
         <div className="flex h-full min-w-0 flex-1 items-center gap-2.5 px-2.5">
           <SiteIcon iconUrl={item.iconUrl} title={item.title} />

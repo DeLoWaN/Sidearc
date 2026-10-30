@@ -1,4 +1,8 @@
+import { useRef } from 'react';
 import type { TabView } from '../../shared/types';
+import { DropIndicator } from '../dnd/DropIndicator';
+import { tabRowTarget } from '../dnd/locators';
+import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
 import { SiteIcon } from './SiteIcon';
 import { useTabGroupMenu } from './TabGroupMenu';
@@ -7,12 +11,21 @@ import { useTabGroupMenu } from './TabGroupMenu';
 export function TabRow({ tab, highlighted }: { tab: TabView; highlighted: boolean }) {
   const { send } = usePanel();
   const { onContextMenu, menu } = useTabGroupMenu(tab);
+  const row = useRef<HTMLLIElement>(null);
+  const { placement, dragging } = useDnd(row, {
+    source: { type: 'tab', tabId: tab.id },
+    locate: tabRowTarget(tab.id),
+  });
   return (
     <li
+      ref={row}
+      data-drop={placement ?? undefined}
+      data-dragging={dragging || undefined}
       onContextMenu={onContextMenu}
       data-highlighted={highlighted || undefined}
-      className="group flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover) data-highlighted:bg-(--row-active) data-highlighted:shadow-sm"
+      className="group relative flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover) data-dragging:opacity-40 data-highlighted:bg-(--row-active) data-highlighted:shadow-sm"
     >
+      {placement && <DropIndicator placement={placement} />}
       <button
         type="button"
         aria-current={highlighted || undefined}

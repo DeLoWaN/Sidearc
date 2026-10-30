@@ -37,7 +37,9 @@ describe('an item dropped in the Pinned Tabs tree', () => {
   });
 
   it('is refused on itself', () => {
-    expect(planDrop(state, item(a), { zone: 'tree-row', itemId: a.id, placement: 'below' })).toBeNull();
+    expect(
+      planDrop(state, item(a), { zone: 'tree-row', itemId: a.id, placement: 'below' }),
+    ).toBeNull();
   });
 
   it('goes into the Folder of the row that it lands on', () => {
@@ -212,10 +214,22 @@ describe('an Unpinned Tab dropped in the Pinned Tabs and the Favorites', () => {
   it('makes a Pinned Tab at the place of the row', () => {
     expect(
       planDrop(state, tab(dragged), { zone: 'tree-row', itemId: b.id, placement: 'above' }),
-    ).toEqual({ type: 'item/from-tab', tabId: dragged.id, kind: 'pinned', parentId: null, index: 1 });
+    ).toEqual({
+      type: 'item/from-tab',
+      tabId: dragged.id,
+      kind: 'pinned',
+      parentId: null,
+      index: 1,
+    });
     expect(
       planDrop(state, tab(dragged), { zone: 'tree-row', itemId: b.id, placement: 'below' }),
-    ).toEqual({ type: 'item/from-tab', tabId: dragged.id, kind: 'pinned', parentId: null, index: 2 });
+    ).toEqual({
+      type: 'item/from-tab',
+      tabId: dragged.id,
+      kind: 'pinned',
+      parentId: null,
+      index: 2,
+    });
   });
 
   it('makes a Pinned Tab inside a Folder', () => {
@@ -242,7 +256,13 @@ describe('an Unpinned Tab dropped in the Pinned Tabs and the Favorites', () => {
   it('makes a Favorite before or after a tile, and at the end on the grid', () => {
     expect(
       planDrop(state, tab(dragged), { zone: 'favorite-tile', itemId: f0.id, edge: 'after' }),
-    ).toEqual({ type: 'item/from-tab', tabId: dragged.id, kind: 'favorite', parentId: null, index: 1 });
+    ).toEqual({
+      type: 'item/from-tab',
+      tabId: dragged.id,
+      kind: 'favorite',
+      parentId: null,
+      index: 1,
+    });
     expect(planDrop(state, tab(dragged), { zone: 'favorites' })).toEqual({
       type: 'item/from-tab',
       tabId: dragged.id,

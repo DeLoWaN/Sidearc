@@ -1,6 +1,10 @@
+import { useRef } from 'react';
 import { ClearDivider } from '../components/ClearDivider';
 import { TabGroupBlock } from '../components/TabGroupBlock';
 import { TabRow } from '../components/TabRow';
+import { DropIndicator } from '../dnd/DropIndicator';
+import { unpinnedSectionTarget } from '../dnd/locators';
+import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
 import { usePanelStore } from '../store';
 import { arrangeUnpinned } from '../tab-groups';
@@ -13,10 +17,18 @@ export function UnpinnedSection() {
   const results = useSearchResults();
   const tabs = results?.tabs ?? allTabs;
   const groups = usePanelStore((store) => store.state.tabGroups);
+  const section = useRef<HTMLElement>(null);
+  const { placement } = useDnd(section, { locate: unpinnedSectionTarget });
   // Clear closes every Unpinned Tab, also the ones that a search hides.
   if (results && tabs.length === 0) return null;
   return (
-    <section aria-label="Unpinned Tabs">
+    <section
+      ref={section}
+      aria-label="Unpinned Tabs"
+      data-drop={placement ?? undefined}
+      className="relative"
+    >
+      {placement && <DropIndicator placement={placement} />}
       {!results && <ClearDivider disabled={tabs.length === 0} />}
       <ul>
         {arrangeUnpinned(tabs, groups).map((entry) =>

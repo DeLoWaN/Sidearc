@@ -1,4 +1,8 @@
+import { useRef } from 'react';
 import type { TabGroupView, TabView } from '../../shared/types';
+import { DropIndicator } from '../dnd/DropIndicator';
+import { tabGroupTarget } from '../dnd/locators';
+import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
 import { usePanelUi } from '../ui-store';
 import { TabRow } from './TabRow';
@@ -8,17 +12,22 @@ export function TabGroupBlock({ group, tabs }: { group: TabGroupView; tabs: TabV
   const { windowId, send } = usePanel();
   const searching = usePanelUi((ui) => ui.searching);
   const title = group.title || 'Untitled group';
+  const block = useRef<HTMLDivElement>(null);
+  const { placement } = useDnd(block, { locate: tabGroupTarget(group.id) });
   // A search shows the matching tabs of a collapsed group and leaves the group state alone.
   const collapsed = group.collapsed && !searching;
   return (
     <li role="none">
       {/* biome-ignore lint/a11y/useSemanticElements: a fieldset is a form control, not a block. */}
       <div
+        ref={block}
         role="group"
         aria-label={title}
         data-color={group.color}
-        className="my-1 ml-1.5 rounded-[3px] border-l-[3px] border-(--group-color) pl-1"
+        data-drop={placement ?? undefined}
+        className="relative my-1 ml-1.5 rounded-[3px] border-l-[3px] border-(--group-color) pl-1"
       >
+        {placement && <DropIndicator placement={placement} />}
         <button
           type="button"
           aria-label={title}

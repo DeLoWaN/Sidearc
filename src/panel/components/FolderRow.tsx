@@ -1,5 +1,9 @@
+import { useRef } from 'react';
 import type { ItemView } from '../../shared/types';
 import type { TreeNode } from '../build-tree';
+import { DropIndicator } from '../dnd/DropIndicator';
+import { folderRowTarget } from '../dnd/locators';
+import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
 import { usePanelUi } from '../ui-store';
 import { ItemList } from './ItemTree';
@@ -23,16 +27,25 @@ const folderIcon = (
 export function FolderRow({ item, nodes }: { item: ItemView; nodes: TreeNode[] }) {
   const { send } = usePanel();
   const { openMenu, renamingId } = usePanelUi();
+  const header = useRef<HTMLDivElement>(null);
+  const { placement, dragging } = useDnd(header, {
+    source: { type: 'item', itemId: item.id },
+    canDrag: renamingId !== item.id,
+    locate: folderRowTarget(item),
+  });
   return (
-    <li>
+    <li data-drop={placement ?? undefined}>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: the context menu key on the row button reaches this handler too. */}
       <div
+        ref={header}
+        data-dragging={dragging || undefined}
         onContextMenu={(event) => {
           event.preventDefault();
           openMenu(item.id, event.clientX, event.clientY);
         }}
-        className="flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover)"
+        className="relative flex h-(--row-height) items-center rounded-[10px] hover:bg-(--row-hover) data-dragging:opacity-40"
       >
+        {placement && <DropIndicator placement={placement} />}
         {renamingId === item.id ? (
           <div className="flex h-full min-w-0 flex-1 items-center gap-2.5 px-2.5">
             {folderIcon}

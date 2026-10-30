@@ -1,6 +1,10 @@
+import { useRef } from 'react';
 import { buildTree } from '../build-tree';
 import { ItemList } from '../components/ItemTree';
 import { PinnedRow } from '../components/PinnedRow';
+import { DropIndicator } from '../dnd/DropIndicator';
+import { pinnedSectionTarget } from '../dnd/locators';
+import { useDnd } from '../dnd/use-dnd';
 import { usePanel } from '../panel-context';
 import { usePanelStore } from '../store';
 import { usePanelUi } from '../ui-store';
@@ -18,6 +22,8 @@ export function PinnedSection() {
   const items = usePanelStore((store) => store.state.items);
   const { openMenu, startCreateFolder } = usePanelUi();
   const results = useSearchResults();
+  const section = useRef<HTMLElement>(null);
+  const { placement } = useDnd(section, { locate: pinnedSectionTarget });
 
   if (results) {
     if (results.pinned.length === 0) return null;
@@ -40,7 +46,10 @@ export function PinnedSection() {
 
   return (
     <section
+      ref={section}
       aria-label="Pinned Tabs"
+      data-drop={placement ?? undefined}
+      className="relative"
       onContextMenu={(event) => {
         // A row has its own menu and has already handled the click.
         if (event.defaultPrevented) return;
@@ -60,6 +69,7 @@ export function PinnedSection() {
         </button>
       </div>
       <ItemList nodes={buildTree(items)} parentId={null} label="Pinned Tabs list" />
+      {placement && <DropIndicator placement={placement} />}
     </section>
   );
 }

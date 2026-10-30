@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { MAX_ARCHIVE_HOURS, MIN_ARCHIVE_HOURS } from '../../shared/settings';
+import { optionsField } from '../button-style';
 import { Section } from '../Section';
 import { useSettings } from '../settings-context';
 
@@ -34,7 +35,7 @@ export function ArchiveDelaySection() {
           }}
           onBlur={commit}
           onKeyDown={(event) => event.key === 'Enter' && commit()}
-          className="w-20 rounded-md bg-(--menu-bg) px-2 py-1"
+          className={`w-20 ${optionsField}`}
         />
         hours without a visit
       </label>

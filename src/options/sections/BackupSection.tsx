@@ -3,6 +3,7 @@ import { backupFileName } from '../../shared/backup-format';
 import { plural } from '../../shared/plural';
 import type { BackupSummary } from '../../shared/protocol';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
+import { optionsButton } from '../button-style';
 import { FilePickerButton } from '../FilePickerButton';
 import { useAsk } from '../options-context';
 import { Section } from '../Section';
@@ -84,29 +85,31 @@ export function BackupSection() {
     );
   };
 
-  const button = 'rounded-md px-3 py-1.5 hover:bg-(--row-hover)';
-
   return (
     <Section title="Backup">
-      <div className="flex flex-wrap items-center gap-4">
-        <button type="button" className={`${button} bg-(--menu-bg)`} onClick={exportBackup}>
-          Export backup
-        </button>
-        <FilePickerButton
-          buttonLabel="Import backup"
-          inputLabel="Backup file"
-          accept=".json,application/json"
-          className={`${button} bg-(--menu-bg)`}
-          onFile={chooseFile}
-        />
+      <div className="flex flex-wrap gap-x-8 gap-y-4">
+        <div className="flex max-w-64 flex-col items-start gap-2">
+          <button type="button" className={optionsButton} onClick={exportBackup}>
+            Export backup
+          </button>
+          <p className="text-xs text-(--text-muted)">
+            Saves your Favorites, Pinned Tabs, Folders, settings and View Archive in one JSON file.
+          </p>
+        </div>
+        <div className="flex max-w-64 flex-col items-start gap-2">
+          <FilePickerButton
+            buttonLabel="Import backup"
+            inputLabel="Backup file"
+            accept=".json,application/json"
+            className={optionsButton}
+            onFile={chooseFile}
+          />
+          <p className="text-xs text-(--text-muted)">
+            Replaces all your Sidearc data with the content of a backup file. Asks for confirmation
+            first.
+          </p>
+        </div>
       </div>
-      <p className="mt-3 text-xs text-(--text-muted)">
-        Saves your Favorites, Pinned Tabs, Folders, settings and View Archive in one JSON file.
-      </p>
-      <p className="mt-1 text-xs text-(--text-muted)">
-        Replaces all your Sidearc data with the content of a backup file. Asks for confirmation
-        first.
-      </p>
       {pending && (
         <ConfirmDialog
           label="Replace your data?"

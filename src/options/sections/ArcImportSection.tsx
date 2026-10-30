@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { type ArcImportReport, type ArcSpace, listArcSpaces } from '../../shared/arc-import';
 import { MAX_FAVORITES } from '../../shared/item-tree';
 import { plural } from '../../shared/plural';
+import { optionsButton, optionsField } from '../button-style';
 import { FilePickerButton } from '../FilePickerButton';
 import { useAsk } from '../options-context';
 import { Section } from '../Section';
@@ -91,7 +92,7 @@ export function ArcImportSection() {
             buttonLabel="Choose file"
             inputLabel="Arc sidebar file"
             accept=".json,application/json"
-            className="self-start rounded-md bg-(--menu-bg) px-3 py-1 hover:bg-(--row-hover)"
+            className={`self-start ${optionsButton}`}
             onFile={chooseFile}
           />
           <p className="text-xs opacity-70">
@@ -103,7 +104,7 @@ export function ArcImportSection() {
               <select
                 value={spaceId}
                 onChange={(event) => setSpaceId(event.target.value)}
-                className="rounded-md bg-(--menu-bg) px-2 py-1"
+                className={optionsField}
               >
                 <option value="">Choose a space</option>
                 {spaces.map((space) => (
@@ -118,7 +119,7 @@ export function ArcImportSection() {
             type="button"
             disabled={!spaceId}
             onClick={runImport}
-            className="self-start rounded-md bg-(--menu-bg) px-3 py-1 disabled:opacity-50"
+            className={`self-start ${optionsButton}`}
           >
             Import
           </button>

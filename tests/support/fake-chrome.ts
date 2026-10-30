@@ -468,16 +468,49 @@ class FakeChrome {
         await this.events.tabGroups.onUpdated.trigger({ ...g });
         return { ...g };
       },
+      /** Moves the whole group at once, as Chrome does: the tabs keep their group, also in another window. */
       move: async (id: number, props: { windowId?: number; index: number }) => {
-        const g = this.groupList.find((x) => x.id === id) as Group;
-        const ids = this.tabList
+        const g = this.groupList.find((x) => x.id === id);
+        if (!g) throw new Error(`No group with id: ${id}.`);
+        const moving = this.tabList
           .filter((t) => t.groupId === id)
-          .sort((a, b) => a.index - b.index)
-          .map((t) => t.id as number);
-        await this.api.tabs.move(ids, {
-          windowId: props.windowId ?? g.windowId,
-          index: props.index,
+          .sort((a, b) => a.index - b.index);
+        const from = { windowId: g.windowId, indexes: moving.map((t) => t.index) };
+        const toWindow = props.windowId ?? g.windowId;
+        const siblings = this.inWindow(toWindow).filter((t) => t.groupId !== id);
+        const at = props.index < 0 ? siblings.length : Math.min(props.index, siblings.length);
+        siblings.splice(at, 0, ...moving);
+        for (const t of moving) t.windowId = toWindow;
+        g.windowId = toWindow;
+        siblings.forEach((t, i) => {
+          t.index = i;
         });
+        this.reindex(from.windowId);
+        for (const [i, t] of moving.entries()) {
+          const id = t.id as number;
+          if (toWindow === from.windowId) {
+            await this.events.tabs.onMoved.trigger(id, {
+              windowId: toWindow,
+              fromIndex: from.indexes[i] as number,
+              toIndex: t.index,
+            });
+          } else {
+            t.active = false;
+            await this.events.tabs.onDetached.trigger(id, {
+              oldWindowId: from.windowId,
+              oldPosition: from.indexes[i] as number,
+            });
+            await this.events.tabs.onAttached.trigger(id, {
+              newWindowId: toWindow,
+              newPosition: t.index,
+            });
+          }
+        }
+        if (toWindow !== from.windowId) {
+          await this.activateNeighbour(from.windowId, from.indexes[0] as number);
+          if (this.inWindow(from.windowId).length === 0)
+            await this.api.windows.remove(from.windowId);
+        }
         await this.events.tabGroups.onMoved.trigger({ ...g });
         return { ...g };
       },

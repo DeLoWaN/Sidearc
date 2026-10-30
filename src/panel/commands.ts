@@ -1,5 +1,6 @@
 import type { SelectionTarget } from '../shared/protocol';
 import type { CommandBody } from './connection';
+import type { GroupRef } from './dnd/types';
 
 /**
  * The commands that move an item or a tab. "Move to…" and drag and drop build them here,
@@ -68,6 +69,20 @@ export function moveTabCommand(
     ...(groupId === undefined ? {} : { groupId }),
     ...(targetWindowId === undefined ? {} : { targetWindowId }),
   };
+}
+
+/**
+ * Moves a whole group to `index` of the tab strip of a window. The index is the place of its first tab when the move ends.
+ * -1 means the end of the strip.
+ */
+export function moveGroupCommand(
+  group: GroupRef,
+  index: number,
+  targetWindowId: number,
+): Of<'group/move'> | Of<'site-group/move'> {
+  return group.kind === 'tab'
+    ? { type: 'group/move', groupId: group.groupId, index, targetWindowId }
+    : { type: 'site-group/move', groupId: group.groupId, index, targetWindowId };
 }
 
 /** The Unpinned Tabs and the Pinned Tabs and Folders of a selection, in the order of the panel. */

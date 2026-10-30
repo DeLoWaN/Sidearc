@@ -11,6 +11,7 @@ import {
   unpinCommand,
 } from '../commands';
 import type { CommandBody } from '../connection';
+import { planGroupDrop } from './plan-group';
 import type { DragSource, DropTarget } from './types';
 
 type SelectionSource = Extract<DragSource, { type: 'selection' }>;
@@ -257,6 +258,7 @@ export function planDrop(
   target: DropTarget,
 ): CommandBody | null {
   if (source.type === 'selection') return planSelectionDrop(state, source, target);
+  if (source.type === 'group') return planGroupDrop(state, source, target);
   if (source.type === 'item') {
     const item = state.items.find((candidate) => candidate.id === source.itemId);
     return item ? planItemDrop(state, item, target) : null;

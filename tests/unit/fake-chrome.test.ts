@@ -42,6 +42,28 @@ describe('fake chrome', () => {
     expect(await browser.tabGroups.query({})).toEqual([]);
   });
 
+  it('moves a whole Tab group to an index of the final strip, also into another window', async () => {
+    const w1 = await fakeChrome.openWindow([
+      'https://a.test/',
+      'https://b.test/',
+      'https://c.test/',
+    ]);
+    const w2 = await fakeChrome.openWindow(['https://x.test/']);
+    const [a, b] = await browser.tabs.query({ windowId: w1 });
+    const gid = (await browser.tabs.group({ tabIds: [a!.id!, b!.id!] })) as unknown as number;
+    const urls = async (windowId: number) =>
+      (await browser.tabs.query({ windowId })).map(
+        (t) => `${t.url}${t.groupId === gid ? '@g' : ''}`,
+      );
+
+    await browser.tabGroups.move(gid, { index: 1 });
+    expect(await urls(w1)).toEqual(['https://c.test/', 'https://a.test/@g', 'https://b.test/@g']);
+
+    await browser.tabGroups.move(gid, { windowId: w2, index: 0 });
+    expect(await urls(w2)).toEqual(['https://a.test/@g', 'https://b.test/@g', 'https://x.test/']);
+    expect((await browser.tabGroups.get(gid)).windowId).toBe(w2);
+  });
+
   it('tracks lastAccessed with the fake clock', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));

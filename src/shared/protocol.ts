@@ -99,6 +99,22 @@ export type SiteGroupNameCommand =
    */
   { type: 'site-group/rename'; groupId: string; name: string };
 
+// group moves
+export type GroupMoveCommand =
+  /**
+   * Moves a Tab group, with its tabs, to the tab strip of the window `targetWindowId`.
+   * `index` is the place of the first tab of the group when the move ends. -1 means the end of the strip.
+   * Does nothing when the group does not exist.
+   */
+  | { type: 'group/move'; groupId: number; index: number; targetWindowId: number }
+  /**
+   * Moves the member tabs of a site group to the tab strip of the window `targetWindowId`, in one call.
+   * The members end next to each other from `index`, in the order that they had.
+   * `index` is the place of the first member when the move ends. -1 means the end of the strip.
+   * A member of another window moves to that window. Does nothing when the group does not exist.
+   */
+  | { type: 'site-group/move'; groupId: string; index: number; targetWindowId: number };
+
 // archive
 export type ArchiveCommand =
   /** Opens the archived tab in the window of the panel, and removes its entry. */
@@ -173,6 +189,7 @@ export type Command = { windowId: number } & (
   | GroupsCommand
   | SiteGroupsCommand
   | SiteGroupNameCommand
+  | GroupMoveCommand
   | ArchiveCommand
   | DragCommand
   | SelectionCommand

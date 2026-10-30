@@ -42,12 +42,17 @@ export type FoldersCommand =
   /**
    * Puts a Pinned Tab or a Folder at the end of a Folder, or at the root when `parentId` is null.
    * Does nothing when the target is not a Folder, or is the item itself or inside it.
-   * A Pinned Tab keeps its live tab.
+   * A Pinned Tab keeps its live tab. A Favorite becomes a Pinned Tab at that place and keeps its live tab.
    */
   | { type: 'item/move'; itemId: string; parentId: string | null };
 
 // favorites (#6)
-export type FavoritesCommand = never;
+export type FavoritesCommand =
+  /**
+   * Turns a Pinned Tab into a Favorite, after the other Favorites. It keeps its live tab.
+   * Does nothing for a Folder or a Favorite. Sends a notice and changes nothing when 12 Favorites exist.
+   */
+  { type: 'item/favorite'; itemId: string };
 
 // tab groups (#9)
 export type GroupsCommand =
@@ -88,7 +93,10 @@ export type Command = { windowId: number } & (
 export type CommandType = Command['type'];
 
 /** A message sent by the worker on a panel port. */
-export type PortMessage = { type: 'state'; state: SidebarState };
+export type PortMessage =
+  | { type: 'state'; state: SidebarState }
+  /** A short text for the user, sent to the one panel whose command the worker refused. */
+  | { type: 'notice'; message: string };
 
 // --- rpc: one-off requests from the options page and the link guard, sent with runtime.sendMessage
 

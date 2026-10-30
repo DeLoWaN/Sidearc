@@ -25,8 +25,8 @@ export function connectPanel(windowId: number) {
   const port = fakeChrome.connect(PANEL_PORT);
   const states: SidebarState[] = [];
   port.onMessage.addListener((message) => {
-    const { type, state } = message as PortMessage;
-    if (type === 'state') states.push(state);
+    const received = message as PortMessage;
+    if (received.type === 'state') states.push(received.state);
   });
   return {
     /** Every state received, oldest first. */

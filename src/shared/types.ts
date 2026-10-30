@@ -118,6 +118,13 @@ export type ArchiveState = {
   archive: ArchiveEntry[];
 };
 
+// undo
+
+export type UndoState = {
+  /** What the next Undo reverts, as a short text such as `Delete "Mail"`. Null when nothing can be undone. */
+  undo: { label: string } | null;
+};
+
 // settings
 
 /** How much room a row takes. */
@@ -137,4 +144,9 @@ export interface Settings {
 export type SettingsState = { settings: Settings };
 
 /** The full state the worker sends to the panel after every change. */
-export type SidebarState = TabsState & ItemsState & GroupsState & ArchiveState & SettingsState;
+export type SidebarState = TabsState &
+  ItemsState &
+  GroupsState &
+  ArchiveState &
+  UndoState &
+  SettingsState;

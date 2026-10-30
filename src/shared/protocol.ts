@@ -97,6 +97,11 @@ export type DragCommand =
    */
   | { type: 'item/unpin'; itemId: string };
 
+// undo
+export type UndoCommand =
+  /** Reverts the newest undoable action and removes it from the Undo list. Does nothing when the list is empty. */
+  { type: 'undo' };
+
 // settings
 export type SettingsCommand =
   /** Opens the options page: a new tab, or the tab that already shows it. */
@@ -111,6 +116,7 @@ export type Command = { windowId: number } & (
   | GroupsCommand
   | ArchiveCommand
   | DragCommand
+  | UndoCommand
   | SettingsCommand
 );
 

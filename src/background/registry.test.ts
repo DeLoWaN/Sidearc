@@ -6,6 +6,7 @@ import {
   registerCommand,
   registerRpc,
   startRpcRouter,
+  wrapCommands,
 } from './registry';
 
 beforeEach(() => {
@@ -31,6 +32,23 @@ it('refuses two handlers for one command', () => {
   expect(() => registerCommand('tab/close', () => {})).toThrow(
     'Command already registered: tab/close',
   );
+});
+
+it('runs a command inside the wrapper, which decides when the handler runs', async () => {
+  const calls: string[] = [];
+  registerCommand('tab/close', () => void calls.push('handler'));
+  wrapCommands(async (command, run) => {
+    calls.push(`before ${command.type}`);
+    await run();
+    calls.push('after');
+  });
+  await dispatchCommand({ type: 'tab/close', tabId: 1, windowId: 1 });
+  expect(calls).toEqual(['before tab/close', 'handler', 'after']);
+});
+
+it('refuses two command wrappers', () => {
+  wrapCommands((_command, run) => run());
+  expect(() => wrapCommands((_command, run) => run())).toThrow('Command wrapper already set');
 });
 
 it('answers a one-off request through runtime.sendMessage', async () => {

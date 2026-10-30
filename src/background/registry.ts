@@ -3,6 +3,10 @@ import type { Command, CommandType, RpcMap, RpcName } from '../shared/protocol';
 type CommandOf<T extends CommandType> = Extract<Command, { type: T }>;
 
 const commandHandlers = new Map<string, (command: Command) => unknown>();
+/** Runs around every command. It decides when to call `run`, which runs the handler. */
+type CommandWrapper = (command: Command, run: () => Promise<void>) => Promise<void>;
+
+let commandWrapper: CommandWrapper | undefined;
 const rpcHandlers = new Map<
   string,
   (request: never, sender: chrome.runtime.MessageSender) => unknown
@@ -17,6 +21,12 @@ export function registerCommand<T extends CommandType>(
   commandHandlers.set(type, handler as (command: Command) => unknown);
 }
 
+/** Sets the one wrapper that runs around every command. A second wrapper throws. */
+export function wrapCommands(wrapper: CommandWrapper) {
+  if (commandWrapper) throw new Error('Command wrapper already set');
+  commandWrapper = wrapper;
+}
+
 /** Registers the one handler of a one-off request. A second handler for the same name throws. */
 export function registerRpc<K extends RpcName>(
   name: K,
@@ -29,11 +39,14 @@ export function registerRpc<K extends RpcName>(
   rpcHandlers.set(name, handler as never);
 }
 
-/** Runs the handler of a command. Throws when no module registered one. */
+/** Runs the handler of a command, inside the command wrapper if one is set. Throws when no module registered a handler. */
 export async function dispatchCommand(command: Command) {
   const handler = commandHandlers.get(command.type);
   if (!handler) throw new Error(`Unknown command: ${command.type}`);
-  await handler(command);
+  const run = async () => {
+    await handler(command);
+  };
+  await (commandWrapper ? commandWrapper(command, run) : run());
 }
 
 /** Adds the one runtime.onMessage listener of the worker. A second listener would race to answer. */
@@ -53,5 +66,6 @@ export function startRpcRouter() {
 /** Forgets every handler. Handlers are module state and survive between tests. */
 export function clearRegistries() {
   commandHandlers.clear();
+  commandWrapper = undefined;
   rpcHandlers.clear();
 }

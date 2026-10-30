@@ -45,6 +45,18 @@ export function FolderRow({ item, nodes }: { item: ItemView; nodes: TreeNode[] }
             onClick={() => send({ type: 'folder/toggle', itemId: item.id })}
             className="flex h-full min-w-0 flex-1 items-center gap-2.5 rounded-[10px] px-2.5 text-left"
           >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 8 8"
+              className={`size-2 shrink-0 text-(--text-muted) ${item.collapsed ? '' : 'rotate-90'}`}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M2.5 1l3 3-3 3" />
+            </svg>
             {folderIcon}
             <span className="truncate font-medium">{item.title}</span>
           </button>

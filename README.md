@@ -92,7 +92,7 @@ Sidearc asks Chrome for these permissions:
 | `favicon`           | Shows site icons from the Chrome icon cache.                                     |
 | Access to all sites | A small script in each page checks link clicks in live tabs, for the link guard. |
 
-Your data stays on your computer, in the extension storage of Chrome. Sidearc sends no network request and collects no usage data. Your data does not sync between computers, so use the JSON export as a backup.
+Your data stays on your computer, in the extension storage of Chrome. Sidearc sends no network request and collects no usage data. Your data does not sync between computers, so use the JSON export as a backup. [PRIVACY.md](PRIVACY.md) is the full privacy policy.
 
 ## Known limits
 

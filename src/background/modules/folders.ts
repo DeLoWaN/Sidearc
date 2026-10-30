@@ -15,7 +15,9 @@ const folders: WorkerModule = {
 
     registerCommand('folder/toggle', ({ itemId }) => toggleFolder(itemId));
 
-    registerCommand('item/move', ({ itemId, parentId }) => moveItem(itemId, parentId));
+    registerCommand('item/move', ({ itemId, parentId, index }) =>
+      moveItem(itemId, parentId, index),
+    );
   },
 };
 export default folders;

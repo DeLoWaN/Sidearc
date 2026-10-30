@@ -40,19 +40,22 @@ export type FoldersCommand =
   /** Collapses an open Folder, or opens a collapsed one. The state is saved. */
   | { type: 'folder/toggle'; itemId: string }
   /**
-   * Puts a Pinned Tab or a Folder at the end of a Folder, or at the root when `parentId` is null.
+   * Puts a Pinned Tab or a Folder in a Folder, or at the root when `parentId` is null.
+   * The item goes to `index` among the items of the target, counted without the item, or to the end without an index.
+   * The positions of the list that the item leaves and of the list that it enters are renumbered.
    * Does nothing when the target is not a Folder, or is the item itself or inside it.
    * A Pinned Tab keeps its live tab. A Favorite becomes a Pinned Tab at that place and keeps its live tab.
    */
-  | { type: 'item/move'; itemId: string; parentId: string | null };
+  | { type: 'item/move'; itemId: string; parentId: string | null; index?: number };
 
 // favorites (#6)
 export type FavoritesCommand =
   /**
-   * Turns a Pinned Tab into a Favorite, after the other Favorites. It keeps its live tab.
-   * Does nothing for a Folder or a Favorite. Sends a notice and changes nothing when 12 Favorites exist.
+   * Turns a Pinned Tab into a Favorite at `index` among the Favorites, or after them without an index. It keeps its live tab.
+   * A Favorite moves to `index` among the Favorites, and stays put without an index.
+   * Does nothing for a Folder. Sends a notice and changes nothing when 12 Favorites exist and the item is not one of them.
    */
-  { type: 'item/favorite'; itemId: string };
+  { type: 'item/favorite'; itemId: string; index?: number };
 
 // tab groups (#9)
 export type GroupsCommand =

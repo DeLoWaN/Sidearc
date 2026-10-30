@@ -63,6 +63,35 @@ it('downloads the text of the worker as a backup file named after the date', asy
   expect(created[0]?.type).toBe('application/json');
 });
 
+it('opens the file picker from the Import backup button', async () => {
+  const opened: string[] = [];
+  vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(function (
+    this: HTMLInputElement,
+  ) {
+    opened.push(this.type);
+  });
+  renderBackup();
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Import backup' }));
+
+  expect(opened).toEqual(['file']);
+});
+
+it('says what Export and Import do', async () => {
+  renderBackup();
+
+  expect(
+    await screen.findByText(
+      'Saves your Favorites, Pinned Tabs, Folders, settings and View Archive in one JSON file.',
+    ),
+  ).toBeVisible();
+  expect(
+    screen.getByText(
+      'Replaces all your Sidearc data with the content of a backup file. Asks for confirmation first.',
+    ),
+  ).toBeVisible();
+});
+
 it('shows the counts of the file and asks before it replaces the data', async () => {
   const { ask } = renderBackup();
 

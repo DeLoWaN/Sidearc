@@ -49,6 +49,20 @@ it('offers the import when Sidearc has no items', async () => {
   expect(screen.getByLabelText('Arc sidebar file')).toHaveAttribute('type', 'file');
 });
 
+it('opens the file picker from a button', async () => {
+  const opened: string[] = [];
+  vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(function (
+    this: HTMLInputElement,
+  ) {
+    opened.push(this.type);
+  });
+  renderSection();
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Choose file' }));
+
+  expect(opened).toEqual(['file']);
+});
+
 it('offers nothing when Sidearc has items', async () => {
   const { ask } = renderSection({ available: false });
 

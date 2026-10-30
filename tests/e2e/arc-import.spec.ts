@@ -13,7 +13,7 @@ test('the options page imports an Arc space into the open panel, once', async ({
     .getByLabel('Arc sidebar file')
     .setInputFiles('tests/fixtures/arc/StorableSidebar.trimmed.json');
   await options.getByRole('combobox', { name: 'Arc space' }).selectOption({ label: 'Alpha' });
-  await options.getByRole('button', { name: 'Import' }).click();
+  await options.getByRole('button', { name: 'Import', exact: true }).click();
 
   await expect(options.getByRole('status')).toContainText(
     '3 Favorites, 9 Pinned Tabs and 5 Folders',

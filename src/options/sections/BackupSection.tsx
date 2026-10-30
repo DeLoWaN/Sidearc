@@ -3,6 +3,7 @@ import { backupFileName } from '../../shared/backup-format';
 import { plural } from '../../shared/plural';
 import type { BackupSummary } from '../../shared/protocol';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
+import { FilePickerButton } from '../FilePickerButton';
 import { useAsk } from '../options-context';
 import { Section } from '../Section';
 import { useSettings } from '../settings-context';
@@ -55,9 +56,8 @@ export function BackupSection() {
     }
   };
 
-  const chooseFile = async (file: File | undefined) => {
+  const chooseFile = async (file: File) => {
     clear();
-    if (!file) return;
     try {
       const text = await file.text();
       const result = await ask('backup/inspect', text);
@@ -92,21 +92,21 @@ export function BackupSection() {
         <button type="button" className={`${button} bg-(--menu-bg)`} onClick={exportBackup}>
           Export backup
         </button>
-        <label className="flex items-center gap-2">
-          Import backup
-          <input
-            type="file"
-            aria-label="Backup file"
-            accept=".json,application/json"
-            onChange={(event) => {
-              const input = event.currentTarget;
-              chooseFile(input.files?.[0]).finally(() => {
-                input.value = '';
-              });
-            }}
-          />
-        </label>
+        <FilePickerButton
+          buttonLabel="Import backup"
+          inputLabel="Backup file"
+          accept=".json,application/json"
+          className={`${button} bg-(--menu-bg)`}
+          onFile={chooseFile}
+        />
       </div>
+      <p className="mt-3 text-xs text-(--text-muted)">
+        Saves your Favorites, Pinned Tabs, Folders, settings and View Archive in one JSON file.
+      </p>
+      <p className="mt-1 text-xs text-(--text-muted)">
+        Replaces all your Sidearc data with the content of a backup file. Asks for confirmation
+        first.
+      </p>
       {pending && (
         <ConfirmDialog
           label="Replace your data?"

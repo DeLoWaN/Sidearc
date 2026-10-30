@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { type ArcImportReport, type ArcSpace, listArcSpaces } from '../../shared/arc-import';
 import { MAX_FAVORITES } from '../../shared/item-tree';
 import { plural } from '../../shared/plural';
+import { FilePickerButton } from '../FilePickerButton';
 import { useAsk } from '../options-context';
 import { Section } from '../Section';
 
@@ -49,12 +50,11 @@ export function ArcImportSection() {
 
   if (!available && !report && !error) return null;
 
-  const chooseFile = async (file: File | undefined) => {
+  const chooseFile = async (file: File) => {
     setText(undefined);
     setSpaces([]);
     setSpaceId('');
     setError(undefined);
-    if (!file) return;
     try {
       const content = await file.text();
       const listed = listArcSpaces(content);
@@ -87,14 +87,13 @@ export function ArcImportSection() {
         <Report report={report} />
       ) : (
         <div className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1">
-            Arc sidebar file
-            <input
-              type="file"
-              accept=".json,application/json"
-              onChange={(event) => chooseFile(event.target.files?.[0])}
-            />
-          </label>
+          <FilePickerButton
+            buttonLabel="Choose file"
+            inputLabel="Arc sidebar file"
+            accept=".json,application/json"
+            className="self-start rounded-md bg-(--menu-bg) px-3 py-1 hover:bg-(--row-hover)"
+            onFile={chooseFile}
+          />
           <p className="text-xs opacity-70">
             Choose StorableSidebar.json, in the Arc folder of Application Support.
           </p>
